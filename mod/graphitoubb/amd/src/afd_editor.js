@@ -27,11 +27,9 @@ define([
     'mod_graphitoubb/snapshot_controller',
     'mod_graphitoubb/repository',
     'mod_graphitoubb/editor_toolbar',
+    'mod_graphitoubb/alphabet_ui',
     'core/notification',
-], function(CytoscapeFactory, SnapshotController, Repository, Toolbar, Notification) {
-
-    /** Alphabet symbols currently in use; kept in sync with cy edges. */
-    var currentAlphabet = [];
+], function(CytoscapeFactory, SnapshotController, Repository, Toolbar, AlphabetUI, Notification) {
 
     /** Source node id stored between the two clicks of the add-transition flow. */
     var pendingTransitionSource = null;
@@ -39,9 +37,8 @@ define([
     /**
      * Extract canonical AFD shape from a Cytoscape instance.
      *
-     * snapshot_controller.isSignificant() compares {states, transitions, alphabet}.
-     * cy.json() uses Cytoscape's own format which lacks those keys, causing
-     * isSignificant() to always return false.
+     * Reads alphabet from cy.scratch('alphabet') when set (S10 source of truth).
+     * Falls back to inferring from edges for backward compatibility with pre-S10 snapshots.
      *
      * @param {object} cy Cytoscape instance.
      * @return {{states: Array, transitions: Array, alphabet: Array, start: string|null, finals: Array}}
@@ -61,20 +58,28 @@ define([
             }
         });
 
-        var symbolSeen = {};
-        var alphabet = [];
         var transitions = [];
-
         cy.edges().forEach(function(e) {
             var symbol = e.data('symbol') || '';
             transitions.push({from: e.source().id(), symbol: symbol, to: e.target().id()});
-            if (symbol && !symbolSeen[symbol]) {
-                symbolSeen[symbol] = true;
-                alphabet.push(symbol);
-            }
         });
 
-        alphabet.sort();
+        var scratch = cy.scratch('alphabet');
+        var alphabet;
+        if (Array.isArray(scratch)) {
+            alphabet = scratch.slice().sort();
+        } else {
+            var symbolSeen = {};
+            alphabet = [];
+            cy.edges().forEach(function(e) {
+                var sym = e.data('symbol') || '';
+                if (sym && !symbolSeen[sym]) {
+                    symbolSeen[sym] = true;
+                    alphabet.push(sym);
+                }
+            });
+            alphabet.sort();
+        }
 
         return {states: states, transitions: transitions, alphabet: alphabet, start: start, finals: finals};
     };
@@ -149,8 +154,7 @@ define([
      * S6b: Validate and create the transition edge.
      *
      * Determinism rule: no two transitions from the same source on the same symbol.
-     * Auto-adds new symbols to currentAlphabet (easier learning curve than
-     * forcing the student to define the alphabet before drawing transitions).
+     * Auto-adds new symbols via AlphabetUI so the visible list stays in sync.
      *
      * @param {object} cy
      * @param {Element|null} toolbarEl
@@ -167,17 +171,18 @@ define([
             return;
         }
 
-        var symbol = window.prompt('Símbolo de transición (1 carácter):');
+        var symbol = window.prompt('Símbolo de transición (1 carácter alfanumérico):');
         if (symbol === null) {
             Toolbar.setMode('idle');
             return;
         }
         symbol = symbol.trim().charAt(0);
-        if (!symbol) {
+        if (!symbol || !/^[a-zA-Z0-9]$/.test(symbol)) {
             Toolbar.setMode('idle');
             return;
         }
 
+        var currentAlphabet = AlphabetUI.getAlphabet();
         var isNewSymbol = currentAlphabet.indexOf(symbol) === -1;
         if (isNewSymbol && currentAlphabet.length >= bound(toolbarEl, 'maxAlphabet', 16)) {
             // eslint-disable-next-line no-console
@@ -197,7 +202,7 @@ define([
         }
 
         if (isNewSymbol) {
-            currentAlphabet.push(symbol);
+            AlphabetUI.addSymbol(symbol);
         }
 
         var targetId = targetNode.id();
@@ -217,9 +222,6 @@ define([
     /**
      * S7: Mark one node as start state; clear any previous start.
      *
-     * Updates both node data (read by extractCanonical) and CSS class
-     * (read by cytoscape_factory styles) so both paths stay in sync.
-     *
      * @param {object} cy
      * @param {object} node Cytoscape node to become the new start state.
      */
@@ -236,9 +238,6 @@ define([
     /**
      * S8: Toggle the final flag on a node.
      *
-     * Updates both data.final (read by extractCanonical) and CSS class .final
-     * (read by cytoscape style selector for double-border rendering).
-     *
      * @param {object} node Cytoscape node.
      */
     var handleToggleFinal = function(node) {
@@ -254,11 +253,6 @@ define([
 
     /**
      * S9: Remove a node or edge.
-     *
-     * Cytoscape cascades connected edge removal automatically when a node is
-     * removed via cy.remove(). No manual edge cleanup needed.
-     * If the deleted node was the start state, the start is simply cleared —
-     * no automatic re-assignment.
      *
      * @param {object} cy
      * @param {object} element Cytoscape node or edge.
@@ -301,7 +295,7 @@ define([
 
                 var cy = CytoscapeFactory.create(container, automaton);
 
-                currentAlphabet = (automaton.alphabet || []).slice();
+                cy.scratch('alphabet', (automaton.alphabet || []).slice());
 
                 var editorRoot = container.closest('.mod-graphitoubb-editor');
                 var toolbarEl = editorRoot
@@ -311,6 +305,15 @@ define([
                 if (toolbarEl) {
                     Toolbar.init(toolbarEl);
                 }
+
+                // Always init AlphabetUI with cy so getAlphabet()/addSymbol() work in handlers.
+                AlphabetUI.init(
+                    editorRoot ? editorRoot.querySelector('.mod-graphitoubb-alphabet-panel') : null,
+                    cy,
+                    function() {
+                        SnapshotController.onchange(attemptid, extractCanonical(cy), schemaversion);
+                    }
+                );
 
                 cy.on('add remove data', function() {
                     SnapshotController.onchange(attemptid, extractCanonical(cy), schemaversion);
