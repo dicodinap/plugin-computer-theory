@@ -136,6 +136,85 @@ define([
     };
 
     /**
+     * S6a: Store source node; transition FSM to adding_transition_target.
+     *
+     * @param {object} node Cytoscape node.
+     */
+    var handleTransitionSource = function(node) {
+        pendingTransitionSource = node.id();
+        Toolbar.setMode('adding_transition_target');
+    };
+
+    /**
+     * S6b: Validate and create the transition edge.
+     *
+     * Determinism rule: no two transitions from the same source on the same symbol.
+     * Auto-adds new symbols to currentAlphabet (easier learning curve than
+     * forcing the student to define the alphabet before drawing transitions).
+     *
+     * @param {object} cy
+     * @param {Element|null} toolbarEl
+     * @param {object} targetNode Cytoscape node.
+     */
+    var handleTransitionTarget = function(cy, toolbarEl, targetNode) {
+        var sourceId = pendingTransitionSource;
+        pendingTransitionSource = null;
+
+        if (cy.edges().length >= bound(toolbarEl, 'maxTransitions', 512)) {
+            // eslint-disable-next-line no-console
+            console.warn('graphitoubb: max transitions (' + bound(toolbarEl, 'maxTransitions', 512) + ') reached');
+            Toolbar.setMode('idle');
+            return;
+        }
+
+        var symbol = window.prompt('Símbolo de transición (1 carácter):');
+        if (symbol === null) {
+            Toolbar.setMode('idle');
+            return;
+        }
+        symbol = symbol.trim().charAt(0);
+        if (!symbol) {
+            Toolbar.setMode('idle');
+            return;
+        }
+
+        var isNewSymbol = currentAlphabet.indexOf(symbol) === -1;
+        if (isNewSymbol && currentAlphabet.length >= bound(toolbarEl, 'maxAlphabet', 16)) {
+            // eslint-disable-next-line no-console
+            console.warn('graphitoubb: max alphabet size (' + bound(toolbarEl, 'maxAlphabet', 16) + ') reached');
+            Toolbar.setMode('idle');
+            return;
+        }
+
+        var isDuplicate = cy.edges().some(function(e) {
+            return e.source().id() === sourceId && e.data('symbol') === symbol;
+        });
+        if (isDuplicate) {
+            // eslint-disable-next-line no-console
+            console.warn('graphitoubb: transition from ' + sourceId + " on '" + symbol + "' already exists");
+            Toolbar.setMode('idle');
+            return;
+        }
+
+        if (isNewSymbol) {
+            currentAlphabet.push(symbol);
+        }
+
+        var targetId = targetNode.id();
+        cy.add({
+            group: 'edges',
+            data: {
+                id: sourceId + '__' + symbol + '__' + targetId,
+                source: sourceId,
+                target: targetId,
+                symbol: symbol,
+                label: symbol,
+            },
+        });
+        Toolbar.setMode('idle');
+    };
+
+    /**
      * Initialise the editor for a given attempt.
      *
      * @param {number} attemptid
@@ -193,6 +272,16 @@ define([
                         case 'adding_state':
                             if (isCanvas) {
                                 handleAddState(cy, toolbarEl, evt);
+                            }
+                            break;
+                        case 'adding_transition_source':
+                            if (isNode) {
+                                handleTransitionSource(target);
+                            }
+                            break;
+                        case 'adding_transition_target':
+                            if (isNode) {
+                                handleTransitionTarget(cy, toolbarEl, target);
                             }
                             break;
                     }
