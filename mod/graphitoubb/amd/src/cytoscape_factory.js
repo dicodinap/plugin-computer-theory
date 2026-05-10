@@ -95,6 +95,12 @@ define(['mod_graphitoubb/cytoscape'], function(cytoscape) {
                     },
                 },
                 {
+                    selector: 'node.trace-visited',
+                    style: {
+                        'background-color': '#ffe066',
+                    },
+                },
+                {
                     selector: 'edge',
                     style: {
                         'label': 'data(label)',

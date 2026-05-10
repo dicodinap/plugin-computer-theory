@@ -122,8 +122,56 @@ define([], function() {
         return {nodes: nodes, edges: edges};
     };
 
+    /**
+     * Convert a live Cytoscape instance to the simulator input format.
+     *
+     * Returns {initialState, acceptStates, alphabet, transitions} where transitions
+     * is a map of "stateId:symbol" → "targetStateId" (matching afd_simulator.js).
+     * Orphan transitions (source/target not in node set) are silently skipped.
+     * Alphabet is read from cy.scratch('alphabet') when set; falls back to [].
+     *
+     * @param {object} cy Cytoscape core instance.
+     * @return {{initialState: string|null, acceptStates: string[], alphabet: string[],
+     *           transitions: Object.<string, string>}}
+     */
+    var cyToAfdSimulator = function(cy) {
+        var initialState = null;
+        var acceptStates = [];
+        var nodeIds = {};
+
+        cy.nodes().forEach(function(n) {
+            nodeIds[n.id()] = true;
+            if (n.data('start')) {
+                initialState = n.id();
+            }
+            if (n.data('final')) {
+                acceptStates.push(n.id());
+            }
+        });
+
+        var transitions = {};
+        cy.edges().forEach(function(e) {
+            var sym = e.data('symbol') || '';
+            var src = e.source().id();
+            var tgt = e.target().id();
+            if (sym && nodeIds[src] && nodeIds[tgt]) {
+                transitions[src + ':' + sym] = tgt;
+            }
+        });
+
+        var alphabet = (cy.scratch('alphabet') || []).slice();
+
+        return {
+            initialState: initialState,
+            acceptStates: acceptStates,
+            alphabet: alphabet,
+            transitions: transitions,
+        };
+    };
+
     return {
         cyToAfd: cyToAfd,
         afdToCy: afdToCy,
+        cyToAfdSimulator: cyToAfdSimulator,
     };
 });

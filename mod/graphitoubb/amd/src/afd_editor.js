@@ -28,8 +28,10 @@ define([
     'mod_graphitoubb/repository',
     'mod_graphitoubb/editor_toolbar',
     'mod_graphitoubb/alphabet_ui',
+    'mod_graphitoubb/afd_simulator',
+    'local_graphitoubb/afd_adapter',
     'core/notification',
-], function(CytoscapeFactory, SnapshotController, Repository, Toolbar, AlphabetUI, Notification) {
+], function(CytoscapeFactory, SnapshotController, Repository, Toolbar, AlphabetUI, AfdSimulator, AfdAdapter, Notification) {
 
     /** Source node id stored between the two clicks of the add-transition flow. */
     var pendingTransitionSource = null;
@@ -314,6 +316,57 @@ define([
                         SnapshotController.onchange(attemptid, extractCanonical(cy), schemaversion);
                     }
                 );
+
+                // S11: wire simulator Run button.
+                var simPanel = editorRoot
+                    ? editorRoot.querySelector('.mod-graphitoubb-simulator-panel')
+                    : null;
+
+                if (simPanel) {
+                    var runBtn = simPanel.querySelector('.mod-graphitoubb-run');
+                    var inputEl = simPanel.querySelector('#graphitoubb-simulator-input');
+
+                    if (runBtn && inputEl) {
+                        runBtn.addEventListener('click', function() {
+                            var word = inputEl.value;
+                            var maxLen = bound(toolbarEl, 'maxInputLength', 256);
+                            if (word.length > maxLen) {
+                                // eslint-disable-next-line no-console
+                                console.warn('graphitoubb: input length exceeds max (' + maxLen + ')');
+                                return;
+                            }
+
+                            var afdSim = AfdAdapter.cyToAfdSimulator(cy);
+                            if (!afdSim.initialState) {
+                                // eslint-disable-next-line no-console
+                                console.warn('graphitoubb: no initial state set');
+                                return;
+                            }
+                            if (!afdSim.alphabet.length) {
+                                // eslint-disable-next-line no-console
+                                console.warn('graphitoubb: alphabet is empty');
+                                return;
+                            }
+
+                            cy.nodes().removeClass('trace-visited');
+                            if (editorRoot) {
+                                editorRoot.classList.remove('trace-accept', 'trace-reject');
+                            }
+
+                            // afd_simulator.run() returns {accepted, trace} — trace is string[].
+                            var result = AfdSimulator.run(afdSim, word);
+
+                            result.trace.forEach(function(nodeId, i) {
+                                setTimeout(function() {
+                                    cy.$('#' + nodeId).addClass('trace-visited');
+                                    if (i === result.trace.length - 1 && editorRoot) {
+                                        editorRoot.classList.add(result.accepted ? 'trace-accept' : 'trace-reject');
+                                    }
+                                }, i * 400);
+                            });
+                        });
+                    }
+                }
 
                 cy.on('add remove data', function() {
                     SnapshotController.onchange(attemptid, extractCanonical(cy), schemaversion);
