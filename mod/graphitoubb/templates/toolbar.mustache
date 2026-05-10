@@ -1,0 +1,43 @@
+{{!
+    Toolbar panel for the AFD editor.
+    Context: {max_states, max_alphabet, max_transitions, max_label_length, max_input_length}
+    Bounds are passed as data-attributes so JS reads them without hardcoding.
+
+    @template mod_graphitoubb/toolbar
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-toolbar-buttons"
+     role="toolbar"
+     aria-label="{{#str}}toolbar_label, mod_graphitoubb{{/str}}"
+     data-max-states="{{max_states}}"
+     data-max-alphabet="{{max_alphabet}}"
+     data-max-transitions="{{max_transitions}}"
+     data-max-label-length="{{max_label_length}}"
+     data-max-input-length="{{max_input_length}}">
+    <button type="button"
+            class="btn btn-outline-secondary mod-graphitoubb-tool-btn"
+            data-mode="adding_state">
+        {{#str}}toolbar_add_state, mod_graphitoubb{{/str}}
+    </button>
+    <button type="button"
+            class="btn btn-outline-secondary mod-graphitoubb-tool-btn"
+            data-mode="adding_transition_source">
+        {{#str}}toolbar_add_transition, mod_graphitoubb{{/str}}
+    </button>
+    <button type="button"
+            class="btn btn-outline-secondary mod-graphitoubb-tool-btn"
+            data-mode="setting_start">
+        {{#str}}toolbar_set_start, mod_graphitoubb{{/str}}
+    </button>
+    <button type="button"
+            class="btn btn-outline-secondary mod-graphitoubb-tool-btn"
+            data-mode="toggling_final">
+        {{#str}}toolbar_toggle_final, mod_graphitoubb{{/str}}
+    </button>
+    <button type="button"
+            class="btn btn-outline-danger mod-graphitoubb-tool-btn"
+            data-mode="deleting">
+        {{#str}}toolbar_delete, mod_graphitoubb{{/str}}
+    </button>
+</div>

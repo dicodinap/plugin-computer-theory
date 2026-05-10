@@ -1,0 +1,23 @@
+{{!
+    Editor shell for a graphitoubb attempt.
+
+    Context: {attemptid, instanceid, schemaversion,
+              max_states, max_alphabet, max_transitions, max_label_length, max_input_length}
+
+    @template mod_graphitoubb/editor
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-editor" data-attemptid="{{attemptid}}" data-instanceid="{{instanceid}}">
+    {{> mod_graphitoubb/toolbar }}
+    <div id="graphitoubb-canvas-{{instanceid}}" class="mod-graphitoubb-canvas">
+        <p class="mod-graphitoubb-loading">{{#str}}editor_loading, mod_graphitoubb{{/str}}</p>
+    </div>
+    {{> mod_graphitoubb/simulator_panel }}
+    {{> mod_graphitoubb/wordbank_panel }}
+</div>
+{{#js}}
+require(['mod_graphitoubb/afd_editor'], function(Editor) {
+    Editor.init({{attemptid}}, {{instanceid}}, {{schemaversion}});
+});
+{{/js}}
