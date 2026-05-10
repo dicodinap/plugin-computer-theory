@@ -215,6 +215,25 @@ define([
     };
 
     /**
+     * S7: Mark one node as start state; clear any previous start.
+     *
+     * Updates both node data (read by extractCanonical) and CSS class
+     * (read by cytoscape_factory styles) so both paths stay in sync.
+     *
+     * @param {object} cy
+     * @param {object} node Cytoscape node to become the new start state.
+     */
+    var handleSetStart = function(cy, node) {
+        cy.nodes().forEach(function(n) {
+            n.data('start', false);
+            n.removeClass('start');
+        });
+        node.data('start', true);
+        node.addClass('start');
+        Toolbar.setMode('idle');
+    };
+
+    /**
      * Initialise the editor for a given attempt.
      *
      * @param {number} attemptid
@@ -282,6 +301,11 @@ define([
                         case 'adding_transition_target':
                             if (isNode) {
                                 handleTransitionTarget(cy, toolbarEl, target);
+                            }
+                            break;
+                        case 'setting_start':
+                            if (isNode) {
+                                handleSetStart(cy, target);
                             }
                             break;
                     }
