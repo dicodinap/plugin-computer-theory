@@ -16,7 +16,7 @@
 /**
  * Orchestrator module for the AFD editor UI.
  *
- * Wires Cytoscape graph events to snapshot_controller.
+ * Wires toolbar FSM modes to Cytoscape mutations and snapshot auto-save.
  *
  * @module     mod_graphitoubb/afd_editor
  * @copyright  2026 GraphitoUBB
@@ -26,16 +26,22 @@ define([
     'mod_graphitoubb/cytoscape_factory',
     'mod_graphitoubb/snapshot_controller',
     'mod_graphitoubb/repository',
+    'mod_graphitoubb/editor_toolbar',
     'core/notification',
-], function(CytoscapeFactory, SnapshotController, Repository, Notification) {
+], function(CytoscapeFactory, SnapshotController, Repository, Toolbar, Notification) {
+
+    /** Alphabet symbols currently in use; kept in sync with cy edges. */
+    var currentAlphabet = [];
+
+    /** Source node id stored between the two clicks of the add-transition flow. */
+    var pendingTransitionSource = null;
 
     /**
      * Extract canonical AFD shape from a Cytoscape instance.
      *
      * snapshot_controller.isSignificant() compares {states, transitions, alphabet}.
      * cy.json() uses Cytoscape's own format which lacks those keys, causing
-     * isSignificant() to always return false. This function produces the
-     * canonical shape that both the comparator and the server expect.
+     * isSignificant() to always return false.
      *
      * @param {object} cy Cytoscape instance.
      * @return {{states: Array, transitions: Array, alphabet: Array, start: string|null, finals: Array}}
@@ -74,54 +80,63 @@ define([
     };
 
     /**
-     * Extract the canonical AFD shape from a Cytoscape instance.
+     * Return the next available qN node id.
      *
-     * snapshot_controller.isSignificant() compares state.states / transitions / alphabet.
-     * cy.json() uses Cytoscape's own format which lacks these keys, so auto-save
-     * never fired (P0 bug). This helper produces the canonical shape instead.
-     *
-     * @param {object} cy Cytoscape instance.
-     * @return {{states: Array, transitions: Array, alphabet: Array, start: string|null, finals: Array}}
+     * @param {object} cy
+     * @return {string}
      */
-    var extractCanonical = function(cy) {
-        var symbolSeen = {};
-        var alphabet = [];
-
-        cy.edges().forEach(function(e) {
-            var sym = e.data('symbol') || '';
-            if (sym && !symbolSeen[sym]) {
-                symbolSeen[sym] = true;
-                alphabet.push(sym);
-            }
-        });
-        alphabet.sort();
-
-        var states = cy.nodes().map(function(n) {
-            return {id: n.id(), label: n.data('label') || n.id()};
-        });
-
-        var transitions = cy.edges().map(function(e) {
-            return {from: e.source().id(), symbol: e.data('symbol') || '', to: e.target().id()};
-        });
-
-        var start = null;
-        var finals = [];
+    var nextStateId = function(cy) {
+        var max = -1;
         cy.nodes().forEach(function(n) {
-            if (n.data('start')) {
-                start = n.id();
-            }
-            if (n.data('final')) {
-                finals.push(n.id());
+            var m = n.id().match(/^q(\d+)$/);
+            if (m) {
+                max = Math.max(max, parseInt(m[1], 10));
             }
         });
+        return 'q' + (max + 1);
+    };
 
-        return {states: states, transitions: transitions, alphabet: alphabet, start: start, finals: finals};
+    /**
+     * Read an integer bound from a toolbar data-* attribute, with fallback.
+     *
+     * @param {Element|null} toolbarEl
+     * @param {string} attr camelCase dataset key (e.g. 'maxStates').
+     * @param {number} fallback
+     * @return {number}
+     */
+    var bound = function(toolbarEl, attr, fallback) {
+        if (!toolbarEl) {
+            return fallback;
+        }
+        var val = parseInt(toolbarEl.dataset[attr], 10);
+        return isNaN(val) ? fallback : val;
+    };
+
+    /**
+     * S5: Create a new state at the canvas click position.
+     *
+     * @param {object} cy
+     * @param {Element|null} toolbarEl
+     * @param {object} evt Cytoscape tap event.
+     */
+    var handleAddState = function(cy, toolbarEl, evt) {
+        if (cy.nodes().length >= bound(toolbarEl, 'maxStates', 64)) {
+            // eslint-disable-next-line no-console
+            console.warn('graphitoubb: max states (' + bound(toolbarEl, 'maxStates', 64) + ') reached');
+            Toolbar.setMode('idle');
+            return;
+        }
+        var id = nextStateId(cy);
+        cy.add({
+            group: 'nodes',
+            data: {id: id, label: id, start: false, final: false},
+            position: evt.position,
+        });
+        Toolbar.setMode('idle');
     };
 
     /**
      * Initialise the editor for a given attempt.
-     *
-     * Called from the editor.mustache {{#js}} block.
      *
      * @param {number} attemptid
      * @param {number} instanceid
@@ -153,8 +168,34 @@ define([
 
                 var cy = CytoscapeFactory.create(container, automaton);
 
+                currentAlphabet = (automaton.alphabet || []).slice();
+
+                var editorRoot = container.closest('.mod-graphitoubb-editor');
+                var toolbarEl = editorRoot
+                    ? editorRoot.querySelector('.mod-graphitoubb-toolbar-buttons')
+                    : null;
+
+                if (toolbarEl) {
+                    Toolbar.init(toolbarEl);
+                }
+
                 cy.on('add remove data', function() {
                     SnapshotController.onchange(attemptid, extractCanonical(cy), schemaversion);
+                });
+
+                cy.on('tap', function(evt) {
+                    var mode = Toolbar.getMode();
+                    var target = evt.target;
+                    var isCanvas = (target === cy);
+                    var isNode = !isCanvas && typeof target.isNode === 'function' && target.isNode();
+
+                    switch (mode) {
+                        case 'adding_state':
+                            if (isCanvas) {
+                                handleAddState(cy, toolbarEl, evt);
+                            }
+                            break;
+                    }
                 });
 
                 return cy;
