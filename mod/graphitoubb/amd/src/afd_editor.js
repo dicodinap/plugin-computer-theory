@@ -253,6 +253,22 @@ define([
     };
 
     /**
+     * S9: Remove a node or edge.
+     *
+     * Cytoscape cascades connected edge removal automatically when a node is
+     * removed via cy.remove(). No manual edge cleanup needed.
+     * If the deleted node was the start state, the start is simply cleared —
+     * no automatic re-assignment.
+     *
+     * @param {object} cy
+     * @param {object} element Cytoscape node or edge.
+     */
+    var handleDelete = function(cy, element) {
+        cy.remove(element);
+        Toolbar.setMode('idle');
+    };
+
+    /**
      * Initialise the editor for a given attempt.
      *
      * @param {number} attemptid
@@ -330,6 +346,11 @@ define([
                         case 'toggling_final':
                             if (isNode) {
                                 handleToggleFinal(target);
+                            }
+                            break;
+                        case 'deleting':
+                            if (isNode || (!isCanvas && typeof target.isEdge === 'function' && target.isEdge())) {
+                                handleDelete(cy, target);
                             }
                             break;
                     }
