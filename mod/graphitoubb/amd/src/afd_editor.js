@@ -265,6 +265,34 @@ define([
     };
 
     /**
+     * Prepend a word result entry to the wordbank list panel.
+     *
+     * Removes the empty-state placeholder on first entry.
+     * Trims to 50 entries (oldest removed from the bottom).
+     *
+     * @param {Element} panelEl .mod-graphitoubb-wordbank-panel element.
+     * @param {string} word
+     * @param {boolean} accepted
+     */
+    var appendWordbankEntry = function(panelEl, word, accepted) {
+        var list = panelEl.querySelector('.mod-graphitoubb-wordbank-list');
+        if (!list) {
+            return;
+        }
+        var empty = list.querySelector('.mod-graphitoubb-empty');
+        if (empty) {
+            list.removeChild(empty);
+        }
+        var li = document.createElement('li');
+        li.className = accepted ? 'accepted' : 'rejected';
+        li.textContent = (accepted ? '\u2713 ' : '\u2717 ') + word;
+        list.insertBefore(li, list.firstChild);
+        while (list.children.length > 50) {
+            list.removeChild(list.lastChild);
+        }
+    };
+
+    /**
      * Initialise the editor for a given attempt.
      *
      * @param {number} attemptid
@@ -317,6 +345,11 @@ define([
                     }
                 );
 
+                // S12: wordbank panel.
+                var wordbankPanel = editorRoot
+                    ? editorRoot.querySelector('.mod-graphitoubb-wordbank-panel')
+                    : null;
+
                 // S11: wire simulator Run button.
                 var simPanel = editorRoot
                     ? editorRoot.querySelector('.mod-graphitoubb-simulator-panel')
@@ -364,6 +397,18 @@ define([
                                     }
                                 }, i * 400);
                             });
+
+                            // S12: log word to WS and update wordbank panel.
+                            Repository.logWord(attemptid, word, result.accepted)
+                                .then(function() {
+                                    if (wordbankPanel) {
+                                        appendWordbankEntry(wordbankPanel, word, result.accepted);
+                                    }
+                                })
+                                .catch(function() {
+                                    // eslint-disable-next-line no-console
+                                    console.warn('graphitoubb: logWord WS call failed');
+                                });
                         });
                     }
                 }
