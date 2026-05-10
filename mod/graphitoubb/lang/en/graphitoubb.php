@@ -84,3 +84,6 @@ $string['toolbar_label'] = 'Editor toolbar';
 $string['toolbar_set_start'] = 'Set start state';
 $string['toolbar_toggle_final'] = 'Toggle final state';
 $string['wordbank_empty'] = 'No words tested yet.';
+$string['alphabet_label'] = 'Alphabet:';
+$string['alphabet_add'] = 'Add';
+$string['alphabet_input_aria'] = 'New symbol (single alphanumeric character)';

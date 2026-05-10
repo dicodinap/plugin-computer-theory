@@ -41,3 +41,16 @@
         {{#str}}toolbar_delete, mod_graphitoubb{{/str}}
     </button>
 </div>
+<div class="mod-graphitoubb-alphabet-panel" data-max-alphabet="{{max_alphabet}}">
+    <span class="mod-graphitoubb-alphabet-label">{{#str}}alphabet_label, mod_graphitoubb{{/str}}</span>
+    <div class="mod-graphitoubb-alphabet-input-group">
+        <input type="text"
+               class="mod-graphitoubb-alphabet-input form-control form-control-sm"
+               maxlength="1"
+               aria-label="{{#str}}alphabet_input_aria, mod_graphitoubb{{/str}}" />
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-alphabet-add">
+            {{#str}}alphabet_add, mod_graphitoubb{{/str}}
+        </button>
+    </div>
+    <ul class="mod-graphitoubb-alphabet-list"></ul>
+</div>
