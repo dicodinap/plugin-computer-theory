@@ -234,6 +234,25 @@ define([
     };
 
     /**
+     * S8: Toggle the final flag on a node.
+     *
+     * Updates both data.final (read by extractCanonical) and CSS class .final
+     * (read by cytoscape style selector for double-border rendering).
+     *
+     * @param {object} node Cytoscape node.
+     */
+    var handleToggleFinal = function(node) {
+        var isFinal = !!node.data('final');
+        node.data('final', !isFinal);
+        if (isFinal) {
+            node.removeClass('final');
+        } else {
+            node.addClass('final');
+        }
+        Toolbar.setMode('idle');
+    };
+
+    /**
      * Initialise the editor for a given attempt.
      *
      * @param {number} attemptid
@@ -306,6 +325,11 @@ define([
                         case 'setting_start':
                             if (isNode) {
                                 handleSetStart(cy, target);
+                            }
+                            break;
+                        case 'toggling_final':
+                            if (isNode) {
+                                handleToggleFinal(target);
                             }
                             break;
                     }
