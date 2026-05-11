@@ -42,17 +42,6 @@ define(['mod_graphitoubb/repository', 'core/notification'], function(Repository,
             detail: {status: status},
         }));
     };
-    var _target = null;
-
-    var dispatchStatus = function(status) {
-        if (!_target) {
-            return;
-        }
-        _target.dispatchEvent(new CustomEvent('graphitoubb:snapshot-status', {
-            bubbles: true,
-            detail: {status: status},
-        }));
-    };
 
     /**
      * Returns true if the new state differs from the last saved state.
@@ -71,16 +60,7 @@ define(['mod_graphitoubb/repository', 'core/notification'], function(Repository,
     };
 
     /**
-     * Register the DOM element that will receive status CustomEvents.
-     *
-     * @param {Element|null} target
-     */
-    var init = function(target) {
-        _target = target || null;
-    };
-
-    /**
-     * Set the DOM element that receives graphitoubb:snapshot-status CustomEvents.
+     * Register the DOM element that will receive graphitoubb:snapshot-status CustomEvents.
      *
      * @param {Element|null} target  Editor root element.
      */
@@ -93,15 +73,16 @@ define(['mod_graphitoubb/repository', 'core/notification'], function(Repository,
      *
      * @param {number} attemptid
      * @param {object} state Current automaton state {states, transitions, alphabet}.
+     * @param {number} schemaversion Tool schema version (forwarded to repository).
      */
-    var onchange = function(attemptid, state) {
+    var onchange = function(attemptid, state, schemaversion) {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(function() {
             if (!isSignificant(state)) {
                 return;
             }
             dispatchStatus('saving');
-            Repository.saveSnapshot(attemptid, state)
+            Repository.saveSnapshot(attemptid, state, schemaversion)
                 .then(function() {
                     lastSavedState = state;
                     dispatchStatus('saved');
@@ -112,11 +93,6 @@ define(['mod_graphitoubb/repository', 'core/notification'], function(Repository,
                     Notification.exception(err);
                 });
         }, DEBOUNCE_MS);
-    };
-
-    return {
-        init: init,
-        onchange: onchange,
     };
 
     return {

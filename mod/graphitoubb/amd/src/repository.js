@@ -42,15 +42,16 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
      *
      * @param {number} attemptid
      * @param {object} payload Serialisable automaton state.
+     * @param {number} schemaversion Schema version for the payload format.
      * @return {Promise<object>} Saved snapshot record.
      */
-    var saveSnapshot = function(attemptid, payload) {
+    var saveSnapshot = function(attemptid, payload, schemaversion) {
         var request = {
             methodname: 'mod_graphitoubb_save_snapshot',
             args: {
                 attemptid: attemptid,
                 payload: JSON.stringify(payload),
-                schemaversion: 1,
+                schemaversion: schemaversion || 1,
             },
         };
         return Ajax.call([request])[0]
