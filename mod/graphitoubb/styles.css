@@ -60,3 +60,30 @@
     color: #6c757d;
     font-style: italic;
 }
+
+.mod-graphitoubb-editor {
+    transition: background-color 300ms ease;
+}
+
+.mod-graphitoubb-editor.trace-accept {
+    background-color: #d4edda;
+}
+
+.mod-graphitoubb-editor.trace-reject {
+    background-color: #f8d7da;
+}
+
+.mod-graphitoubb-editor.trace-accept .mod-graphitoubb-canvas {
+    box-shadow: 0 0 0 3px #28a745 inset;
+    transition: box-shadow 300ms;
+}
+
+.mod-graphitoubb-editor.trace-reject .mod-graphitoubb-canvas {
+    box-shadow: 0 0 0 3px #dc3545 inset;
+    transition: box-shadow 300ms;
+}
+
+.mod-graphitoubb-canvas .trace-visited {
+    background-color: #ffe066;
+    border-color: #f39c12;
+}

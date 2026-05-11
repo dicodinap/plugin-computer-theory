@@ -36,9 +36,14 @@ class renderer extends \plugin_renderer_base {
      */
     public function render_editor(int $attemptid, int $instanceid, int $schemaversion): string {
         $context = [
-            'attemptid'     => $attemptid,
-            'instanceid'    => $instanceid,
-            'schemaversion' => $schemaversion,
+            'attemptid'        => $attemptid,
+            'instanceid'       => $instanceid,
+            'schemaversion'    => $schemaversion,
+            'max_states'       => \local_graphitoubb\tools\afd\domain\validator::MAX_STATES,
+            'max_alphabet'     => \local_graphitoubb\tools\afd\domain\validator::MAX_ALPHABET,
+            'max_transitions'  => \local_graphitoubb\tools\afd\domain\validator::MAX_TRANSITIONS,
+            'max_label_length' => \local_graphitoubb\tools\afd\domain\validator::MAX_LABEL_LENGTH,
+            'max_input_length' => \local_graphitoubb\tools\afd\domain\validator::MAX_INPUT_LENGTH,
         ];
         return $this->render_from_template('mod_graphitoubb/editor', $context);
     }

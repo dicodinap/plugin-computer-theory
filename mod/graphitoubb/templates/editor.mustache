@@ -8,7 +8,14 @@
     @copyright 2026 GraphitoUBB
     @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 }}
-<div class="mod-graphitoubb-editor" data-attemptid="{{attemptid}}" data-instanceid="{{instanceid}}">
+<div class="mod-graphitoubb-editor"
+    data-attemptid="{{attemptid}}"
+    data-instanceid="{{instanceid}}"
+    data-max-states="{{max_states}}"
+    data-max-alphabet="{{max_alphabet}}"
+    data-max-transitions="{{max_transitions}}"
+    data-max-label-length="{{max_label_length}}"
+    data-max-input-length="{{max_input_length}}">
     {{> mod_graphitoubb/toolbar }}
     <div id="graphitoubb-canvas-{{instanceid}}" class="mod-graphitoubb-canvas">
         <p class="mod-graphitoubb-loading">{{#str}}editor_loading, mod_graphitoubb{{/str}}</p>
