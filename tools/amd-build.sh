@@ -51,6 +51,7 @@ build_tree() {
             npx terser "$src_file" \
                 --compress \
                 --mangle \
+                --comments false \
                 --output "$out_file"
         fi
     done
