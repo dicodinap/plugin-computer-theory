@@ -64,7 +64,7 @@ define(['mod_graphitoubb/cytoscape'], function(cytoscape) {
 
         (automaton.transitions || []).forEach(function(t, i) {
             elements.push({
-                data: {id: 't' + i, source: t.from, target: t.to, label: t.symbol},
+                data: {id: 't' + i, source: t.from, target: t.to, label: t.symbol, symbol: t.symbol},
             });
         });
 
