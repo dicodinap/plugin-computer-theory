@@ -98,6 +98,8 @@ define(['mod_graphitoubb/cytoscape'], function(cytoscape) {
                     selector: 'node.trace-visited',
                     style: {
                         'background-color': '#ffe066',
+                        'transition-property': 'background-color',
+                        'transition-duration': '300ms',
                     },
                 },
                 {

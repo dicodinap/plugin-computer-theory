@@ -23,7 +23,7 @@
  * @copyright  2026 GraphitoUBB
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define([], function() {
+define(['core/notification', 'core/str'], function(Notification, Str) {
 
     var _cy = null;
     var _maxAlphabet = 16;
@@ -102,8 +102,10 @@ define([], function() {
             return e.data('symbol') === s;
         });
         if (inUse) {
-            // eslint-disable-next-line no-console
-            console.warn('graphitoubb: cannot remove symbol "' + s + '" \u2014 in use by existing transition(s)');
+            Str.get_string('err_symbol_in_use', 'mod_graphitoubb').then(function(msg) {
+                Notification.addNotification({message: msg, type: 'warning'});
+                return;
+            });
             return false;
         }
         _cy.scratch('alphabet', getAlphabet().filter(function(x) {

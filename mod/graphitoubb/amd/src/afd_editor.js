@@ -31,10 +31,27 @@ define([
     'mod_graphitoubb/afd_simulator',
     'local_graphitoubb/afd_adapter',
     'core/notification',
-], function(CytoscapeFactory, SnapshotController, Repository, Toolbar, AlphabetUI, AfdSimulator, AfdAdapter, Notification) {
+    'mod_graphitoubb/save_indicator',
+    'core/str',
+], function(CytoscapeFactory, SnapshotController, Repository, Toolbar, AlphabetUI, AfdSimulator, AfdAdapter, Notification, SaveIndicator, Str) {
 
     /** Source node id stored between the two clicks of the add-transition flow. */
     var pendingTransitionSource = null;
+
+    /**
+     * Fetch a translated string and show a Moodle notification.
+     *
+     * @param {string} type  'error'|'warning'|'info'|'success'
+     * @param {string} key   Lang string key in mod_graphitoubb.
+     * @param {string|undefined} param  Optional {$a} substitution.
+     */
+    var notify = function(type, key, param) {
+        Str.get_string(key, 'mod_graphitoubb', param !== undefined ? String(param) : null)
+            .then(function(msg) {
+                Notification.addNotification({message: msg, type: type});
+                return;
+            });
+    };
 
     /**
      * Extract canonical AFD shape from a Cytoscape instance.
@@ -128,8 +145,7 @@ define([
      */
     var handleAddState = function(cy, toolbarEl, evt) {
         if (cy.nodes().length >= bound(toolbarEl, 'maxStates', 64)) {
-            // eslint-disable-next-line no-console
-            console.warn('graphitoubb: max states (' + bound(toolbarEl, 'maxStates', 64) + ') reached');
+            notify('error', 'err_max_states', bound(toolbarEl, 'maxStates', 64));
             Toolbar.setMode('idle');
             return;
         }
@@ -167,8 +183,7 @@ define([
         pendingTransitionSource = null;
 
         if (cy.edges().length >= bound(toolbarEl, 'maxTransitions', 512)) {
-            // eslint-disable-next-line no-console
-            console.warn('graphitoubb: max transitions (' + bound(toolbarEl, 'maxTransitions', 512) + ') reached');
+            notify('error', 'err_max_transitions', bound(toolbarEl, 'maxTransitions', 512));
             Toolbar.setMode('idle');
             return;
         }
@@ -187,8 +202,7 @@ define([
         var currentAlphabet = AlphabetUI.getAlphabet();
         var isNewSymbol = currentAlphabet.indexOf(symbol) === -1;
         if (isNewSymbol && currentAlphabet.length >= bound(toolbarEl, 'maxAlphabet', 16)) {
-            // eslint-disable-next-line no-console
-            console.warn('graphitoubb: max alphabet size (' + bound(toolbarEl, 'maxAlphabet', 16) + ') reached');
+            notify('error', 'err_max_alphabet', bound(toolbarEl, 'maxAlphabet', 16));
             Toolbar.setMode('idle');
             return;
         }
@@ -197,8 +211,7 @@ define([
             return e.source().id() === sourceId && e.data('symbol') === symbol;
         });
         if (isDuplicate) {
-            // eslint-disable-next-line no-console
-            console.warn('graphitoubb: transition from ' + sourceId + " on '" + symbol + "' already exists");
+            notify('warning', 'err_duplicate_transition', sourceId + " \u2192 '" + symbol + "'");
             Toolbar.setMode('idle');
             return;
         }
@@ -336,6 +349,13 @@ define([
                     Toolbar.init(toolbarEl);
                 }
 
+                // S13: wire save indicator and give snapshot_controller the dispatch target.
+                SnapshotController.init(editorRoot || null);
+                var indicatorEl = editorRoot
+                    ? editorRoot.querySelector('.mod-graphitoubb-save-indicator')
+                    : null;
+                SaveIndicator.init(indicatorEl, editorRoot || null);
+
                 // Always init AlphabetUI with cy so getAlphabet()/addSymbol() work in handlers.
                 AlphabetUI.init(
                     editorRoot ? editorRoot.querySelector('.mod-graphitoubb-alphabet-panel') : null,
@@ -364,20 +384,17 @@ define([
                             var word = inputEl.value;
                             var maxLen = bound(toolbarEl, 'maxInputLength', 256);
                             if (word.length > maxLen) {
-                                // eslint-disable-next-line no-console
-                                console.warn('graphitoubb: input length exceeds max (' + maxLen + ')');
+                                notify('error', 'err_input_too_long', maxLen);
                                 return;
                             }
 
                             var afdSim = AfdAdapter.cyToAfdSimulator(cy);
                             if (!afdSim.initialState) {
-                                // eslint-disable-next-line no-console
-                                console.warn('graphitoubb: no initial state set');
+                                notify('error', 'err_no_initial_state');
                                 return;
                             }
                             if (!afdSim.alphabet.length) {
-                                // eslint-disable-next-line no-console
-                                console.warn('graphitoubb: alphabet is empty');
+                                notify('warning', 'err_empty_alphabet');
                                 return;
                             }
 
@@ -388,6 +405,20 @@ define([
 
                             // afd_simulator.run() returns {accepted, trace} — trace is string[].
                             var result = AfdSimulator.run(afdSim, word);
+
+                            // S14: surface rejection reason as a toast.
+                            if (!result.accepted) {
+                                var rejDetail;
+                                if (result.trace.length <= word.length) {
+                                    // Stopped mid-input: no transition for this symbol at current state.
+                                    var failSym = word[result.trace.length - 1];
+                                    var failState = result.trace[result.trace.length - 1];
+                                    rejDetail = "'" + failSym + "' @ " + failState;
+                                } else {
+                                    rejDetail = result.trace[result.trace.length - 1] + ' (not accepting)';
+                                }
+                                notify('warning', 'err_simulator_reject', rejDetail);
+                            }
 
                             result.trace.forEach(function(nodeId, i) {
                                 setTimeout(function() {
@@ -404,10 +435,10 @@ define([
                                     if (wordbankPanel) {
                                         appendWordbankEntry(wordbankPanel, word, result.accepted);
                                     }
+                                    return;
                                 })
                                 .catch(function() {
-                                    // eslint-disable-next-line no-console
-                                    console.warn('graphitoubb: logWord WS call failed');
+                                    notify('warning', 'warn_logword_failed');
                                 });
                         });
                     }
