@@ -2,6 +2,35 @@
 
 All notable changes to GraphitoUBB plugin family.
 
+## [0.2.0-alpha] — 2026-05-11
+
+### Added — mod_graphitoubb (AFD editor UX)
+
+- S2: Promoted `tool_interface` to v2 — added `validate(array): validation_result`, `serialize(array): array`, `render_editor(): array` contracts; `validation_result` value object with `::pass()` / `::fail(array)` factories
+- S3: Toolbar Mustache template (`editor_toolbar.mustache`) + i18n strings (en/es) for all toolbar buttons
+- S4.A: 7-state editor FSM in `editor_toolbar.js` — states: idle, adding_state, adding_transition_source, adding_transition_target, setting_start, toggling_final, deleting; emits `graphitoubb:modechange` CustomEvent
+- S4.B: Cytoscape ↔ AFD canonical adapter in `local/graphitoubb/amd/src/afd_adapter.js` — `cyToAfd`, `afdToCy`, `cyToAfdSimulator`
+- S4.C: Fixed `isSignificant` comparison bug in `snapshot_controller.js` (silent data-loss on JSON payload comparison)
+- S5: State creation mode — click-to-add node, D-A bounds check (MAX_STATES=64), visual feedback
+- S6: Transition creation mode — two-click source→target flow, deterministic check (no duplicate symbol on same source)
+- S7: Start state selection mode — enforces single start state invariant
+- S8: Toggle final state mode — click to mark/unmark accepting states
+- S9: Delete mode — cascading edge removal when deleting a node
+- S10: Alphabet management UI (`alphabet_ui.js`) — add/remove symbols, bounds enforcement (MAX_ALPHABET=16)
+- S11: Simulator wiring (`afd_simulator.js`) — step/run trace animation on Cytoscape nodes, `.trace-visited` / `.trace-accept` / `.trace-reject` CSS classes, input bounds check (MAX_INPUT_LENGTH=256)
+- S12: Wordbank wired to `log_word` WS endpoint with debounce and error handling
+- hotfix: `data-max-*` attributes emitted on editor root (fc568d1); `.trace-accept` / `.trace-reject` background rules in `styles.css`
+- hotfix: Transition symbol persisted on Cytoscape edge `data.symbol` (35ecb0f)
+- S13: Save indicator badge (`save_indicator.js`) — subscribes to `graphitoubb:snapshot-status` CustomEvent; shows Saving… / Saved ✓ / Save failed ✕; auto-fades after 2s
+- S14: Toast notifications via `core/notification` — replaced all `console.warn` with `Notification.addNotification`; surfaces simulator reject reason with stuck state + symbol; lang strings via `core/str`
+- S15.A: AMD build pipeline (`tools/amd-build.sh`) — iterates mod + local AMD trees; terser minification for source files; copy-as-is for third-party libs >100KB; `cytoscape.js` committed to `amd/src` as canonical dev-mode source
+- S15.B: Behat spike — `editor_opens.feature` authored; execution deferred to v0.3 (requires Moodle webserver container + Selenium)
+
+### Known issues / deferred to v0.3
+- Label-edit mode (S9 deferral): inline DOM `<input>` overlay for node labels — not implemented in v0.2
+- Behat execution: `editor_opens.feature` written but not verified; requires moodle-docker or CI with Selenium
+- Snapshot rate-limit precision remains 1-second (BIGINT migration still pending)
+
 ## [0.1.0-alpha] — 2026-05-10
 
 ### Added — local_graphitoubb (registry + AFD domain)
