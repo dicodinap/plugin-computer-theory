@@ -87,3 +87,24 @@
     background-color: #ffe066;
     border-color: #f39c12;
 }
+
+.mod-graphitoubb-save-indicator {
+    display: inline-block;
+    font-size: 0.8rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    min-width: 7em;
+    transition: opacity 300ms;
+}
+
+.mod-graphitoubb-save-indicator--saving {
+    color: #6c757d;
+}
+
+.mod-graphitoubb-save-indicator--saved {
+    color: #28a745;
+}
+
+.mod-graphitoubb-save-indicator--error {
+    color: #dc3545;
+}

@@ -19,6 +19,9 @@
  * Client is the authority for deciding whether a change is significant enough
  * to persist (D-B decision). Server persists without re-validating content.
  *
+ * Dispatches graphitoubb:snapshot-status CustomEvent on the registered target
+ * with detail.status = 'saving' | 'saved' | 'error'.
+ *
  * @module     mod_graphitoubb/snapshot_controller
  * @copyright  2026 GraphitoUBB
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -28,6 +31,28 @@ define(['mod_graphitoubb/repository', 'core/notification'], function(Repository,
     var debounceTimer = null;
     var DEBOUNCE_MS = 300;
     var lastSavedState = null;
+    var _target = null;
+
+    var dispatchStatus = function(status) {
+        if (!_target) {
+            return;
+        }
+        _target.dispatchEvent(new CustomEvent('graphitoubb:snapshot-status', {
+            bubbles: true,
+            detail: {status: status},
+        }));
+    };
+    var _target = null;
+
+    var dispatchStatus = function(status) {
+        if (!_target) {
+            return;
+        }
+        _target.dispatchEvent(new CustomEvent('graphitoubb:snapshot-status', {
+            bubbles: true,
+            detail: {status: status},
+        }));
+    };
 
     /**
      * Returns true if the new state differs from the last saved state.
@@ -46,6 +71,24 @@ define(['mod_graphitoubb/repository', 'core/notification'], function(Repository,
     };
 
     /**
+     * Register the DOM element that will receive status CustomEvents.
+     *
+     * @param {Element|null} target
+     */
+    var init = function(target) {
+        _target = target || null;
+    };
+
+    /**
+     * Set the DOM element that receives graphitoubb:snapshot-status CustomEvents.
+     *
+     * @param {Element|null} target  Editor root element.
+     */
+    var init = function(target) {
+        _target = target || null;
+    };
+
+    /**
      * Called on each editor change. Debounces and conditionally saves.
      *
      * @param {number} attemptid
@@ -57,16 +100,27 @@ define(['mod_graphitoubb/repository', 'core/notification'], function(Repository,
             if (!isSignificant(state)) {
                 return;
             }
+            dispatchStatus('saving');
             Repository.saveSnapshot(attemptid, state)
                 .then(function() {
                     lastSavedState = state;
+                    dispatchStatus('saved');
                     return;
                 })
-                .catch(Notification.exception);
+                .catch(function(err) {
+                    dispatchStatus('error');
+                    Notification.exception(err);
+                });
         }, DEBOUNCE_MS);
     };
 
     return {
+        init: init,
+        onchange: onchange,
+    };
+
+    return {
+        init: init,
         onchange: onchange,
     };
 });
