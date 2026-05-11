@@ -1,0 +1,62 @@
+.mod-graphitoubb-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.mod-graphitoubb-toolbar {
+    min-height: 2rem;
+}
+
+.mod-graphitoubb-canvas {
+    width: 100%;
+    min-height: 420px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: #fff;
+    position: relative;
+}
+
+.mod-graphitoubb-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #6c757d;
+    margin: 0;
+}
+
+.mod-graphitoubb-simulator-panel,
+.mod-graphitoubb-wordbank-panel {
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: #f8f9fa;
+}
+
+.mod-graphitoubb-simulator-panel label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.mod-graphitoubb-trace {
+    margin-top: 0.5rem;
+    min-height: 1.5rem;
+    font-family: monospace;
+}
+
+.mod-graphitoubb-wordbank-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mod-graphitoubb-wordbank-list li {
+    padding: 0.25rem 0;
+}
+
+.mod-graphitoubb-empty {
+    color: #6c757d;
+    font-style: italic;
+}

@@ -1,0 +1,17 @@
+{{!
+    Simulator panel: input string + run button + state trace output.
+
+    @template mod_graphitoubb/simulator_panel
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-simulator-panel">
+    <label for="graphitoubb-simulator-input">
+        {{#str}}simulator_input_label, mod_graphitoubb{{/str}}
+    </label>
+    <input id="graphitoubb-simulator-input" type="text" class="form-control" />
+    <button type="button" class="btn btn-primary mod-graphitoubb-run">
+        {{#str}}simulator_run, mod_graphitoubb{{/str}}
+    </button>
+    <div class="mod-graphitoubb-trace" aria-live="polite"></div>
+</div>

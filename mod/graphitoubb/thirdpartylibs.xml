@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<libraries>
+  <library>
+    <location>amd/build/cytoscape.js</location>
+    <name>Cytoscape.js</name>
+    <version>3.30.2</version>
+    <licenseversion></licenseversion>
+    <license>MIT</license>
+    <repository>https://github.com/cytoscape/cytoscape.js</repository>
+    <copyright>Copyright (c) 2016-2024, The Cytoscape Consortium</copyright>
+  </library>
+</libraries>

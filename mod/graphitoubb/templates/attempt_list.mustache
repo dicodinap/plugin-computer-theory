@@ -1,0 +1,54 @@
+{{!
+    Template for the teacher report: list of all student attempts for an instance.
+
+    @template mod_graphitoubb/attempt_list
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    Example context (json):
+    {
+        "has_attempts": true,
+        "attempts": [
+            {
+                "fullname": "Jane Doe",
+                "status": "finished",
+                "timestarted_fmt": "10 May 2026, 9:00 AM",
+                "timefinished_fmt": "10 May 2026, 9:30 AM",
+                "snapshot_count": 5,
+                "last_word_tested": "aab"
+            }
+        ]
+    }
+}}
+<h2>{{#str}}attempts_header, mod_graphitoubb{{/str}}</h2>
+{{#has_attempts}}
+<div class="no-overflow">
+    <table class="generaltable fullwidth">
+        <thead>
+            <tr>
+                <th scope="col">{{#str}}col_user, mod_graphitoubb{{/str}}</th>
+                <th scope="col">{{#str}}col_status, mod_graphitoubb{{/str}}</th>
+                <th scope="col">{{#str}}col_started, mod_graphitoubb{{/str}}</th>
+                <th scope="col">{{#str}}col_finished, mod_graphitoubb{{/str}}</th>
+                <th scope="col">{{#str}}col_snapshots, mod_graphitoubb{{/str}}</th>
+                <th scope="col">{{#str}}col_lastword, mod_graphitoubb{{/str}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#attempts}}
+            <tr>
+                <td>{{fullname}}</td>
+                <td>{{status}}</td>
+                <td>{{timestarted_fmt}}</td>
+                <td>{{timefinished_fmt}}</td>
+                <td>{{snapshot_count}}</td>
+                <td>{{last_word_tested}}</td>
+            </tr>
+            {{/attempts}}
+        </tbody>
+    </table>
+</div>
+{{/has_attempts}}
+{{^has_attempts}}
+<p>{{#str}}no_attempts, mod_graphitoubb{{/str}}</p>
+{{/has_attempts}}

@@ -1,0 +1,17 @@
+{{!
+    Teacher read-only view of a student attempt.
+
+    Context: attempt row fields {id, userid, status, timestarted, timefinished}
+
+    @template mod_graphitoubb/attempt_summary
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-attempt-summary" data-attemptid="{{id}}">
+    <dl class="row">
+        <dt class="col-sm-3">{{#str}}attempt, mod_graphitoubb{{/str}}</dt>
+        <dd class="col-sm-9">{{id}}</dd>
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">{{status}}</dd>
+    </dl>
+</div>

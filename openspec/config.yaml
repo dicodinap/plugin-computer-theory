@@ -1,0 +1,70 @@
+schema: spec-driven
+
+context: |
+  Proyecto: GraphitoUBB — plugin Moodle para Matemáticas Discretas y Teoría de la Computación (UBB).
+  Stack: Moodle 4.5.11 LTS · PHP 8.3 · PostgreSQL 16 (prefijo m_) · AMD+ES6 · grunt amd.
+  Arquitectura: tres plugins — local_graphitoubb (núcleo de dominio: tool_interface, registry, simuladores, graders),
+  mod_graphitoubb (actividad), qtype_graphitoubb (tipo de pregunta). Patrón horizontal: cada tema implementa tool_interface.
+  Testing: PHPUnit 9.6 + phpcs (moodlehq/moodle-cs); Behat pendiente.
+  Convenciones: code style Moodle (phpcs), nombres en inglés, lang strings en español neutro, component slug [a-z0-9_]+.
+
+strict_tdd: false
+
+rules:
+  proposal:
+    - Identificar plugin afectado (local_/mod_/qtype_) y dependencias entre ellos
+    - Documentar impacto en BD (XMLDB) y plan de upgrade.php
+  specs:
+    - Usar Given/When/Then para escenarios de simulación y grading
+    - Usar RFC 2119 (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Diagramar flujo entre adapter (mod_/qtype_) y núcleo (local_)
+    - Justificar dónde vive lógica nueva: si es de dominio → local_; si es de superficie → mod_/qtype_
+  tasks:
+    - Agrupar por capa (BD/XMLDB, PHP dominio, AMD frontend, lang strings, tests)
+    - Numeración jerárquica (1.1, 1.2)
+    - Tareas pequeñas — una sesión cada una
+  apply:
+    - Seguir convenciones de plugins Moodle (boilerplate phpdoc, namespaces, capabilities)
+    - phpcs sin errores antes de cerrar tarea
+  verify:
+    - Correr PHPUnit sobre el componente afectado
+    - Verificar render visual de templates Mustache en browser cuando aplica
+    - Sin regresiones en tests existentes (29 tests AFD ya pasan)
+  archive:
+    - Avisar antes de mergear deltas destructivas (drops de tabla, removes de capabilities)
+
+testing:
+  strict_tdd: false
+  detected: 2026-05-09
+  test_runner:
+    framework: PHPUnit 9.6 (planificado)
+    command: vendor/bin/phpunit (cuando exista código)
+  layers:
+    unit:
+      available: false
+      tool: PHPUnit (planificado)
+    integration:
+      available: false
+      tool: PHPUnit + Moodle test framework (planificado)
+    e2e:
+      available: false
+      tool: Behat (pendiente)
+  coverage:
+    available: false
+    command: null
+  quality:
+    linter:
+      available: false
+      command: vendor/bin/phpcs --standard=moodle (planificado)
+    type_checker:
+      available: false
+      command: null
+    formatter:
+      available: false
+      command: null
+
+notes: |
+  El folder plugin-computer-theory/ está vacío en este repo (solo README). El POC real vive bajo
+  ~/tesis/grafito-ubb/ con tres plugins ya scaffoldeados como `discretelab` (rename pendiente a `graphitoubb`).
+  Cuando se materialice código acá, re-correr sdd-init para refrescar testing capabilities.

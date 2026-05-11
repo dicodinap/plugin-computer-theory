@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "states": [{"id": "r0"}, {"id": "r1"}, {"id": "r2"}],
+  "alphabet": ["0", "1"],
+  "transitions": [
+    {"from": "r0", "symbol": "0", "to": "r0"},
+    {"from": "r0", "symbol": "1", "to": "r1"},
+    {"from": "r1", "symbol": "0", "to": "r2"},
+    {"from": "r1", "symbol": "1", "to": "r0"},
+    {"from": "r2", "symbol": "0", "to": "r1"},
+    {"from": "r2", "symbol": "1", "to": "r2"}
+  ],
+  "start": "r0",
+  "finals": ["r0"]
+}

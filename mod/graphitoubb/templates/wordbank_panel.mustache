@@ -1,0 +1,24 @@
+{{!
+    Wordbank panel: list of words tested against the automaton.
+    Words are added dynamically by wordbank.js; this template shows the initial empty state.
+
+    Context: {words: [{word, accepted}]}  (empty by default on first render)
+
+    @template mod_graphitoubb/wordbank_panel
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-wordbank-panel">
+    <ul class="mod-graphitoubb-wordbank-list">
+        {{#words}}
+        <li class="{{#accepted}}accepted{{/accepted}}{{^accepted}}rejected{{/accepted}}">
+            {{word}}
+        </li>
+        {{/words}}
+        {{^words}}
+        <li class="mod-graphitoubb-empty">
+            {{#str}}wordbank_empty, mod_graphitoubb{{/str}}
+        </li>
+        {{/words}}
+    </ul>
+</div>
