@@ -167,6 +167,20 @@ final class validator {
             }
         }
 
+        // Parse formula fields per type. Catches unclosed parens, dangling operators,
+        // unknown symbols, etc. before the payload is persisted.
+        // (The schema_loader only checks structural shape; this is the semantic gate.)
+        foreach ($this->formula_fields($type) as $field) {
+            if (array_key_exists($field, $config) && is_string($config[$field])) {
+                $fr = $this->validate_formula($config[$field]);
+                if (!$fr->ok) {
+                    foreach ($fr->errors as $msg) {
+                        $errors[] = 'config.' . $field . ': ' . $msg;
+                    }
+                }
+            }
+        }
+
         // Scoring weights sanity check for types that have a scoring section.
         if (in_array($type, ['equivalence', 'classify'], true)) {
             $scoring = $problem['scoring'] ?? null;
@@ -200,6 +214,24 @@ final class validator {
                 return ['formula_1', 'formula_2', 'expected_equivalent', 'require_table_justification'];
             case 'classify':
                 return ['formula', 'expected_class', 'require_table_justification'];
+            default:
+                return [];
+        }
+    }
+
+    /**
+     * Return the list of config keys that hold raw formula strings, per type.
+     *
+     * @param  string $type
+     * @return string[]
+     */
+    private function formula_fields(string $type): array {
+        switch ($type) {
+            case 'complete':
+            case 'classify':
+                return ['formula'];
+            case 'equivalence':
+                return ['formula_1', 'formula_2'];
             default:
                 return [];
         }
