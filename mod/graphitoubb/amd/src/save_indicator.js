@@ -66,17 +66,22 @@ define([], function() {
     /**
      * Initialise the save indicator.
      *
+     * Listens to both `graphitoubb:snapshot-status` (AFD autosave) and
+     * `graphitoubb:autosave-status` (truth-table autosave) on the target element.
+     *
      * @param {Element|null} el  The .mod-graphitoubb-save-indicator span.
-     * @param {Element|null} target  Element that dispatches graphitoubb:snapshot-status.
+     * @param {Element|null} target  Element that dispatches the status events.
      */
     var init = function(el, target) {
         _el = el || null;
         if (!target) {
             return;
         }
-        target.addEventListener('graphitoubb:snapshot-status', function(evt) {
+        var handler = function(evt) {
             setStatus(evt.detail && evt.detail.status);
-        });
+        };
+        target.addEventListener('graphitoubb:snapshot-status', handler);
+        target.addEventListener('graphitoubb:autosave-status', handler);
     };
 
     return {

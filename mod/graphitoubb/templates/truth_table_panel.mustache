@@ -1,0 +1,37 @@
+{{!
+    Truth table student panel — submit button, autosave indicator, and feedback area.
+
+    Context variables (inherited from truth_table_editor or standalone):
+      - attemptid  (int)   Attempt id.
+      - readonly   (bool)  True after submission (hides submit button).
+      - submitted  (bool)  True if a prior submission exists.
+      - feedback   (array) [{col_label, cell_kind, submitted, expected, is_correct, explanation}] (optional).
+
+    @template mod_graphitoubb/truth_table_panel
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-tte__panel" data-region="truth-table-panel">
+
+    <div class="mod-graphitoubb-tte__panel-actions d-flex align-items-center gap-2">
+        {{! Autosave indicator }}
+        {{> mod_graphitoubb/autosave_indicator}}
+
+        {{! Submit button }}
+        {{^readonly}}
+        <button type="button"
+                class="btn btn-primary mod-graphitoubb-tte__submit"
+                data-region="submit-btn"
+                aria-label="{{#str}}submit_button, mod_graphitoubb{{/str}}">
+            {{#str}}submit_button, mod_graphitoubb{{/str}}
+        </button>
+        {{/readonly}}
+    </div>
+
+    {{! Feedback area — populated by AMD after grading }}
+    <div class="mod-graphitoubb-tte__feedback" data-region="feedback-area" aria-live="polite">
+        {{#feedback}}
+        {{> mod_graphitoubb/feedback_cell}}
+        {{/feedback}}
+    </div>
+</div>

@@ -61,9 +61,49 @@ if (!$canviewreport && !$canattempt) {
 
 $renderer = $PAGE->get_renderer('mod_graphitoubb');
 
+// Detect the configured tool for this instance — drives per-tool dispatch.
+$problem = $DB->get_record('graphitoubb_problem', ['instanceid' => $instance->id]);
+$canmanage = has_capability('mod/graphitoubb:manage', $context) ||
+             has_capability('moodle/course:manageactivities', $context);
+
 echo $OUTPUT->header();
 
-if ($canattempt) {
+if ($problem && $problem->tool === 'truth_table') {
+    if ($canattempt) {
+        $service = new \mod_graphitoubb\attempt_service();
+        $attempt = $service->start_or_resume((int) $instance->id, (int) $USER->id);
+
+        // Load latest submission + grading for this attempt (if any).
+        $submission_row = $DB->get_record('graphitoubb_submission', ['attemptid' => $attempt->id], '*', IGNORE_MULTIPLE);
+        $submission_payload = null;
+        $grading_payload = null;
+        if ($submission_row) {
+            $submission_payload = json_decode($submission_row->payload, true) ?: null;
+            $grading_payload    = json_decode($submission_row->grading_result, true) ?: null;
+        }
+
+        echo $renderer->render_truth_table_editor(
+            (int) $attempt->id,
+            (int) $instance->id,
+            $problem,
+            $submission_payload,
+            $grading_payload
+        );
+    }
+    if ($canmanage) {
+        $editurl = new \moodle_url('/mod/graphitoubb/edit_problem.php', ['id' => $cm->id]);
+        echo \html_writer::div(
+            \html_writer::link($editurl, '✏ Edit problem (teacher)'),
+            'mt-3'
+        );
+    }
+} else if ($canmanage) {
+    // No problem configured yet: prompt the teacher.
+    $editurl = new \moodle_url('/mod/graphitoubb/edit_problem.php', ['id' => $cm->id]);
+    echo \html_writer::tag('p', 'No problem configured yet for this activity.');
+    echo \html_writer::link($editurl, '⚙ Configure problem', ['class' => 'btn btn-primary']);
+} else if ($canattempt) {
+    // Legacy AFD path (existing POC flow).
     $service = new \mod_graphitoubb\attempt_service();
     $attempt = $service->start_or_resume((int) $instance->id, (int) $USER->id);
     echo $renderer->render_editor((int) $attempt->id, (int) $instance->id, 1);

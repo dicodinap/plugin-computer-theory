@@ -1,0 +1,128 @@
+{{!
+    Truth table editor — main container for the truth_table tool.
+
+    Context variables:
+      - attemptid      (int)    Attempt record id.
+      - instanceid     (int)    Activity instance id.
+      - problem_type   (string) complete | equivalence | classify
+      - problem_payload (string) JSON-escaped problem definition.
+      - variables      (array)  [{label}] Variable names extracted from the problem.
+      - formula        (string) Canonical formula for display.
+      - columns        (array)  [{label}] Table column headers.
+      - rows           (array)  [{index, vars: [{val}], cells: [{col_index, value}]}] Skeleton rows.
+      - show_radio     (bool)   Whether the radio answer section is visible.
+      - radio_options  (array)  [{value, label}] Radio choices.
+      - readonly       (bool)   True after submission.
+
+    @template mod_graphitoubb/truth_table_editor
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-truth-table-editor"
+     data-region="truth-table-editor"
+     data-attemptid="{{attemptid}}"
+     data-instanceid="{{instanceid}}"
+     data-problem-type="{{problem_type}}"
+     data-problem-payload="{{problem_payload}}">
+
+    {{! Variables section }}
+    <section class="mod-graphitoubb-tte__variables" aria-label="{{#str}}truth_table_editor_label, mod_graphitoubb{{/str}}">
+        {{#variables}}
+        <span class="mod-graphitoubb-tte__variable-badge badge badge-secondary">{{label}}</span>
+        {{/variables}}
+    </section>
+
+    {{! Formula input }}
+    <div class="mod-graphitoubb-tte__formula form-group">
+        <label for="tt-formula-{{attemptid}}" class="mod-graphitoubb-tte__formula-label">
+            {{#str}}formula_label, mod_graphitoubb{{/str}}
+        </label>
+        <textarea id="tt-formula-{{attemptid}}"
+                  class="mod-graphitoubb-tte__formula-input form-control"
+                  rows="2"
+                  aria-label="{{#str}}formula_label, mod_graphitoubb{{/str}}"
+                  {{#readonly}}readonly{{/readonly}}
+                  data-region="formula-input">{{formula}}</textarea>
+        <div class="mod-graphitoubb-tte__canonical-preview text-muted small"
+             data-region="canonical-preview"
+             aria-live="polite"></div>
+    </div>
+
+    {{! Helper buttons — Unicode operator palette }}
+    <div class="mod-graphitoubb-tte__helpers" role="toolbar" aria-label="Operadores lógicos">
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
+                data-symbol="¬" aria-label="Negación ¬">¬</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
+                data-symbol="∧" aria-label="Conjunción ∧">∧</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
+                data-symbol="∨" aria-label="Disyunción ∨">∨</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
+                data-symbol="→" aria-label="Implicación →">→</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
+                data-symbol="↔" aria-label="Bicondicional ↔">↔</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
+                data-symbol="⊕" aria-label="XOR ⊕">⊕</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
+                data-symbol="⊤" aria-label="Verdad ⊤">⊤</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
+                data-symbol="⊥" aria-label="Falsedad ⊥">⊥</button>
+    </div>
+
+    {{! Truth table }}
+    <div class="mod-graphitoubb-tte__table-wrapper table-responsive" data-region="table-wrapper">
+        <table class="table table-bordered mod-graphitoubb-tte__table"
+               aria-label="{{#str}}truth_table_editor_label, mod_graphitoubb{{/str}}">
+            <thead>
+                <tr>
+                    {{#columns}}
+                    <th scope="col" class="mod-graphitoubb-tte__col-header">{{label}}</th>
+                    {{/columns}}
+                </tr>
+            </thead>
+            <tbody data-region="table-body">
+                {{#rows}}
+                <tr data-row-index="{{index}}">
+                    {{#vars}}
+                    <td class="mod-graphitoubb-tte__cell mod-graphitoubb-tte__cell--var">{{val}}</td>
+                    {{/vars}}
+                    {{#cells}}
+                    <td class="mod-graphitoubb-tte__cell mod-graphitoubb-tte__cell--input">
+                        <select class="form-control form-control-sm mod-graphitoubb-tte__cell-select"
+                                data-row="{{../index}}"
+                                data-col="{{col_index}}"
+                                aria-label="Fila {{../index}}, columna {{col_index}}"
+                                {{#../readonly}}disabled{{/../readonly}}>
+                            <option value=""></option>
+                            <option value="V" {{#v_selected}}selected{{/v_selected}}>V</option>
+                            <option value="F" {{#f_selected}}selected{{/f_selected}}>F</option>
+                        </select>
+                    </td>
+                    {{/cells}}
+                </tr>
+                {{/rows}}
+            </tbody>
+        </table>
+    </div>
+
+    {{! Radio answer section (equivalence / classify) }}
+    {{#show_radio}}
+    <fieldset class="mod-graphitoubb-tte__radio-group" data-region="radio-group">
+        <legend class="mod-graphitoubb-tte__radio-legend">{{radio_legend}}</legend>
+        {{#radio_options}}
+        <div class="form-check">
+            <input class="form-check-input mod-graphitoubb-tte__radio"
+                   type="radio"
+                   name="tt-radio-{{../attemptid}}"
+                   id="tt-radio-{{../attemptid}}-{{value}}"
+                   value="{{value}}"
+                   {{#readonly}}disabled{{/readonly}}>
+            <label class="form-check-label" for="tt-radio-{{../attemptid}}-{{value}}">
+                {{label}}
+            </label>
+        </div>
+        {{/radio_options}}
+    </fieldset>
+    {{/show_radio}}
+
+    {{> mod_graphitoubb/truth_table_panel}}
+</div>

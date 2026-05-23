@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "local_graphitoubb/truth_table/problem-equivalence.v1",
+  "title": "Truth Table — Equivalence Problem (v1)",
+  "description": "Schema for a truth_table problem of type 'equivalence'. The student states whether two formulas are logically equivalent and (optionally) justifies with a table.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tool", "schema_version", "type", "ui", "scoring", "config"],
+  "properties": {
+    "tool": {
+      "type": "string",
+      "const": "truth_table"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "type": {
+      "type": "string",
+      "const": "equivalence"
+    },
+    "ui": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intermediate_subformulas", "row_order"],
+      "properties": {
+        "intermediate_subformulas": {
+          "type": "string",
+          "enum": ["auto", "none", "manual"]
+        },
+        "manual_subformulas": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "row_order": {
+          "type": "string",
+          "const": "canonical"
+        }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["radio_weight", "table_weight", "wrong_radio_policy"],
+      "properties": {
+        "radio_weight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "table_weight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "wrong_radio_policy": {
+          "type": "string",
+          "enum": ["strict", "proportional"]
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formula_1", "formula_2", "require_table_justification"],
+      "properties": {
+        "formula_1": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "formula_2": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "expected_equivalent": {
+          "type": ["boolean", "null"],
+          "description": "Auto-computed if null; professor may override to create trap questions."
+        },
+        "require_table_justification": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

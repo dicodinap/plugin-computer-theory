@@ -34,7 +34,10 @@ final class db_schema_test extends advanced_testcase {
         require_once(__DIR__ . '/../lib.php');
     }
 
-    public function test_unique_attempt_constraint_rejects_duplicate(): void {
+    public function test_attempt_table_allows_multiple_attempts_per_user(): void {
+        // Iter 1 dropped the unique (instanceid, userid) constraint to support
+        // the multi-attempt policy (best / last / average). This test verifies
+        // that the schema now accepts more than one attempt per user.
         global $DB;
 
         $course = $this->getDataGenerator()->create_course();
@@ -48,21 +51,25 @@ final class db_schema_test extends advanced_testcase {
 
         $instanceid = graphitoubb_add_instance($data);
 
-        $DB->insert_record('graphitoubb_attempt', [
+        $first = $DB->insert_record('graphitoubb_attempt', [
+            'instanceid'  => $instanceid,
+            'userid'      => $user->id,
+            'status'      => 'finished',
+            'timestarted' => time(),
+        ]);
+
+        $second = $DB->insert_record('graphitoubb_attempt', [
             'instanceid'  => $instanceid,
             'userid'      => $user->id,
             'status'      => 'inprogress',
             'timestarted' => time(),
         ]);
 
-        $this->expectException(dml_write_exception::class);
-
-        $DB->insert_record('graphitoubb_attempt', [
-            'instanceid'  => $instanceid,
-            'userid'      => $user->id,
-            'status'      => 'inprogress',
-            'timestarted' => time(),
-        ]);
+        $this->assertNotEquals($first, $second);
+        $this->assertSame(2, $DB->count_records('graphitoubb_attempt', [
+            'instanceid' => $instanceid,
+            'userid'     => $user->id,
+        ]));
     }
 
     public function test_different_users_can_each_have_one_attempt(): void {

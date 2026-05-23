@@ -1,0 +1,101 @@
+{{!
+    Summary tab — KPI cards, score stats, bucket chart, top errors.
+    AMD hydrates this via mod_graphitoubb_get_panel_summary WS call.
+    All content rendered as placeholders; AMD replaces data-field elements.
+
+    @template mod_graphitoubb/panel_summary
+    @package  mod_graphitoubb
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<section class="graphitoubb-panel-summary py-3" data-region="panel-summary-content">
+
+    {{! Loading spinner — hidden once AMD populates data }}
+    <div data-region="summary-loading" class="text-center py-4">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only visually-hidden">{{#str}}editor_loading, mod_graphitoubb{{/str}}</span>
+        </div>
+    </div>
+
+    {{! ---- KPI cards ---- }}
+    <div class="row g-3 mb-4 d-none" data-region="summary-kpis">
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100 border-primary">
+                <div class="card-body">
+                    <div class="display-5 fw-bold text-primary" data-field="enrolled">—</div>
+                    <div class="card-text small">{{#str}}kpi_enrolled, mod_graphitoubb{{/str}}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100 border-info">
+                <div class="card-body">
+                    <div class="display-5 fw-bold text-info" data-field="attempted">—</div>
+                    <div class="card-text small">{{#str}}kpi_attempted, mod_graphitoubb{{/str}}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100 border-success">
+                <div class="card-body">
+                    <div class="display-5 fw-bold text-success" data-field="submitted">—</div>
+                    <div class="card-text small">{{#str}}kpi_submitted, mod_graphitoubb{{/str}}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100 border-warning">
+                <div class="card-body">
+                    <div class="display-5 fw-bold text-warning" data-field="with_draft">—</div>
+                    <div class="card-text small">{{#str}}kpi_with_draft, mod_graphitoubb{{/str}}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{! ---- Score stats ---- }}
+    <div class="row g-3 mb-4 d-none" data-region="summary-stats">
+        <div class="col-12 col-md-4">
+            <div class="d-flex justify-content-between border-bottom py-1">
+                <span class="fw-semibold">{{#str}}stat_avg, mod_graphitoubb{{/str}}</span>
+                <span data-field="avg_score">—</span>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="d-flex justify-content-between border-bottom py-1">
+                <span class="fw-semibold">{{#str}}stat_median, mod_graphitoubb{{/str}}</span>
+                <span data-field="median_score">—</span>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="d-flex justify-content-between border-bottom py-1">
+                <span class="fw-semibold">{{#str}}stat_stddev, mod_graphitoubb{{/str}}</span>
+                <span data-field="stddev_score">—</span>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="d-flex justify-content-between border-bottom py-1">
+                <span class="fw-semibold">{{#str}}stat_time_median, mod_graphitoubb{{/str}}</span>
+                <span data-field="time_median_seconds">—</span>
+            </div>
+        </div>
+    </div>
+
+    {{! ---- Bucket bar chart ---- }}
+    <div class="mb-4 d-none" data-region="summary-buckets">
+        <h6 class="fw-semibold mb-2">{{#str}}stat_avg, mod_graphitoubb{{/str}}</h6>
+        {{! AMD renders a bar chart here using the buckets array }}
+        <div data-region="bucket-chart" class="graphitoubb-bucket-chart" style="height:160px;" aria-hidden="true"></div>
+        {{! Accessible textual alternative rendered by AMD as a <table> }}
+        <div data-region="bucket-table-accessible"></div>
+    </div>
+
+    {{! ---- Top errors ---- }}
+    <div class="mb-4 d-none" data-region="summary-top-errors">
+        <h6 class="fw-semibold mb-2">{{#str}}stat_top_errors, mod_graphitoubb{{/str}}</h6>
+        <ol class="list-group list-group-flush" data-region="top-errors-list">
+            {{! AMD populates <li> elements here }}
+        </ol>
+    </div>
+
+</section>

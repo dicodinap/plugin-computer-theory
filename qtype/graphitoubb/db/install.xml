@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="question/type/graphitoubb/db" VERSION="20260518" COMMENT="XMLDB file for Moodle qtype_graphitoubb — truth_table question type"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd">
+  <TABLES>
+    <TABLE NAME="qtype_graphitoubb_options" COMMENT="Per-question truth_table problem options for qtype_graphitoubb">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="questionid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="References question.id"/>
+        <FIELD NAME="tool" TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="truth_table" SEQUENCE="false" COMMENT="Tool slug, always truth_table for this qtype"/>
+        <FIELD NAME="exercise_type" TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="complete" SEQUENCE="false" COMMENT="complete | equivalence | classify"/>
+        <FIELD NAME="problem_payload" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Serialised problem JSON (up to 8 KB)"/>
+        <FIELD NAME="scoring_config" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="JSON scoring config (radio_weight, table_weight, wrong_radio_policy)"/>
+        <FIELD NAME="ui_config" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="JSON UI config (intermediate_subformulas, row_order)"/>
+        <FIELD NAME="payload_hash" TYPE="char" LENGTH="64" NOTNULL="true" SEQUENCE="false" COMMENT="SHA-256 of the canonical problem payload"/>
+        <FIELD NAME="schema_version" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Schema version for migration support"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_questionid" TYPE="foreign" FIELDS="questionid" REFTABLE="question" REFFIELDS="id"/>
+        <KEY NAME="uq_questionid" TYPE="unique" FIELDS="questionid"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>

@@ -2,6 +2,29 @@
 
 All notable changes to GraphitoUBB plugin family.
 
+## [v0.2.0] (Iter 1 — truth_table) — 2026-05-18
+
+### Added
+- truth_table tool with three exercise types (`complete`, `equivalence`, `classify`)
+- `qtype_graphitoubb` plugin for Moodle Quiz integration
+- Teacher panel with 4 tabs (summary, per_student, heatmap, export)
+- Autosave with debounce 500 ms, optimistic locking, conflict resolution
+- Privacy API for all iter1 tables (`graphitoubb_submission`, `graphitoubb_event`, `graphitoubb_grade_cache`)
+- Cron task `cleanup_orphans` (daily at 03:15) — prunes events >180 days and orphaned submission/grade/snapshot rows
+- Web services: `save_draft`, `submit`, `log_event`, `get_problem_stats`, `get_panel_*`
+- Behat steps for student attempts, teacher panel, autosave recovery
+- `local/graphitoubb/lang/es/local_graphitoubb.php` — Spanish parity for local plugin
+
+### Changed
+- `graphitoubb_attempt` now supports drafts (`current_draft`, `draft_updated_at`)
+- `graphitoubb` instance now supports multi-attempt policy (best / last / average)
+- Privacy provider for `mod_graphitoubb` extended to cover all iter1 tables; `graphitoubb_problem` explicitly excluded (instructor data only)
+
+### Migration
+- Bump to version `2026051800`
+- Backfill `problem_snapshot_hash` for legacy submissions
+- Idempotent XMLDB upgrade; all `CREATE TABLE` and `ADD FIELD` guarded with `table_exists` / `field_exists` checks
+
 ## [0.2.0-alpha] — 2026-05-11
 
 ### Added — mod_graphitoubb (AFD editor UX)

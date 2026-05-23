@@ -8,27 +8,32 @@
 
     <TABLE NAME="graphitoubb" COMMENT="Instance-level settings for each mod_graphitoubb activity.">
       <FIELDS>
-        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="course"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"  COMMENT="FK to course.id"/>
-        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
-        <FIELD NAME="intro"        TYPE="text" NOTNULL="false"/>
-        <FIELD NAME="introformat"  TYPE="int"  LENGTH="4"  NOTNULL="true" DEFAULT="0"/>
-        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
-        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="id"               TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="course"           TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"  COMMENT="FK to course.id"/>
+        <FIELD NAME="name"             TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="intro"            TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="introformat"      TYPE="int"  LENGTH="4"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="attempts_policy"  TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="best"        COMMENT="Grading policy: best, last, or average."/>
+        <FIELD NAME="attempts_max"     TYPE="int"  LENGTH="10" NOTNULL="false"                      COMMENT="Maximum attempts per student; null = unlimited."/>
+        <FIELD NAME="close_behavior"   TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="auto_submit" COMMENT="What happens when close date is reached."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
     </TABLE>
 
-    <TABLE NAME="graphitoubb_attempt" COMMENT="One attempt per student per activity instance (UNIQUE instanceid+userid).">
+    <TABLE NAME="graphitoubb_attempt" COMMENT="Student attempts on a mod_graphitoubb activity. Multiple attempts per user allowed.">
       <FIELDS>
-        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="instanceid"   TYPE="int"  LENGTH="10" NOTNULL="true" COMMENT="FK to graphitoubb.id"/>
-        <FIELD NAME="userid"       TYPE="int"  LENGTH="10" NOTNULL="true" COMMENT="FK to user.id"/>
-        <FIELD NAME="status"       TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="inprogress"/>
-        <FIELD NAME="timestarted"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
-        <FIELD NAME="timefinished" TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="id"               TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="instanceid"       TYPE="int"  LENGTH="10" NOTNULL="true" COMMENT="FK to graphitoubb.id"/>
+        <FIELD NAME="userid"           TYPE="int"  LENGTH="10" NOTNULL="true" COMMENT="FK to user.id"/>
+        <FIELD NAME="status"           TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="inprogress"/>
+        <FIELD NAME="timestarted"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timefinished"     TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="current_draft"    TYPE="text" NOTNULL="false"             COMMENT="Autosaved draft JSON; null when no draft."/>
+        <FIELD NAME="draft_updated_at" TYPE="int"  LENGTH="10" NOTNULL="false" COMMENT="Unix timestamp of last autosave; used for optimistic locking."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary"       TYPE="primary" FIELDS="id"/>
@@ -36,7 +41,7 @@
         <KEY NAME="fk_userid"     TYPE="foreign" FIELDS="userid"     REFTABLE="user"              REFFIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="uq_instance_user" UNIQUE="true" FIELDS="instanceid, userid"/>
+        <INDEX NAME="idx_instance_user" UNIQUE="false" FIELDS="instanceid, userid"/>
       </INDEXES>
     </TABLE>
 
@@ -66,6 +71,84 @@
         <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
         <KEY NAME="fk_attemptid" TYPE="foreign" FIELDS="attemptid" REFTABLE="graphitoubb_attempt" REFFIELDS="id"/>
       </KEYS>
+    </TABLE>
+
+    <TABLE NAME="graphitoubb_problem" COMMENT="Teacher-defined problems linked to a mod_graphitoubb instance.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="instanceid"     TYPE="int"  LENGTH="10" NOTNULL="true" COMMENT="FK to graphitoubb.id"/>
+        <FIELD NAME="tool"           TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT=""         COMMENT="Tool slug, e.g. truth_table."/>
+        <FIELD NAME="type"           TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT=""         COMMENT="Problem sub-type, e.g. complete."/>
+        <FIELD NAME="payload"        TYPE="text" NOTNULL="true"                                COMMENT="Canonical problem JSON."/>
+        <FIELD NAME="payload_hash"   TYPE="char" LENGTH="64" NOTNULL="true"                   COMMENT="SHA-256 of canonical payload; change detection."/>
+        <FIELD NAME="schema_version" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"        TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_instanceid"  TYPE="foreign" FIELDS="instanceid" REFTABLE="graphitoubb" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_tool_type" UNIQUE="false" FIELDS="tool"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="graphitoubb_submission" COMMENT="Final graded submissions — one per attempt per submit action.">
+      <FIELDS>
+        <FIELD NAME="id"                    TYPE="int"    LENGTH="10"    NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="attemptid"             TYPE="int"    LENGTH="10"    NOTNULL="true" COMMENT="FK to graphitoubb_attempt.id"/>
+        <FIELD NAME="payload"               TYPE="text"   NOTNULL="true"                COMMENT="Submitted answer JSON."/>
+        <FIELD NAME="payload_hash"          TYPE="char"   LENGTH="64"    NOTNULL="true"/>
+        <FIELD NAME="problem_snapshot_hash" TYPE="char"   LENGTH="64"    NOTNULL="true" COMMENT="SHA-256 of problem at grading time."/>
+        <FIELD NAME="score"                 TYPE="number" LENGTH="10"    DECIMALS="4"   NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="fraction"              TYPE="number" LENGTH="10"    DECIMALS="4"   NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="passed"                TYPE="int"    LENGTH="1"     NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="grading_result"        TYPE="text"   NOTNULL="true"                COMMENT="Full grading_result JSON for display."/>
+        <FIELD NAME="schema_version"        TYPE="int"    LENGTH="10"    NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="timecreated"           TYPE="int"    LENGTH="10"    NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_attemptid" TYPE="foreign" FIELDS="attemptid" REFTABLE="graphitoubb_attempt" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+    <TABLE NAME="graphitoubb_event" COMMENT="Telemetry events for truth-table interactions.">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="attemptid"   TYPE="int"  LENGTH="10"  NOTNULL="false" COMMENT="FK to graphitoubb_attempt.id; nullable for pre-attempt events."/>
+        <FIELD NAME="userid"      TYPE="int"  LENGTH="10"  NOTNULL="true"/>
+        <FIELD NAME="instanceid"  TYPE="int"  LENGTH="10"  NOTNULL="true"/>
+        <FIELD NAME="name"        TYPE="char" LENGTH="64"  NOTNULL="true"/>
+        <FIELD NAME="payload"     TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_inst_name" UNIQUE="false" FIELDS="instanceid, name"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="graphitoubb_grade_cache" COMMENT="Cached aggregate grade per attempt after policy applied.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"    LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="attemptid"      TYPE="int"    LENGTH="10"  NOTNULL="true" COMMENT="FK to graphitoubb_attempt.id"/>
+        <FIELD NAME="score"          TYPE="number" LENGTH="10"  DECIMALS="4"   NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="fraction"       TYPE="number" LENGTH="10"  DECIMALS="4"   NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="attempt_count"  TYPE="int"    LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="policy_applied" TYPE="char"   LENGTH="32"  NOTNULL="true" DEFAULT="best"/>
+        <FIELD NAME="timemodified"   TYPE="int"    LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_attemptid" TYPE="foreign" FIELDS="attemptid" REFTABLE="graphitoubb_attempt" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uq_attemptid" UNIQUE="true" FIELDS="attemptid"/>
+      </INDEXES>
     </TABLE>
 
   </TABLES>

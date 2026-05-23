@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "local_graphitoubb/truth_table/problem-complete.v1",
+  "title": "Truth Table — Complete Problem (v1)",
+  "description": "Schema for a truth_table problem of type 'complete'. The student fills every cell of the truth table.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tool", "schema_version", "type", "ui", "config"],
+  "properties": {
+    "tool": {
+      "type": "string",
+      "const": "truth_table"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "type": {
+      "type": "string",
+      "const": "complete"
+    },
+    "ui": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intermediate_subformulas", "row_order"],
+      "properties": {
+        "intermediate_subformulas": {
+          "type": "string",
+          "enum": ["auto", "none", "manual"]
+        },
+        "manual_subformulas": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "row_order": {
+          "type": "string",
+          "const": "canonical"
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formula"],
+      "properties": {
+        "formula": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      }
+    }
+  }
+}

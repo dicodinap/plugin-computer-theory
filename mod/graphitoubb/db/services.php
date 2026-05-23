@@ -64,4 +64,78 @@ $functions = [
         'ajax'         => true,
     ],
 
+    // Truth-table slice (iter1).
+
+    'mod_graphitoubb_save_draft' => [
+        'classname'    => 'mod_graphitoubb\external\save_draft',
+        'methodname'   => 'execute',
+        'description'  => 'Autosave a truth-table draft for an in-progress attempt.',
+        'type'         => 'write',
+        'capabilities' => 'mod/graphitoubb:attempt',
+        'ajax'         => true,
+    ],
+
+    'mod_graphitoubb_submit' => [
+        'classname'    => 'mod_graphitoubb\external\submit',
+        'methodname'   => 'execute',
+        'description'  => 'Submit a final truth-table answer and receive grading result.',
+        'type'         => 'write',
+        'capabilities' => 'mod/graphitoubb:submit',
+        'ajax'         => true,
+    ],
+
+    'mod_graphitoubb_log_event' => [
+        'classname'    => 'mod_graphitoubb\external\log_event',
+        'methodname'   => 'execute',
+        'description'  => 'Log a telemetry event for a truth-table attempt.',
+        'type'         => 'write',
+        'capabilities' => 'mod/graphitoubb:attempt',
+        'ajax'         => true,
+    ],
+
+    'mod_graphitoubb_get_problem_stats' => [
+        'classname'    => 'mod_graphitoubb\external\get_problem_stats',
+        'methodname'   => 'execute',
+        'description'  => 'Fetch aggregate problem statistics for the teacher panel summary tab.',
+        'type'         => 'read',
+        'capabilities' => 'mod/graphitoubb:viewreports',
+        'ajax'         => true,
+    ],
+
+    'mod_graphitoubb_get_panel_summary' => [
+        'classname'    => 'mod_graphitoubb\external\get_panel_summary',
+        'methodname'   => 'execute',
+        'description'  => 'Fetch summary-tab data for the teacher panel.',
+        'type'         => 'read',
+        'capabilities' => 'mod/graphitoubb:viewreports',
+        'ajax'         => true,
+    ],
+
+    'mod_graphitoubb_get_panel_heatmap' => [
+        'classname'    => 'mod_graphitoubb\external\get_panel_heatmap',
+        'methodname'   => 'execute',
+        'description'  => 'Fetch heatmap data for the teacher panel.',
+        'type'         => 'read',
+        'capabilities' => 'mod/graphitoubb:viewreports',
+        'ajax'         => true,
+    ],
+
+    'mod_graphitoubb_get_panel_per_student' => [
+        'classname'    => 'mod_graphitoubb\external\get_panel_per_student',
+        'methodname'   => 'execute',
+        'description'  => 'Fetch per-student data for the teacher panel.',
+        'type'         => 'read',
+        'capabilities' => 'mod/graphitoubb:viewreports',
+        'ajax'         => true,
+    ],
+
+    'mod_graphitoubb_reset_attempts' => [
+        'classname'    => 'mod_graphitoubb\external\reset_attempts',
+        'methodname'   => 'execute',
+        'description'  => 'Reset (delete) all attempts for a student in an instance.',
+        'type'         => 'write',
+        'capabilities' => 'mod/graphitoubb:reattempt',
+        'ajax'         => true,
+    ],
+
 ];

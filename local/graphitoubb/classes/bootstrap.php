@@ -25,6 +25,7 @@
 namespace local_graphitoubb;
 
 use local_graphitoubb\tools\afd\afd_tool;
+use local_graphitoubb\tools\truth_table\truth_table_tool;
 
 /**
  * Entry point for tool registration. Called once at plugin init.
@@ -51,5 +52,6 @@ class bootstrap {
     public static function register_default_tools(): void {
         $registry = tool_registry::instance();
         $registry->register(new afd_tool());
+        $registry->register(new truth_table_tool());
     }
 }

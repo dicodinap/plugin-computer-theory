@@ -1,0 +1,119 @@
+{{!
+    Teacher panel — 4-tab dashboard container.
+    AMD module panel_dashboard.js hydrates all tabs via WS calls.
+
+    @template mod_graphitoubb/teacher_panel
+    @package  mod_graphitoubb
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    Context variables required by this template:
+      instanceid          {Number}  Activity instance id.
+      contextid           {Number}  Module context id.
+      wsfunctions         {String}  JSON-encoded WS function names map.
+      tab_summary_active  {Boolean} True when summary tab is active (default).
+}}
+<div id="graphitoubb-panel"
+     data-region="graphitoubb-panel"
+     data-instanceid="{{instanceid}}"
+     data-contextid="{{contextid}}"
+     data-wsfunctions="{{wsfunctions}}">
+
+    {{! Tab bar — ARIA tablist pattern }}
+    <ul class="nav nav-tabs" role="tablist" id="graphitoubb-panel-tabs">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link{{#tab_summary_active}} active{{/tab_summary_active}}"
+                    id="tab-summary-btn"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tab-summary"
+                    role="tab"
+                    aria-controls="tab-summary"
+                    aria-selected="{{tab_summary_active}}"
+                    tabindex="{{#tab_summary_active}}0{{/tab_summary_active}}{{^tab_summary_active}}-1{{/tab_summary_active}}">
+                {{#str}}panel_tab_summary, mod_graphitoubb{{/str}}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link{{#tab_student_active}} active{{/tab_student_active}}"
+                    id="tab-student-btn"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tab-student"
+                    role="tab"
+                    aria-controls="tab-student"
+                    aria-selected="{{tab_student_active}}"
+                    tabindex="{{#tab_student_active}}0{{/tab_student_active}}{{^tab_student_active}}-1{{/tab_student_active}}">
+                {{#str}}panel_tab_per_student, mod_graphitoubb{{/str}}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link{{#tab_heatmap_active}} active{{/tab_heatmap_active}}"
+                    id="tab-heatmap-btn"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tab-heatmap"
+                    role="tab"
+                    aria-controls="tab-heatmap"
+                    aria-selected="{{tab_heatmap_active}}"
+                    tabindex="{{#tab_heatmap_active}}0{{/tab_heatmap_active}}{{^tab_heatmap_active}}-1{{/tab_heatmap_active}}">
+                {{#str}}panel_tab_heatmap, mod_graphitoubb{{/str}}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link{{#tab_export_active}} active{{/tab_export_active}}"
+                    id="tab-export-btn"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tab-export"
+                    role="tab"
+                    aria-controls="tab-export"
+                    aria-selected="{{tab_export_active}}"
+                    tabindex="{{#tab_export_active}}0{{/tab_export_active}}{{^tab_export_active}}-1{{/tab_export_active}}">
+                {{#str}}panel_tab_export, mod_graphitoubb{{/str}}
+            </button>
+        </li>
+    </ul>
+
+    {{! Tab panels }}
+    <div class="tab-content" id="graphitoubb-panel-tab-content">
+
+        {{! ---- Summary ---- }}
+        <div class="tab-pane fade{{#tab_summary_active}} show active{{/tab_summary_active}}"
+             id="tab-summary"
+             role="tabpanel"
+             aria-labelledby="tab-summary-btn">
+            {{> mod_graphitoubb/panel_summary }}
+        </div>
+
+        {{! ---- Per student ---- }}
+        <div class="tab-pane fade{{#tab_student_active}} show active{{/tab_student_active}}"
+             id="tab-student"
+             role="tabpanel"
+             aria-labelledby="tab-student-btn">
+            {{> mod_graphitoubb/panel_per_student }}
+        </div>
+
+        {{! ---- Heatmap ---- }}
+        <div class="tab-pane fade{{#tab_heatmap_active}} show active{{/tab_heatmap_active}}"
+             id="tab-heatmap"
+             role="tabpanel"
+             aria-labelledby="tab-heatmap-btn">
+            {{> mod_graphitoubb/panel_heatmap }}
+        </div>
+
+        {{! ---- Export ---- }}
+        <div class="tab-pane fade{{#tab_export_active}} show active{{/tab_export_active}}"
+             id="tab-export"
+             role="tabpanel"
+             aria-labelledby="tab-export-btn">
+            {{> mod_graphitoubb/panel_export }}
+        </div>
+
+    </div>{{! /tab-content }}
+
+    {{! Error toast — shown by AMD on WS failure }}
+    <div class="alert alert-danger d-none mt-3"
+         data-region="panel-error"
+         role="alert"
+         aria-live="assertive">
+        {{#str}}error_loading_panel, mod_graphitoubb{{/str}}
+    </div>
+
+</div>{{! /#graphitoubb-panel }}

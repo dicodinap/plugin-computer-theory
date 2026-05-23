@@ -62,6 +62,37 @@ Located in `classes/tools/afd/`. Full domain stack:
 
 Capabilities exposed: `['edit', 'simulate', 'snapshot', 'wordbank']`.
 
+## Second tool: TruthTableTool (truth_table v1) — iter 1
+
+Located in `classes/tools/truth_table/`. Three exercise modes: `complete`, `equivalence`, `classify`.
+
+Domain stack:
+
+| Class/File | Responsibility |
+|---|---|
+| `domain/lexer` + `domain/parser` | Tokenise and parse propositional formulas to AST |
+| `domain/ast/` | AST node types: `var_node`, `const_node`, `not_node`, `and_node`, `or_node`, `xor_node`, `impl_node`, `iff_node` |
+| `domain/evaluator` | Pure Boolean evaluator over AST nodes |
+| `domain/truth_table_builder` | Builds truth table rows for all variable combinations |
+| `domain/canonicalizer` | Reserializes formula with explicit parentheses |
+| `domain/validator` | Bounds checks (variables ≤ 8, formula ≤ 512 chars) |
+| `domain/serializer` | Canonical JSON for problem and submission payloads |
+| `grader/complete_grader` | Cell-by-cell grading with propagated-error detection |
+| `grader/equivalence_grader` | Radio + optional justification table |
+| `grader/classify_grader` | Radio + optional justification table |
+| `grader/grading_result` + `grader/feedback_item` | Value objects returned by graders |
+| `schema/` | JSON schemas for problem and submission payloads (v1) |
+| `truth_table_tool` | Implements `tool_interface`; wires domain and graders |
+
+Capabilities exposed: `['edit', 'submit', 'autosave']`.
+
+Operator precedence (highest to lowest):
+1. `¬` (negation)
+2. `∧` (conjunction)
+3. `∨` (disjunction), `⊕` (XOR)
+4. `→` (implication)
+5. `↔` (biconditional)
+
 ## How to add a new tool
 
 1. Create a namespace under `classes/tools/<toolid>/`.

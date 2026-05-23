@@ -1,0 +1,103 @@
+{{!
+    Per-student tab — filterable table with drawer for attempt detail.
+    AMD hydrates via mod_graphitoubb_get_panel_per_student WS.
+
+    @template mod_graphitoubb/panel_per_student
+    @package  mod_graphitoubb
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<section class="graphitoubb-panel-per-student py-3" data-region="panel-student-content">
+
+    {{! ---- Filter toolbar ---- }}
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <label for="graphitoubb-student-filter" class="fw-semibold mb-0">
+            {{#str}}filter_all, mod_graphitoubb{{/str}}:
+        </label>
+        <select id="graphitoubb-student-filter"
+                class="form-select form-select-sm w-auto"
+                data-region="student-filter">
+            <option value="all">{{#str}}filter_all, mod_graphitoubb{{/str}}</option>
+            <option value="with_errors">{{#str}}filter_with_errors, mod_graphitoubb{{/str}}</option>
+            <option value="not_submitted">{{#str}}filter_not_submitted, mod_graphitoubb{{/str}}</option>
+        </select>
+    </div>
+
+    {{! ---- Loading spinner ---- }}
+    <div data-region="student-loading" class="text-center py-4">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only visually-hidden">{{#str}}editor_loading, mod_graphitoubb{{/str}}</span>
+        </div>
+    </div>
+
+    {{! ---- Student table ---- }}
+    <div class="table-responsive d-none" data-region="student-table-wrapper">
+        <table class="table table-hover table-striped" data-region="student-table">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col"
+                        class="sortable"
+                        data-sort="fullname"
+                        aria-sort="ascending"
+                        tabindex="0">
+                        {{#str}}col_student, mod_graphitoubb{{/str}}
+                    </th>
+                    <th scope="col"
+                        class="sortable text-end"
+                        data-sort="fraction"
+                        aria-sort="none"
+                        tabindex="0">
+                        {{#str}}col_score, mod_graphitoubb{{/str}}
+                    </th>
+                    <th scope="col"
+                        class="sortable text-end"
+                        data-sort="attempts_count"
+                        aria-sort="none"
+                        tabindex="0">
+                        {{#str}}col_attempts, mod_graphitoubb{{/str}}
+                    </th>
+                    <th scope="col"
+                        class="sortable text-end"
+                        data-sort="time_spent_seconds"
+                        aria-sort="none"
+                        tabindex="0">
+                        {{#str}}col_time, mod_graphitoubb{{/str}}
+                    </th>
+                    <th scope="col"
+                        class="sortable"
+                        data-sort="status"
+                        aria-sort="none"
+                        tabindex="0">
+                        {{#str}}col_status, mod_graphitoubb{{/str}}
+                    </th>
+                    <th scope="col">{{#str}}action_reset_attempts, mod_graphitoubb{{/str}}</th>
+                </tr>
+            </thead>
+            <tbody data-region="student-tbody">
+                {{! AMD inserts <tr> rows here }}
+            </tbody>
+        </table>
+    </div>
+
+    {{! ---- Student drawer (detail panel) ---- }}
+    <div class="offcanvas offcanvas-end"
+         tabindex="-1"
+         id="graphitoubb-student-drawer"
+         data-region="student-drawer"
+         aria-labelledby="student-drawer-label">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="student-drawer-label" data-region="drawer-student-name">
+                {{#str}}col_student, mod_graphitoubb{{/str}}
+            </h5>
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="offcanvas"
+                    aria-label="{{#str}}back_to_activity, mod_graphitoubb{{/str}}">
+            </button>
+        </div>
+        <div class="offcanvas-body" data-region="drawer-body">
+            {{! AMD populates attempt history and error summary here }}
+        </div>
+    </div>
+
+</section>

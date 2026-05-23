@@ -1,0 +1,19 @@
+{{!
+    Autosave indicator badge — 4 states: idle, saving, saved, error.
+
+    The AMD module `autosave.js` drives this element by dispatching
+    `graphitoubb:autosave-status` CustomEvents on the editor root, and
+    `save_indicator.js` updates text and CSS classes.
+
+    No context variables required; AMD manages state at runtime.
+
+    @template mod_graphitoubb/autosave_indicator
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<span class="mod-graphitoubb-save-indicator badge badge-light"
+      data-region="autosave-indicator"
+      aria-live="polite"
+      aria-atomic="true"
+      role="status">
+</span>

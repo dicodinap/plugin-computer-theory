@@ -1,0 +1,37 @@
+{{!
+    Autosave conflict modal — shown when server draft_updated_at differs from client's.
+
+    Context variables:
+      - server_time   (string) Human-readable timestamp of server version.
+      - client_time   (string) Human-readable timestamp of client version.
+
+    The AMD autosave module populates this via core/modal_factory and wires
+    the two buttons before display.
+
+    @template mod_graphitoubb/conflict_modal
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-conflict-modal" data-region="conflict-modal">
+    <p class="mod-graphitoubb-conflict-modal__description">
+        {{#str}}conflict_title, mod_graphitoubb{{/str}}
+    </p>
+    <p class="mod-graphitoubb-conflict-modal__detail text-muted small">
+        Versión del servidor: {{server_time}}<br>
+        Tu versión: {{client_time}}
+    </p>
+    <div class="mod-graphitoubb-conflict-modal__actions d-flex gap-2 justify-content-end">
+        <button type="button"
+                class="btn btn-outline-secondary mod-graphitoubb-conflict-modal__load-other"
+                data-action="load-other"
+                aria-label="{{#str}}conflict_load_other, mod_graphitoubb{{/str}}">
+            {{#str}}conflict_load_other, mod_graphitoubb{{/str}}
+        </button>
+        <button type="button"
+                class="btn btn-primary mod-graphitoubb-conflict-modal__overwrite"
+                data-action="overwrite"
+                aria-label="{{#str}}conflict_overwrite, mod_graphitoubb{{/str}}">
+            {{#str}}conflict_overwrite, mod_graphitoubb{{/str}}
+        </button>
+    </div>
+</div>

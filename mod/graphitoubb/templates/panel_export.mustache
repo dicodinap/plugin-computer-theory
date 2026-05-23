@@ -1,0 +1,94 @@
+{{!
+    Export tab — format + scope selectors, download button.
+    Form POSTs to panel_export.php with cmid (passed in data attribute) by AMD.
+
+    @template mod_graphitoubb/panel_export
+    @package  mod_graphitoubb
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<section class="graphitoubb-panel-export py-3" data-region="panel-export-content">
+
+    <form method="get"
+          action=""
+          data-region="export-form"
+          class="row g-3">
+        {{! action is set by AMD from panel's data-instanceid }}
+
+        {{! Format selector }}
+        <div class="col-12 col-md-4">
+            <label class="form-label fw-semibold" for="export-format">
+                {{#str}}export_format, mod_graphitoubb{{/str}}
+            </label>
+            <select id="export-format" name="format" class="form-select" data-region="export-format">
+                <option value="csv">{{#str}}export_csv, mod_graphitoubb{{/str}}</option>
+                <option value="json">{{#str}}export_json, mod_graphitoubb{{/str}}</option>
+                <option value="pdf">{{#str}}export_pdf, mod_graphitoubb{{/str}}</option>
+            </select>
+        </div>
+
+        {{! Scope checkboxes }}
+        <div class="col-12 col-md-8">
+            <fieldset>
+                <legend class="form-label fw-semibold">
+                    {{#str}}export_scope, mod_graphitoubb{{/str}}
+                </legend>
+                <div class="d-flex flex-wrap gap-3">
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="scope"
+                               id="scope-all"
+                               value="all"
+                               checked>
+                        <label class="form-check-label" for="scope-all">
+                            {{#str}}filter_all, mod_graphitoubb{{/str}}
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="scope"
+                               id="scope-summary"
+                               value="summary">
+                        <label class="form-check-label" for="scope-summary">
+                            {{#str}}panel_tab_summary, mod_graphitoubb{{/str}}
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="scope"
+                               id="scope-per-student"
+                               value="per_student">
+                        <label class="form-check-label" for="scope-per-student">
+                            {{#str}}panel_tab_per_student, mod_graphitoubb{{/str}}
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="scope"
+                               id="scope-heatmap"
+                               value="heatmap">
+                        <label class="form-check-label" for="scope-heatmap">
+                            {{#str}}panel_tab_heatmap, mod_graphitoubb{{/str}}
+                        </label>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+
+        {{! Hidden cmid — AMD sets this from data-instanceid context (using cmid wired by panel.php) }}
+        <input type="hidden" name="id" data-region="export-cmid" value="">
+
+        {{! Submit }}
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">
+                {{#str}}export_button, mod_graphitoubb{{/str}}
+            </button>
+        </div>
+
+    </form>
+
+</section>

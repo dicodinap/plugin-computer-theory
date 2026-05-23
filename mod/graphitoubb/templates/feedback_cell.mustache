@@ -1,0 +1,41 @@
+{{!
+    Single feedback item for a truth-table cell.
+
+    Context variables:
+      - row_index    (int)    0-based row index.
+      - col_label    (string) Column formula/label.
+      - cell_kind    (string) subformula | final | radio
+      - submitted    (string) Student-submitted value.
+      - expected     (string) Expected correct value.
+      - is_correct   (bool)   Whether the cell matches.
+      - is_root_error (bool)  Whether this is the origin of a propagated error.
+      - explanation  (string) Human-readable explanation.
+
+    @template mod_graphitoubb/feedback_cell
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-feedback-cell mod-graphitoubb-feedback-cell--{{cell_kind}} {{#is_correct}}mod-graphitoubb-feedback-cell--correct{{/is_correct}}{{^is_correct}}mod-graphitoubb-feedback-cell--incorrect{{/is_correct}}"
+     role="listitem"
+     data-row="{{row_index}}"
+     data-col="{{col_label}}">
+    <span class="mod-graphitoubb-feedback-cell__icon" aria-hidden="true">
+        {{#is_correct}}✓{{/is_correct}}{{^is_correct}}✗{{/is_correct}}
+    </span>
+    <span class="mod-graphitoubb-feedback-cell__location">
+        Fila {{row_index}}, <code>{{col_label}}</code>:
+    </span>
+    <span class="mod-graphitoubb-feedback-cell__values">
+        enviado <strong>{{submitted}}</strong> — esperado <strong>{{expected}}</strong>
+    </span>
+    {{^is_correct}}
+    {{#is_root_error}}
+    <span class="badge badge-warning mod-graphitoubb-feedback-cell__propagated-badge">
+        {{#str}}feedback_cell_propagated, mod_graphitoubb{{/str}}
+    </span>
+    {{/is_root_error}}
+    {{/is_correct}}
+    {{#explanation}}
+    <p class="mod-graphitoubb-feedback-cell__explanation text-muted small">{{explanation}}</p>
+    {{/explanation}}
+</div>

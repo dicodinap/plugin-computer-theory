@@ -74,9 +74,137 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         return Ajax.call([request])[0];
     };
 
+    // -------------------------------------------------------------------------
+    // Truth-table methods (iter1).
+    // -------------------------------------------------------------------------
+
+    /**
+     * Autosave a truth-table draft.
+     *
+     * @param {number} attemptid
+     * @param {string} payload        JSON-stringified submission payload.
+     * @param {string} hash           SHA-256 of the payload.
+     * @param {number} draft_updated_at  Client's last known server timestamp.
+     * @return {Promise<{status: string, draft_updated_at: number, server_payload: string}>}
+     */
+    var saveDraft = function(attemptid, payload, hash, draft_updated_at) {
+        return Ajax.call([{
+            methodname: 'mod_graphitoubb_save_draft',
+            args: {
+                attemptid:        attemptid,
+                payload:          payload,
+                payload_hash:     hash || '',
+                draft_updated_at: draft_updated_at || 0,
+            },
+        }])[0];
+    };
+
+    /**
+     * Submit a final truth-table answer.
+     *
+     * @param {number} attemptid
+     * @param {string} payload  JSON-stringified submission.
+     * @return {Promise<object>}  Grading result.
+     */
+    var submit = function(attemptid, payload) {
+        return Ajax.call([{
+            methodname: 'mod_graphitoubb_submit',
+            args: {attemptid: attemptid, payload: payload},
+        }])[0];
+    };
+
+    /**
+     * Log a client-side telemetry event.
+     *
+     * Fails silently (does not propagate rejection).
+     *
+     * @param {string} name        Event name from the allowlist.
+     * @param {object} payloadObj  Optional payload object (will be JSON-encoded).
+     * @param {number} instanceid
+     * @param {number} [attemptid]
+     * @return {Promise<object>}
+     */
+    var logEvent = function(name, payloadObj, instanceid, attemptid) {
+        return Ajax.call([{
+            methodname: 'mod_graphitoubb_log_event',
+            args: {
+                attemptid:  attemptid || 0,
+                instanceid: instanceid,
+                name:       name,
+                payload:    payloadObj ? JSON.stringify(payloadObj) : '',
+            },
+        }])[0].catch(function() {/* fail silent */});
+    };
+
+    // -------------------------------------------------------------------------
+    // Teacher panel methods (iter1 slice 5).
+    // -------------------------------------------------------------------------
+
+    /**
+     * Fetch summary-tab data for the teacher panel.
+     *
+     * @param {number} instanceid
+     * @return {Promise<object>} Summary data (enrolled, attempted, avg_score, buckets, top_errors, …).
+     */
+    var getPanelSummary = function(instanceid) {
+        return Ajax.call([{
+            methodname: 'mod_graphitoubb_get_panel_summary',
+            args: {instanceid: instanceid},
+        }])[0].catch(Notification.exception);
+    };
+
+    /**
+     * Fetch per-student tab data for the teacher panel.
+     *
+     * @param {number} instanceid
+     * @param {string} filter  'all' | 'with_errors' | 'not_submitted'
+     * @return {Promise<{students: Array}>}
+     */
+    var getPanelPerStudent = function(instanceid, filter) {
+        return Ajax.call([{
+            methodname: 'mod_graphitoubb_get_panel_per_student',
+            args: {instanceid: instanceid, filter: filter || 'all'},
+        }])[0].catch(Notification.exception);
+    };
+
+    /**
+     * Fetch heatmap data for the teacher panel.
+     *
+     * @param {number} instanceid
+     * @return {Promise<{columns: string[], rows_count: number, cells: Array}>}
+     */
+    var getPanelHeatmap = function(instanceid) {
+        return Ajax.call([{
+            methodname: 'mod_graphitoubb_get_panel_heatmap',
+            args: {instanceid: instanceid},
+        }])[0].catch(Notification.exception);
+    };
+
+    /**
+     * Reset attempts for a student (or all students if userid is 0).
+     *
+     * @param {number} instanceid
+     * @param {number} [userid=0]  0 = reset all students.
+     * @return {Promise<{reset_count: number}>}
+     */
+    var resetAttempts = function(instanceid, userid) {
+        return Ajax.call([{
+            methodname: 'mod_graphitoubb_reset_attempts',
+            args: {instanceid: instanceid, userid: userid || 0},
+        }])[0].catch(Notification.exception);
+    };
+
     return {
-        loadLatestSnapshot: loadLatestSnapshot,
-        saveSnapshot: saveSnapshot,
-        logWord: logWord,
+        loadLatestSnapshot:  loadLatestSnapshot,
+        saveSnapshot:        saveSnapshot,
+        logWord:             logWord,
+        saveDraft:           saveDraft,
+        submit:              submit,
+        logEvent:            logEvent,
+        // Panel methods.
+        getPanelSummary:     getPanelSummary,
+        getPanelPerStudent:  getPanelPerStudent,
+        getPanelHeatmap:     getPanelHeatmap,
+        resetAttempts:       resetAttempts,
     };
 });

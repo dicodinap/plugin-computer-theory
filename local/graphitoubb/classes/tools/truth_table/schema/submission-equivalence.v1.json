@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "local_graphitoubb/truth_table/submission-equivalence.v1",
+  "title": "Truth Table — Equivalence Submission (v1)",
+  "description": "Schema for a student submission to a truth_table problem of type 'equivalence'. The radio_answer is a boolean (true = equivalent).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tool", "schema_version", "type", "radio_answer"],
+  "properties": {
+    "tool": {
+      "type": "string",
+      "const": "truth_table"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "type": {
+      "type": "string",
+      "const": "equivalence"
+    },
+    "table": {
+      "type": ["object", "null"],
+      "description": "Optional combined truth table justification. Required when the problem has require_table_justification=true.",
+      "additionalProperties": false,
+      "required": ["columns", "rows"],
+      "properties": {
+        "columns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["vars", "values"],
+            "properties": {
+              "vars": {
+                "type": "object",
+                "description": "Variable assignment for this row. Keys are uppercase letters A–Z; values are 'V' or 'F'.",
+                "additionalProperties": {
+                  "type": "string",
+                  "enum": ["V", "F"]
+                }
+              },
+              "values": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["V", "F", ""]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "radio_answer": {
+      "type": ["boolean", "null"],
+      "description": "true = student claims the two formulas are equivalent; false = not equivalent; null = unanswered."
+    }
+  }
+}
