@@ -181,7 +181,7 @@ final class equivalence_grader_test extends \basic_testcase {
             'type'           => 'equivalence',
             'radio_answer'   => true, // Wrong: A and ¬A are NOT equivalent.
             'table'          => [
-                'columns' => ['A', 'final', '¬A', 'equiv?'],
+                'columns' => ['A', 'final₁', 'final₂', 'equiv?'],
                 'rows'    => [
                     ['vars' => ['A' => 'F'], 'values' => ['F', 'F', 'V', 'F']],
                     ['vars' => ['A' => 'V'], 'values' => ['V', 'V', 'F', 'F']],
@@ -226,7 +226,7 @@ final class equivalence_grader_test extends \basic_testcase {
             'type'           => 'equivalence',
             'radio_answer'   => true,
             'table'          => [
-                'columns' => ['A', 'final', 'final', 'equiv?'],
+                'columns' => ['A', 'final₁', 'final₂', 'equiv?'],
                 'rows'    => [
                     ['vars' => ['A' => 'F'], 'values' => ['F', 'F', 'F', 'V']],
                     ['vars' => ['A' => 'V'], 'values' => ['V', 'V', 'V', 'V']],
@@ -271,5 +271,61 @@ final class equivalence_grader_test extends \basic_testcase {
         // Assert: auto-computed equivalence agrees with student → full score.
         $this->assertFalse($result->error);
         $this->assertEqualsWithDelta(1.0, $result->fraction, 0.001);
+    }
+
+    // -------------------------------------------------------------------------
+    // Test 6 — regression: duplicate 'final' headers collapsed.
+    // Before the rename, 'final' appeared twice in $gradeable_cols and in
+    // $expected_by_label, so a student who copied formula_1's truth column into
+    // formula_2's column would get full credit on f2's final. With 'final₁' /
+    // 'final₂' the mistake is caught.
+    // -------------------------------------------------------------------------
+    public function test_duplicate_final_disambiguated(): void {
+        // A → B  vs  A ∧ B — NOT equivalent (A=T,B=F: T→F=F; T∧F=F, agree; A=F,B=F: F→F=T; F∧F=F, disagree).
+        $problem = [
+            'tool'           => 'truth_table',
+            'schema_version' => 1,
+            'type'           => 'equivalence',
+            'ui'             => ['intermediate_subformulas' => 'none', 'manual_subformulas' => [], 'row_order' => 'canonical'],
+            'scoring' => ['radio_weight' => 0, 'table_weight' => 100, 'wrong_radio_policy' => 'proportional'],
+            'config'  => [
+                'formula_1' => 'A → B',
+                'formula_2' => 'A ∧ B',
+                'expected_equivalent'        => false,
+                'require_table_justification' => true,
+            ],
+        ];
+        // Truth tables:
+        //   A=F,B=F: A→B=V, A∧B=F → equiv?=F.
+        //   A=F,B=V: A→B=V, A∧B=F → equiv?=F.
+        //   A=V,B=F: A→B=F, A∧B=F → equiv?=V.
+        //   A=V,B=V: A→B=V, A∧B=V → equiv?=V.
+        // Student answers radio correctly AND fills final₁ correctly,
+        // but COPIES final₁'s column into the final₂ cell.
+        // → 2 of 4 final₂ cells are wrong (rows 0 and 1).
+        $submission = [
+            'tool'           => 'truth_table',
+            'schema_version' => 1,
+            'type'           => 'equivalence',
+            'radio_answer'   => false,
+            'table'          => [
+                'columns' => ['A', 'B', 'final₁', 'final₂', 'equiv?'],
+                'rows'    => [
+                    ['vars' => ['A' => 'F', 'B' => 'F'], 'values' => ['V', 'V', 'F']],
+                    ['vars' => ['A' => 'F', 'B' => 'V'], 'values' => ['V', 'V', 'F']],
+                    ['vars' => ['A' => 'V', 'B' => 'F'], 'values' => ['F', 'F', 'V']],
+                    ['vars' => ['A' => 'V', 'B' => 'V'], 'values' => ['V', 'V', 'V']],
+                ],
+            ],
+        ];
+
+        $result = $this->grader->grade($problem, $submission, 1.0, 0.6, 'hash-eq-6');
+
+        $this->assertFalse($result->error);
+        // 3 gradeable cols (final₁, final₂, equiv?) × 4 rows = 12 cells.
+        $this->assertSame(12, $result->cells_total);
+        // 2 of the 4 final₂ cells are wrong → 10 correct.
+        $this->assertSame(10, $result->cells_correct);
+        $this->assertLessThan(1.0, $result->fraction);
     }
 }

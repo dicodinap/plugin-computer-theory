@@ -280,6 +280,15 @@ final class equivalence_grader {
         // Build expected column sequence: cols1 (non-var) + cols2 (non-var) + 'equiv?'.
         $cols1_non_var = array_slice($table1['columns'], count($vars1));
         $cols2_non_var = array_slice($table2['columns'], count($vars2));
+        // Builder emits the literal 'final' label for the root column of each formula.
+        // In the combined equivalence table both finals would collide on the same key,
+        // so disambiguate the last gradeable column of each side to 'final₁' / 'final₂'.
+        if (!empty($cols1_non_var)) {
+            $cols1_non_var[count($cols1_non_var) - 1] = 'final₁';
+        }
+        if (!empty($cols2_non_var)) {
+            $cols2_non_var[count($cols2_non_var) - 1] = 'final₂';
+        }
         // 'equiv?' is a synthetic label for the final combined column.
         $gradeable_cols = array_merge($cols1_non_var, $cols2_non_var, ['equiv?']);
 
@@ -301,20 +310,26 @@ final class equivalence_grader {
             $sub_values = $sub_row['values'] ?? [];
 
             // Collect expected values per column label.
+            // Remap the trailing 'final' of each formula to its disambiguated label
+            // so the lookup keys match $gradeable_cols.
             $expected_by_label = [];
             if ($exp_row1) {
-                $cols1 = $table1['columns'];
+                $cols1     = $table1['columns'];
+                $last_ci_1 = count($cols1) - 1;
                 foreach ($cols1 as $ci => $label) {
                     if ($ci >= count($vars1)) {
-                        $expected_by_label[$label] = $exp_row1['values'][$ci];
+                        $key = ($ci === $last_ci_1) ? 'final₁' : $label;
+                        $expected_by_label[$key] = $exp_row1['values'][$ci];
                     }
                 }
             }
             if ($exp_row2) {
-                $cols2 = $table2['columns'];
+                $cols2     = $table2['columns'];
+                $last_ci_2 = count($cols2) - 1;
                 foreach ($cols2 as $ci => $label) {
                     if ($ci >= count($vars2)) {
-                        $expected_by_label[$label] = $exp_row2['values'][$ci];
+                        $key = ($ci === $last_ci_2) ? 'final₂' : $label;
+                        $expected_by_label[$key] = $exp_row2['values'][$ci];
                     }
                 }
             }

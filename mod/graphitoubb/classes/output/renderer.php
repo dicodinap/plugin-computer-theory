@@ -164,6 +164,14 @@ class renderer extends \plugin_renderer_base {
 
                 $cols1_non_var = array_slice($table1['columns'], count($vars1));
                 $cols2_non_var = array_slice($table2['columns'], count($vars2));
+                // Disambiguate the duplicate 'final' header — must match the rename
+                // performed by equivalence_grader::grade_combined_table.
+                if (!empty($cols1_non_var)) {
+                    $cols1_non_var[count($cols1_non_var) - 1] = 'final₁';
+                }
+                if (!empty($cols2_non_var)) {
+                    $cols2_non_var[count($cols2_non_var) - 1] = 'final₂';
+                }
                 $cols = array_merge($all_vars, $cols1_non_var, $cols2_non_var, ['equiv?']);
                 $vars = $all_vars;
 
