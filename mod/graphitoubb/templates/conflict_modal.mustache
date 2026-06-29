@@ -17,8 +17,8 @@
         {{#str}}conflict_title, mod_graphitoubb{{/str}}
     </p>
     <p class="mod-graphitoubb-conflict-modal__detail text-muted small">
-        Versión del servidor: {{server_time}}<br>
-        Tu versión: {{client_time}}
+        {{#str}}conflict_server_version, mod_graphitoubb, {{server_time}}{{/str}}<br>
+        {{#str}}conflict_your_version, mod_graphitoubb, {{client_time}}{{/str}}
     </p>
     <div class="mod-graphitoubb-conflict-modal__actions d-flex gap-2 justify-content-end">
         <button type="button"

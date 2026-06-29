@@ -102,6 +102,96 @@ $string['toolbar_toggle_final'] = 'Toggle final state';
 $string['warn_logword_failed'] = 'Word log failed. Check your connection.';
 $string['wordbank_empty'] = 'No words tested yet.';
 
+// UX/UI improvements — AFD editor + teacher panel.
+$string['save_indicator_saving'] = 'Saving…';
+$string['save_indicator_saved'] = 'Saved ✓';
+$string['save_indicator_error'] = 'Save failed ✕';
+$string['mode_hint_idle'] = 'Pick a tool to start building your automaton.';
+$string['mode_hint_adding_state'] = 'Click on the canvas to place a new state.';
+$string['mode_hint_adding_transition_source'] = 'Click the source state of the transition.';
+$string['mode_hint_adding_transition_target'] = 'Now click the target state.';
+$string['mode_hint_setting_start'] = 'Click the state to mark as the start state.';
+$string['mode_hint_toggling_final'] = 'Click a state to toggle it as a final (accepting) state.';
+$string['mode_hint_deleting'] = 'Click a state or transition to delete it.';
+$string['transition_symbol_prompt'] = 'Transition symbol (1 alphanumeric character):';
+$string['zoom_in'] = 'Zoom in';
+$string['zoom_out'] = 'Zoom out';
+$string['zoom_fit'] = 'Fit automaton to view';
+$string['zoom_reset'] = 'Reset zoom (100%)';
+$string['legend_title'] = 'Legend';
+$string['legend_start'] = 'Start state (blue border)';
+$string['legend_final'] = 'Final state (double ring)';
+$string['legend_visited'] = 'Visited during simulation';
+$string['run_hint_needs_start'] = 'Set a start state to run the simulator.';
+$string['run_hint_needs_alphabet'] = 'Add at least one alphabet symbol to run the simulator.';
+$string['run_hint_ready'] = 'Ready — type a word and run the simulator.';
+$string['run_disabled_title'] = 'The automaton is not ready to run yet.';
+$string['sim_accepted'] = 'Accepted';
+$string['sim_rejected'] = 'Rejected';
+$string['word_empty'] = 'ε (empty)';
+$string['reset_modal_title'] = 'Reset student attempts';
+$string['reset_modal_body'] = 'Reset all attempts for {$a}? This permanently deletes their snapshots, tested words and submissions for this activity. This cannot be undone.';
+$string['reset_confirm_button'] = 'Reset attempts';
+$string['reset_success'] = 'Attempts reset for {$a}.';
+$string['reset_error'] = 'Could not reset attempts. Please try again.';
+$string['submit_grading'] = 'Grading…';
+
+// i18n sweep (§7.1) — truth_table editor, feedback, conflict modal, parser, panel.
+$string['helpers_label'] = 'Logical operators';
+$string['op_negation'] = 'Negation ¬';
+$string['op_conjunction'] = 'Conjunction ∧';
+$string['op_disjunction'] = 'Disjunction ∨';
+$string['op_implication'] = 'Implication →';
+$string['op_biconditional'] = 'Biconditional ↔';
+$string['op_xor'] = 'Exclusive or ⊕';
+$string['op_true'] = 'True ⊤';
+$string['op_false'] = 'False ⊥';
+$string['cell_aria'] = 'Row {$a->row}, column {$a->col}';
+$string['radio_equivalence_legend'] = 'Are they logically equivalent?';
+$string['radio_classify_legend'] = 'Classify the formula';
+$string['radio_yes'] = 'Yes';
+$string['radio_no'] = 'No';
+$string['class_tautology'] = 'Tautology';
+$string['class_contradiction'] = 'Contradiction';
+$string['class_contingency'] = 'Contingency';
+$string['feedback_location'] = 'Row {$a}';
+$string['feedback_submitted'] = 'submitted';
+$string['feedback_expected'] = 'expected';
+$string['conflict_server_version'] = 'Server version: {$a}';
+$string['conflict_your_version'] = 'Your version: {$a}';
+$string['parse_unexpected_char'] = 'Unexpected character "{$a->ch}" at position {$a->pos}.';
+$string['parse_expected_token'] = 'Expected {$a->type} at position {$a->pos}, found "{$a->val}".';
+$string['parse_expected_operand'] = 'Expected a variable, constant or "(" at position {$a->pos}, found "{$a->val}".';
+$string['parse_incomplete'] = 'Incomplete formula: unexpected character at position {$a}.';
+$string['panel_row'] = 'Row';
+$string['panel_no_data'] = 'no data';
+$string['panel_students_soon'] = '(Student list coming soon)';
+
+// AFD submission / finish attempt (A2).
+$string['afd_status_label'] = 'Status:';
+$string['afd_finish_button'] = 'Mark as finished';
+$string['afd_finish_title'] = 'Submit your automaton?';
+$string['afd_finish_body'] = 'Once submitted you will not be able to edit this automaton.';
+$string['afd_finish_confirm'] = 'Submit';
+$string['afd_finish_success'] = 'Automaton submitted.';
+$string['afd_finish_error'] = 'Could not submit. Please try again.';
+
+// AFD destructive-action confirmations (A12 / G1).
+$string['delete_confirm_title'] = 'Delete state?';
+$string['delete_confirm_body'] = 'This state has {$a} connected transition(s). Deleting it will also remove them.';
+$string['delete_confirm_button'] = 'Delete';
+$string['reset_automaton_button'] = 'Reset automaton';
+$string['reset_automaton_title'] = 'Reset the automaton?';
+$string['reset_automaton_body'] = 'This removes all states, transitions and alphabet symbols. This cannot be undone.';
+$string['reset_automaton_confirm'] = 'Reset';
+
+// AFD authoring + grading (C1).
+$string['afd_consigna_title'] = 'Your task';
+$string['afd_result_score'] = 'Score: {$a->correct}/{$a->total} test words correct ({$a->pct}%)';
+$string['afd_result_passed'] = 'Passed';
+$string['afd_result_invalid'] = 'Your automaton could not be graded — make sure it has a start state.';
+$string['afd_finish_graded_toast'] = 'Submitted — {$a->correct}/{$a->total} test words correct.';
+
 // Truth-table iter1 strings.
 $string['truth_table_editor_label'] = 'Truth table editor';
 $string['formula_label'] = 'Formula:';
@@ -181,6 +271,14 @@ $string['export_json']                   = 'JSON';
 $string['export_pdf']                    = 'PDF';
 $string['export_button']                 = 'Download export';
 $string['error_loading_panel']           = 'Error loading panel data. Please refresh and try again.';
+$string['panel_hist_title']              = 'Score distribution';
+$string['panel_hist_range']              = 'Range';
+$string['panel_hist_count']              = 'Count';
+$string['panel_drawer_score']            = 'Score';
+$string['panel_drawer_attempts']         = 'Attempts';
+$string['panel_drawer_time']             = 'Time';
+$string['panel_drawer_status']           = 'Status';
+$string['panel_drawer_draft']            = 'Draft';
 
 $string['privacy:metadata:graphitoubb_submission'] = 'Final graded submissions made by students on a GraphitoUBB activity.';
 $string['privacy:metadata:graphitoubb_submission:attemptid'] = 'The attempt this submission belongs to.';

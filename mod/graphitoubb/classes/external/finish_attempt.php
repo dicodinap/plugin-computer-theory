@@ -73,7 +73,36 @@ final class finish_attempt extends external_api {
 
         $attemptservice->finish($params['attemptid']);
 
-        return ['status' => 'ok'];
+        $response = ['status' => 'ok'];
+
+        // C1: if this instance is an AFD exercise, grade the student's latest
+        // automaton against the authored test words and persist a submission.
+        $problem = (new \mod_graphitoubb\problem_repository())->find_by_instance((int) $attempt->instanceid);
+        if ($problem && $problem->tool === 'afd') {
+            $pdata        = json_decode($problem->payload, true) ?: [];
+            $config       = $pdata['config'] ?? [];
+            $latest       = (new \mod_graphitoubb\snapshot_service())->get_latest($params['attemptid']);
+            $snapshotjson = $latest ? $latest->payload : null;
+
+            $grading = (new \local_graphitoubb\tools\afd\grader\afd_grader())->grade($config, $snapshotjson);
+
+            $automaton = $snapshotjson ? (json_decode($snapshotjson, true) ?: []) : [];
+            (new \mod_graphitoubb\submission_repository())->save(
+                $params['attemptid'],
+                ['tool' => 'afd', 'automaton' => $automaton],
+                $grading,
+                (string) $problem->payload_hash,
+                1
+            );
+
+            $response['graded']        = true;
+            $response['invalid']       = (bool) $grading['invalid'];
+            $response['fraction']      = (float) $grading['fraction'];
+            $response['words_correct'] = (int) $grading['words_correct'];
+            $response['words_total']   = (int) $grading['words_total'];
+        }
+
+        return $response;
     }
 
     /**
@@ -83,7 +112,12 @@ final class finish_attempt extends external_api {
      */
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
-            'status' => new external_value(PARAM_ALPHANUMEXT, 'ok'),
+            'status'        => new external_value(PARAM_ALPHANUMEXT, 'ok'),
+            'graded'        => new external_value(PARAM_BOOL, 'Whether AFD grading ran', VALUE_OPTIONAL),
+            'invalid'       => new external_value(PARAM_BOOL, 'Automaton ungradeable (e.g. no start)', VALUE_OPTIONAL),
+            'fraction'      => new external_value(PARAM_FLOAT, 'Score fraction 0–1', VALUE_OPTIONAL),
+            'words_correct' => new external_value(PARAM_INT, 'Test words classified correctly', VALUE_OPTIONAL),
+            'words_total'   => new external_value(PARAM_INT, 'Total test words', VALUE_OPTIONAL),
         ]);
     }
 }

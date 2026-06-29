@@ -26,7 +26,10 @@
 define([
     'core/str',
     'mod_graphitoubb/repository',
-], function(Str, Repository) {
+    'core/modal_save_cancel',
+    'core/modal_events',
+    'core/notification',
+], function(Str, Repository, ModalSaveCancel, ModalEvents, Notification) {
 
     'use strict';
 
@@ -84,6 +87,69 @@ define([
         currentFilter: 'all',
         heatmapData: null,
     };
+
+    // -------------------------------------------------------------------------
+    // Localised UI labels. English defaults keep synchronous rendering correct;
+    // init() overwrites them with the site language via core/str before the
+    // first panel render. (Previously these were hardcoded Spanish, which clashed
+    // with the otherwise-localised panel UI.)
+    // -------------------------------------------------------------------------
+    var STR = {
+        histTitle: 'Score distribution',
+        histRange: 'Range',
+        histCount: 'Count',
+        drawerScore: 'Score',
+        drawerAttempts: 'Attempts',
+        drawerTime: 'Time',
+        drawerStatus: 'Status',
+        drawerDraft: 'Draft',
+        yes: 'Yes',
+        no: 'No',
+        row: 'Row',
+        noData: 'no data',
+        studentsSoon: '(Student list coming soon)',
+    };
+
+    /**
+     * Prefetch localised panel labels into STR. Resolves even on failure
+     * (English defaults remain in place).
+     *
+     * @return {Promise}
+     */
+    function loadStrings() {
+        return Str.get_strings([
+            {key: 'panel_hist_title', component: 'mod_graphitoubb'},
+            {key: 'panel_hist_range', component: 'mod_graphitoubb'},
+            {key: 'panel_hist_count', component: 'mod_graphitoubb'},
+            {key: 'panel_drawer_score', component: 'mod_graphitoubb'},
+            {key: 'panel_drawer_attempts', component: 'mod_graphitoubb'},
+            {key: 'panel_drawer_time', component: 'mod_graphitoubb'},
+            {key: 'panel_drawer_status', component: 'mod_graphitoubb'},
+            {key: 'panel_drawer_draft', component: 'mod_graphitoubb'},
+            {key: 'yes', component: 'core'},
+            {key: 'no', component: 'core'},
+            {key: 'panel_row', component: 'mod_graphitoubb'},
+            {key: 'panel_no_data', component: 'mod_graphitoubb'},
+            {key: 'panel_students_soon', component: 'mod_graphitoubb'},
+        ]).then(function(s) {
+            STR.histTitle = s[0];
+            STR.histRange = s[1];
+            STR.histCount = s[2];
+            STR.drawerScore = s[3];
+            STR.drawerAttempts = s[4];
+            STR.drawerTime = s[5];
+            STR.drawerStatus = s[6];
+            STR.drawerDraft = s[7];
+            STR.yes = s[8];
+            STR.no = s[9];
+            STR.row = s[10];
+            STR.noData = s[11];
+            STR.studentsSoon = s[12];
+            return STR;
+        }).catch(function() {
+            return STR;
+        });
+    }
 
     // -------------------------------------------------------------------------
     // Error display.
@@ -288,8 +354,8 @@ define([
         if (accessible) {
             var table = document.createElement('table');
             table.className = 'sr-only visually-hidden';
-            table.setAttribute('aria-label', 'Distribución de notas');
-            var thead = '<thead><tr><th>Rango</th><th>Cantidad</th></tr></thead>';
+            table.setAttribute('aria-label', STR.histTitle);
+            var thead = '<thead><tr><th>' + escHtml(STR.histRange) + '</th><th>' + escHtml(STR.histCount) + '</th></tr></thead>';
             var rows = buckets.map(function(b) {
                 return '<tr><td>' + (b.bucket * 10) + '-' + Math.min(100, (b.bucket + 1) * 10) + '%</td><td>' + b.count + '</td></tr>';
             }).join('');
@@ -315,7 +381,7 @@ define([
         topErrors.forEach(function(err) {
             var li = document.createElement('li');
             li.className = 'list-group-item d-flex justify-content-between align-items-center';
-            var label = 'Fila ' + err.row_index + ' — ' + err.col_label;
+            var label = STR.row + ' ' + err.row_index + ' — ' + err.col_label;
             li.textContent = label;
             var badge = document.createElement('span');
             badge.className = 'badge bg-danger rounded-pill';
@@ -386,18 +452,62 @@ define([
                 e.stopPropagation();
                 var uid  = parseInt(btn.dataset.userid, 10);
                 var name = btn.dataset.name;
-                Str.get_string('action_reset_confirm', 'mod_graphitoubb').then(function(msg) {
-                    if (window.confirm(msg + '\n' + name)) {
-                        Repository.resetAttempts(state.instanceid, uid)
-                        .then(function() {
-                            state.loaded.student = false;
-                            loadStudents(state.currentFilter);
-                        })
-                        .catch(function() {
-                            Str.get_string('error_loading_panel', 'mod_graphitoubb').then(showError);
-                        });
-                    }
+                confirmReset(uid, name);
+            });
+        });
+    }
+
+    /**
+     * D1: confirm an attempt reset with a Moodle modal (replacing window.confirm),
+     * spelling out the destructive impact and surfacing a success/error toast.
+     *
+     * @param {number} uid  Target user id.
+     * @param {string} name Student full name (for the prompt and toast).
+     */
+    function confirmReset(uid, name) {
+        Str.get_strings([
+            {key: 'reset_modal_title', component: 'mod_graphitoubb'},
+            {key: 'reset_modal_body', component: 'mod_graphitoubb', param: name},
+            {key: 'reset_confirm_button', component: 'mod_graphitoubb'},
+        ]).then(function(strs) {
+            return ModalSaveCancel.create({
+                title: strs[0],
+                body: strs[1],
+            }).then(function(modal) {
+                modal.setSaveButtonText(strs[2]);
+                modal.getRoot().on(ModalEvents.save, function() {
+                    doReset(uid, name);
                 });
+                modal.getRoot().on(ModalEvents.hidden, function() {
+                    modal.destroy();
+                });
+                modal.show();
+                return modal;
+            });
+        }).catch(Notification.exception);
+    }
+
+    /**
+     * Perform the reset WS call and refresh the student list, with toast feedback.
+     *
+     * @param {number} uid  Target user id.
+     * @param {string} name Student full name (for the success toast).
+     */
+    function doReset(uid, name) {
+        Repository.resetAttempts(state.instanceid, uid)
+        .then(function() {
+            state.loaded.student = false;
+            loadStudents(state.currentFilter);
+            return Str.get_string('reset_success', 'mod_graphitoubb', name);
+        })
+        .then(function(msg) {
+            Notification.addNotification({message: msg, type: 'success'});
+            return;
+        })
+        .catch(function() {
+            Str.get_string('reset_error', 'mod_graphitoubb').then(function(msg) {
+                Notification.addNotification({message: msg, type: 'error'});
+                return;
             });
         });
     }
@@ -421,11 +531,11 @@ define([
         if (body) {
             body.innerHTML = [
                 '<dl class="row">',
-                '<dt class="col-5">Nota</dt><dd class="col-7">' + fmtFraction(student.fraction) + '</dd>',
-                '<dt class="col-5">Intentos</dt><dd class="col-7">' + student.attempts_count + '</dd>',
-                '<dt class="col-5">Tiempo</dt><dd class="col-7">' + fmtSeconds(student.time_spent_seconds) + '</dd>',
-                '<dt class="col-5">Estado</dt><dd class="col-7">' + student.status + '</dd>',
-                '<dt class="col-5">Borrador</dt><dd class="col-7">' + (student.has_draft ? 'Sí' : 'No') + '</dd>',
+                '<dt class="col-5">' + escHtml(STR.drawerScore) + '</dt><dd class="col-7">' + fmtFraction(student.fraction) + '</dd>',
+                '<dt class="col-5">' + escHtml(STR.drawerAttempts) + '</dt><dd class="col-7">' + student.attempts_count + '</dd>',
+                '<dt class="col-5">' + escHtml(STR.drawerTime) + '</dt><dd class="col-7">' + fmtSeconds(student.time_spent_seconds) + '</dd>',
+                '<dt class="col-5">' + escHtml(STR.drawerStatus) + '</dt><dd class="col-7">' + escHtml(student.status) + '</dd>',
+                '<dt class="col-5">' + escHtml(STR.drawerDraft) + '</dt><dd class="col-7">' + (student.has_draft ? escHtml(STR.yes) : escHtml(STR.no)) + '</dd>',
                 '</dl>',
             ].join('');
         }
@@ -537,7 +647,8 @@ define([
                         'cursor:' + (count > 0 ? 'pointer' : 'default'),
                     ].join(';');
                     cell.textContent = pct !== null ? pct.toFixed(1) + '%' : '—';
-                    cell.title = col + ' | fila ' + r + (count > 0 ? ': ' + pct.toFixed(1) + '% (' + count + ')' : ': sin datos');
+                    cell.title = col + ' | ' + STR.row.toLowerCase() + ' ' + r
+                        + (count > 0 ? ': ' + pct.toFixed(1) + '% (' + count + ')' : ': ' + STR.noData);
 
                     if (count > 0) {
                         cell.addEventListener('click', function() {
@@ -557,7 +668,7 @@ define([
             var tHead = details.querySelector('[data-region="heatmap-table-head"]');
             var tBody = details.querySelector('[data-region="heatmap-table-body"]');
             if (tHead) {
-                var thRow = '<tr><th scope="col">Fila</th>';
+                var thRow = '<tr><th scope="col">' + escHtml(STR.row) + '</th>';
                 data.columns.forEach(function(col) {
                     thRow += '<th scope="col">' + escHtml(col) + '</th>';
                 });
@@ -585,11 +696,12 @@ define([
         detail.classList.remove('d-none');
         var title = detail.querySelector('[data-region="cell-detail-title"]');
         if (title) {
-            title.textContent = colLabel + ' | fila ' + row + ' — ' + cellData.pct_correct.toFixed(1) + '%';
+            title.textContent = colLabel + ' | ' + STR.row.toLowerCase() + ' ' + row + ' — '
+                + cellData.pct_correct.toFixed(1) + '%';
         }
         var list = detail.querySelector('[data-region="cell-detail-students"]');
         if (list) {
-            list.innerHTML = '<li class="list-group-item text-muted">(Lista de alumnos disponible próximamente)</li>';
+            list.innerHTML = '<li class="list-group-item text-muted">' + escHtml(STR.studentsSoon) + '</li>';
         }
     }
 
@@ -671,8 +783,13 @@ define([
         initTabs();
         initStudentFilter();
 
-        // Load summary eagerly (it's the default tab).
-        loadSummary();
+        // Prefetch localised labels, then load summary eagerly (the default tab).
+        loadStrings().then(function() {
+            loadSummary();
+            return;
+        }).catch(function() {
+            loadSummary();
+        });
     };
 
     return {init: init};

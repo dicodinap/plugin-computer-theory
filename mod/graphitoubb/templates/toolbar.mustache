@@ -17,31 +17,42 @@
      data-max-input-length="{{max_input_length}}">
     <button type="button"
             class="btn btn-outline-secondary mod-graphitoubb-tool-btn"
-            data-mode="adding_state">
+            data-mode="adding_state"
+            aria-pressed="false">
         {{#str}}toolbar_add_state, mod_graphitoubb{{/str}}
     </button>
     <button type="button"
             class="btn btn-outline-secondary mod-graphitoubb-tool-btn"
-            data-mode="adding_transition_source">
+            data-mode="adding_transition_source"
+            aria-pressed="false">
         {{#str}}toolbar_add_transition, mod_graphitoubb{{/str}}
     </button>
     <button type="button"
             class="btn btn-outline-secondary mod-graphitoubb-tool-btn"
-            data-mode="setting_start">
+            data-mode="setting_start"
+            aria-pressed="false">
         {{#str}}toolbar_set_start, mod_graphitoubb{{/str}}
     </button>
     <button type="button"
             class="btn btn-outline-secondary mod-graphitoubb-tool-btn"
-            data-mode="toggling_final">
+            data-mode="toggling_final"
+            aria-pressed="false">
         {{#str}}toolbar_toggle_final, mod_graphitoubb{{/str}}
     </button>
     <button type="button"
             class="btn btn-outline-danger mod-graphitoubb-tool-btn"
-            data-mode="deleting">
+            data-mode="deleting"
+            aria-pressed="false">
         {{#str}}toolbar_delete, mod_graphitoubb{{/str}}
+    </button>
+    <button type="button"
+            class="btn btn-outline-danger mod-graphitoubb-reset-automaton-btn"
+            data-action="reset-automaton">
+        {{#str}}reset_automaton_button, mod_graphitoubb{{/str}}
     </button>
     <span class="mod-graphitoubb-save-indicator" aria-live="polite"></span>
 </div>
+<p class="mod-graphitoubb-mode-hint" aria-live="polite">{{#str}}mode_hint_idle, mod_graphitoubb{{/str}}</p>
 <div class="mod-graphitoubb-alphabet-panel" data-max-alphabet="{{max_alphabet}}">
     <span class="mod-graphitoubb-alphabet-label">{{#str}}alphabet_label, mod_graphitoubb{{/str}}</span>
     <div class="mod-graphitoubb-alphabet-input-group">

@@ -33,6 +33,23 @@
  */
 define([], function() {
 
+    /**
+     * Build a parser Error carrying a localisable string key + params so the
+     * consumer (truth_table_editor) can render it via core/str. The English
+     * `.message` is a usable fallback for non-UI callers (e.g. tests).
+     *
+     * @param {string} message English fallback message.
+     * @param {string} key     Lang string key in mod_graphitoubb.
+     * @param {object|number} param  {$a} substitution(s).
+     * @return {Error}
+     */
+    var parseError = function(message, key, param) {
+        var err = new Error(message);
+        err.strKey = key;
+        err.strParam = param;
+        return err;
+    };
+
     // -------------------------------------------------------------------------
     // ASCII → Unicode normalization map.
     // -------------------------------------------------------------------------
@@ -107,7 +124,9 @@ define([], function() {
             if (/[A-Z]/.test(ch)) {
                 tokens.push({type: TOKEN.VAR, val: ch, pos: pos}); i++; continue;
             }
-            throw new Error('Carácter inesperado "' + ch + '" en posición ' + pos);
+            throw parseError(
+                'Unexpected character "' + ch + '" at position ' + pos + '.',
+                'parse_unexpected_char', {ch: ch, pos: pos});
         }
         tokens.push({type: TOKEN.EOF, val: '', pos: input.length + 1});
         return tokens;
@@ -135,7 +154,9 @@ define([], function() {
         var expect = function(type) {
             var tok = peek();
             if (tok.type !== type) {
-                throw new Error('Se esperaba ' + type + ' en posición ' + tok.pos + ', encontrado "' + tok.val + '"');
+                throw parseError(
+                    'Expected ' + type + ' at position ' + tok.pos + ', found "' + tok.val + '".',
+                    'parse_expected_token', {type: type, pos: tok.pos, val: tok.val});
             }
             return consume();
         };
@@ -200,13 +221,16 @@ define([], function() {
                 consume();
                 return {kind: 'const', value: tok.val === '⊤'};
             }
-            throw new Error('Se esperaba variable, constante o "(" en posición ' + tok.pos +
-                            ', encontrado "' + tok.val + '"');
+            throw parseError(
+                'Expected a variable, constant or "(" at position ' + tok.pos + ', found "' + tok.val + '".',
+                'parse_expected_operand', {pos: tok.pos, val: tok.val});
         };
 
         var ast = parseFormula();
         if (peek().type !== TOKEN.EOF) {
-            throw new Error('Fórmula incompleta: carácter inesperado en posición ' + peek().pos);
+            throw parseError(
+                'Incomplete formula: unexpected character at position ' + peek().pos + '.',
+                'parse_incomplete', peek().pos);
         }
         return ast;
     };

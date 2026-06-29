@@ -2,6 +2,128 @@
 
 All notable changes to GraphitoUBB plugin family.
 
+## [Unreleased] — Teacher authoring form — 2026-06-29
+
+`docs/UX_UI_IMPROVEMENTS.md` C3 + C5 on `edit_problem.php`. Verified in browser.
+
+### Fixed
+- **No more auto-submit data loss (C3)**: changing the exercise type no longer
+  reloads the page via `onchange="this.form.submit()"` (which discarded typed
+  formulas). Type-specific fields now show/hide client-side; switching types and
+  back preserves what was typed.
+
+### Added
+- **Formula syntax help (C5)**: a collapsible operator legend (symbol, ASCII
+  synonym, example) on the authoring form.
+
+## [Unreleased] — AFD submission & error tolerance — 2026-06-29
+
+Adds the missing "hand-in" loop and removes the accidental-data-loss risk in the
+AFD editor (`docs/UX_UI_IMPROVEMENTS.md` A2, A12, G1). Verified end-to-end in browser.
+
+### Added
+- **AFD "Mark as finished" / submission bar (A2)**: a status badge (In progress /
+  Finished) plus a primary "Mark as finished" button that confirms via a Moodle
+  modal, calls `mod_graphitoubb_finish_attempt`, locks the editor read-only and
+  shows a success toast. `render_editor` now receives the attempt status and a
+  finished attempt re-opens locked. New `repository.finishAttempt`.
+- **Destructive-action confirmations (A12 / G1)**: deleting a state that still has
+  connected transitions now asks for confirmation (Moodle modal, naming the count)
+  before removing them; a new **Reset automaton** toolbar button clears all states,
+  transitions and alphabet symbols behind a confirmation. No native `confirm`.
+
+### Migration
+- Bump `mod_graphitoubb` to `2026062904` (release `0.3.4-alpha`)
+
+## [Unreleased] — i18n sweep (§7.1) — 2026-06-29
+
+Eliminates the hardcoded-string debt from `docs/UX_UI_IMPROVEMENTS.md` §7.1 so the
+bilingual (en/es) promise holds across both tools. Verified end-to-end in browser
+with the Spanish language pack installed (server `{{#str}}`/`get_string` **and**
+JS `core/str`, including `{$a}` parameter substitution).
+
+### Changed — moved hardcoded strings to `get_string` / `core/str`
+- **truth_table editor**: operator palette `aria-label`s + new tooltips (B7), the
+  `Logical operators` toolbar label, and each cell's `Row N, column M` aria-label
+  (computed server-side via `cell_aria`).
+- **Radio section (B5)**: equivalence/classify legends and option labels
+  (`Yes/No`, `Tautology/Contradiction/Contingency`) now localised in `renderer.php`.
+- **feedback_cell (B5)**: `Row N`, `submitted`, `expected` localised.
+- **conflict_modal (B2)**: `Server version` / `Your version` localised.
+- **formula_parser (B4)**: the four parse errors are thrown as structured
+  `{strKey, strParam}` errors and rendered via `core/str` with `role="alert"` +
+  `text-danger` in the canonical preview (was hardcoded Spanish + colour-only).
+- **save_indicator max-length error**: uses `core/str` instead of `M.util.get_string`.
+- **panel_dashboard**: residual Spanish (`Fila`, `sin datos`, the
+  coming-soon student list) moved to localised `STR` labels.
+- **qtype_graphitoubb**: `summarise_response` (`Equivalence/Classification/Truth
+  table…`, `(no answer)`, row counts) localised; uses core `yes`/`no`.
+
+### Migration
+- Bump `mod_graphitoubb` to `2026062902` (release `0.3.2-alpha`)
+- Bump `qtype_graphitoubb` to `2026062902` (release `0.2.1-alpha`)
+
+## [Unreleased] — UX/UI quick wins — 2026-06-29
+
+Implements the quick-wins wave from `docs/UX_UI_IMPROVEMENTS.md` (all verified in
+browser with Playwright across student/teacher roles).
+
+### Added
+- **AFD editor — contextual mode hint (A5)**: a live-region hint under the toolbar
+  tells the student what the active tool does ("Click on the canvas to place a new
+  state.", etc.); toolbar buttons now expose `aria-pressed`.
+- **AFD editor — zoom controls (A6)**: floating `+ / − / fit / 100%` cluster over the
+  canvas, respecting the existing `maxZoom` clamp. Makes the previously hidden
+  wheel-zoom/pan discoverable.
+- **AFD editor — legend (A9)**: start / final / visited swatches beside the canvas so
+  state roles are not conveyed by colour alone.
+- **AFD editor — Run validity (A11)**: the Run button is disabled with an explicit
+  reason ("Set a start state…", "Add at least one alphabet symbol…") until the
+  automaton can actually run, instead of a generic after-the-fact toast.
+- **AFD editor — simulation verdict (E2)**: the trace zone shows `✓ Accepted` /
+  `✗ Rejected` (icon + text), not background colour alone.
+- **Teacher panel — reset confirmation modal (D1)**: replaces the native
+  `window.confirm` with a Moodle modal that names the student and spells out the
+  destructive impact; a success/error toast follows the action (D2).
+
+### Changed
+- **Save indicator (B1)**: `Saving… / Saved ✓ / Save failed ✕` now come from
+  `get_string` via `core/str` (were hardcoded English), so they follow the site
+  language in both the AFD and truth-table editors.
+- **Transition symbol prompt (A3, i18n part of G1)**: the `window.prompt` label is
+  localised (`transition_symbol_prompt`) instead of hardcoded Spanish. (Full
+  popover replacement remains deferred.)
+- **truth_table submit (B3/G3)**: the submit button shows a spinner + "Grading…"
+  and blocks double-submit while the answer is being graded.
+- **"Last word tested" empty string (D3)**: an empty word now renders as
+  `ε (empty)` in the teacher report and the student wordbank, instead of a blank
+  cell that read as a bug.
+
+### Migration
+- Bump `mod_graphitoubb` to version `2026062901` (release `0.3.1-alpha`)
+
+## [Unreleased] — AFD prod-readiness fixes — 2026-06-29
+
+### Fixed
+- **mod_graphitoubb**: ship plugin activity icons (`pix/monologo.svg`, `pix/icon.svg`).
+  Previously every page emitted a 404 for `theme/image.php/.../monologo` and the
+  activity rendered a broken icon.
+- **AFD editor**: cap Cytoscape zoom (`maxZoom: 1.5`, conditional layout) so a
+  saved automaton with few states no longer auto-fits to an unusable ~2.7× zoom
+  with overlapping nodes; a fresh editor now opens at zoom 1.
+- **AFD editor**: restore the wordbank history on resume. `render_editor` now
+  pre-populates the tested-words panel from `graphitoubb_wordbank_log` instead of
+  showing an empty list after reload.
+- **reset_attempts**: also delete `graphitoubb_snapshot` and
+  `graphitoubb_wordbank_log` rows. Resetting an AFD student now actually clears
+  their automaton and tested words (previously a no-op for AFD attempts).
+- **Teacher panel**: replace hardcoded Spanish labels (`Distribución de notas`,
+  `Rango`, `Cantidad`, `Nota`, `Intentos`, `Tiempo`, `Estado`, `Borrador`) with
+  localised strings so the panel follows the site language.
+
+### Migration
+- Bump `mod_graphitoubb` to version `2026062900`
+
 ## [v0.2.0] (Iter 1 — truth_table) — 2026-05-18
 
 ### Added

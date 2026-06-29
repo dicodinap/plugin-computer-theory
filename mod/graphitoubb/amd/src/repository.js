@@ -114,6 +114,19 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     };
 
     /**
+     * Mark an attempt as finished (AFD "submit"/"hand in").
+     *
+     * @param {number} attemptid
+     * @return {Promise<{status: string}>}
+     */
+    var finishAttempt = function(attemptid) {
+        return Ajax.call([{
+            methodname: 'mod_graphitoubb_finish_attempt',
+            args: {attemptid: attemptid},
+        }])[0];
+    };
+
+    /**
      * Log a client-side telemetry event.
      *
      * Fails silently (does not propagate rejection).
@@ -200,6 +213,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         logWord:             logWord,
         saveDraft:           saveDraft,
         submit:              submit,
+        finishAttempt:       finishAttempt,
         logEvent:            logEvent,
         // Panel methods.
         getPanelSummary:     getPanelSummary,

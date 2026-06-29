@@ -59,6 +59,68 @@ $savedmsg = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_sesskey();
 
+    $tool = optional_param('tool', 'truth_table', PARAM_ALPHA);
+}
+
+// C1: AFD authoring branch — prompt + alphabet + expected-verdict test words.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($tool ?? '') === 'afd') {
+    $afd_prompt       = optional_param('afd_prompt', '', PARAM_TEXT);
+    $afd_alphabet_raw = optional_param('afd_alphabet', '', PARAM_RAW_TRIMMED);
+    $afd_words_raw    = optional_param('afd_test_words', '', PARAM_RAW);
+
+    // Alphabet: distinct single alphanumeric characters, in input order.
+    preg_match_all('/[a-zA-Z0-9]/', $afd_alphabet_raw, $am);
+    $alphabet = array_values(array_unique($am[0]));
+
+    // Test words: one per line, "VERDICT:WORD" (accept|reject|+|-|t|f|1|0…).
+    $testwords  = [];
+    $wordserror = [];
+    foreach (preg_split('/\r\n|\r|\n/', $afd_words_raw) as $line) {
+        $line = trim($line);
+        if ($line === '') {
+            continue;
+        }
+        $parts   = explode(':', $line, 2);
+        $verdict = strtolower(trim($parts[0]));
+        $word    = isset($parts[1]) ? trim($parts[1]) : '';
+        $accept  = in_array($verdict, ['accept', 'a', '+', 't', 'true', '1', 'yes'], true);
+        foreach (preg_split('//u', $word, -1, PREG_SPLIT_NO_EMPTY) as $ch) {
+            if (!in_array($ch, $alphabet, true)) {
+                $wordserror[] = '"' . $word . '" (symbol "' . $ch . '")';
+                break;
+            }
+        }
+        $testwords[] = ['word' => $word, 'accept' => $accept];
+    }
+
+    if ($afd_prompt === '') {
+        $error = 'The prompt (consigna) is required.';
+    } else if (empty($alphabet)) {
+        $error = 'Define at least one alphabet symbol.';
+    } else if (empty($testwords)) {
+        $error = 'Add at least one test word (format: accept:WORD or reject:WORD).';
+    } else if (!empty($wordserror)) {
+        $error = 'Some test words use symbols outside the alphabet: ' . implode('; ', $wordserror);
+    }
+
+    if (!$error) {
+        $payload = [
+            'tool'           => 'afd',
+            'schema_version' => 1,
+            'type'           => 'language',
+            'config'         => [
+                'prompt'     => $afd_prompt,
+                'alphabet'   => $alphabet,
+                'test_words' => $testwords,
+            ],
+        ];
+        (new \mod_graphitoubb\problem_repository())->save((int) $instance->id, 'afd', 'language', $payload, 1);
+        $savedmsg    = 'Problem saved.';
+        $prevpayload = $payload;
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($tool ?? 'truth_table') !== 'afd') {
     $type     = required_param('exercise_type', PARAM_ALPHA);
     $formula  = optional_param('formula',   '', PARAM_RAW_TRIMMED);
     $formula1 = optional_param('formula_1', '', PARAM_RAW_TRIMMED);
@@ -154,8 +216,23 @@ $cur_expequiv  = $prevpayload['config']['expected_equivalent']   ?? true;
 $cur_expclass  = $prevpayload['config']['expected_class']        ?? 'tautology';
 $cur_reqjust   = $prevpayload['config']['require_table_justification'] ?? false;
 
+// C1: AFD authoring prefill.
+$cur_tool       = $prevpayload['tool'] ?? 'truth_table';
+$cur_afd_prompt = $prevpayload['config']['prompt'] ?? '';
+$cur_afd_alpha  = isset($prevpayload['config']['alphabet'])
+    ? implode(' ', $prevpayload['config']['alphabet'])
+    : 'a b';
+$cur_afd_words  = '';
+if (($prevpayload['tool'] ?? '') === 'afd' && !empty($prevpayload['config']['test_words'])) {
+    $lines = [];
+    foreach ($prevpayload['config']['test_words'] as $tw) {
+        $lines[] = (!empty($tw['accept']) ? 'accept' : 'reject') . ':' . ($tw['word'] ?? '');
+    }
+    $cur_afd_words = implode("\n", $lines);
+}
+
 echo $OUTPUT->header();
-echo $OUTPUT->heading('Edit truth_table problem — ' . format_string($instance->name));
+echo $OUTPUT->heading('Edit problem — ' . format_string($instance->name));
 
 if ($error) {
     echo $OUTPUT->notification($error, \core\output\notification::NOTIFY_ERROR);
@@ -179,14 +256,28 @@ $checked = function(bool $b): string {
 $cur_formula_safe  = s($cur_formula);
 $cur_formula1_safe = s($cur_formula1);
 $cur_formula2_safe = s($cur_formula2);
+$cur_afd_prompt_safe = s($cur_afd_prompt);
+$cur_afd_alpha_safe  = s($cur_afd_alpha);
+$cur_afd_words_safe  = s($cur_afd_words);
 
 echo <<<HTML
 <form method="post" action="">
     <input type="hidden" name="sesskey" value="{$sesskey}">
 
     <div class="form-group">
+        <label for="tool"><strong>Tool</strong></label>
+        <select name="tool" id="tool" class="form-control">
+HTML;
+echo $selopt('truth_table', $cur_tool, 'Truth table (logic)');
+echo $selopt('afd',         $cur_tool, 'AFD — finite automaton');
+echo <<<HTML
+        </select>
+    </div>
+
+    <div class="mod-graphitoubb-tool-section" data-tool="truth_table">
+    <div class="form-group">
         <label for="exercise_type"><strong>Exercise type</strong></label>
-        <select name="exercise_type" id="exercise_type" class="form-control" onchange="this.form.submit()">
+        <select name="exercise_type" id="exercise_type" class="form-control">
 HTML;
 echo $selopt('complete',    $selected_type, 'Complete table');
 echo $selopt('equivalence', $selected_type, 'Equivalence (two formulas)');
@@ -195,8 +286,25 @@ echo <<<HTML
         </select>
     </div>
 
-    <div class="form-group">
-        <label for="formula"><strong>Formula</strong> (single, for complete & classify)</label>
+    <details class="mod-graphitoubb-syntax-help card card-body mb-3">
+        <summary><strong>Formula syntax help</strong></summary>
+        <table class="table table-sm mt-2 mb-0">
+            <thead><tr><th>Operator</th><th>Symbol</th><th>ASCII</th><th>Example</th></tr></thead>
+            <tbody>
+                <tr><td>Negation</td><td>¬</td><td><code>~</code> <code>!</code></td><td><code>~A</code> → ¬A</td></tr>
+                <tr><td>Conjunction</td><td>∧</td><td><code>&amp;</code> <code>/\\</code></td><td><code>A &amp; B</code> → A ∧ B</td></tr>
+                <tr><td>Disjunction</td><td>∨</td><td><code>|</code> <code>\\/</code></td><td><code>A | B</code> → A ∨ B</td></tr>
+                <tr><td>Exclusive or</td><td>⊕</td><td>—</td><td><code>A ⊕ B</code></td></tr>
+                <tr><td>Implication</td><td>→</td><td><code>-&gt;</code></td><td><code>A -&gt; B</code> → A → B</td></tr>
+                <tr><td>Biconditional</td><td>↔</td><td><code>&lt;-&gt;</code></td><td><code>A &lt;-&gt; B</code> → A ↔ B</td></tr>
+                <tr><td>True / False</td><td>⊤ / ⊥</td><td>—</td><td><code>⊤</code>, <code>⊥</code></td></tr>
+            </tbody>
+        </table>
+        <small class="form-text text-muted">Variables are single uppercase letters (A–Z). Use parentheses to group.</small>
+    </details>
+
+    <div class="form-group mod-graphitoubb-field-group" data-types="complete classify">
+        <label for="formula"><strong>Formula</strong> (single, for complete &amp; classify)</label>
         <input type="text" name="formula" id="formula" class="form-control"
                value="{$cur_formula_safe}"
                placeholder="A ∧ B  (or use ASCII: A & B, A | B, ~A, A -> B, A &lt;-&gt; B)">
@@ -205,18 +313,18 @@ echo <<<HTML
         </small>
     </div>
 
-    <div class="form-group">
+    <div class="form-group mod-graphitoubb-field-group" data-types="equivalence">
         <label for="formula_1"><strong>Formula 1</strong> (equivalence only)</label>
         <input type="text" name="formula_1" id="formula_1" class="form-control"
                value="{$cur_formula1_safe}" placeholder="A → B">
     </div>
-    <div class="form-group">
+    <div class="form-group mod-graphitoubb-field-group" data-types="equivalence">
         <label for="formula_2"><strong>Formula 2</strong> (equivalence only)</label>
         <input type="text" name="formula_2" id="formula_2" class="form-control"
                value="{$cur_formula2_safe}" placeholder="¬A ∨ B">
     </div>
 
-    <div class="form-group">
+    <div class="form-group mod-graphitoubb-field-group" data-types="equivalence">
         <label><strong>Expected equivalent</strong> (equivalence only)</label>
         <select name="expected_equivalent" class="form-control">
 HTML;
@@ -226,7 +334,7 @@ echo <<<HTML
         </select>
     </div>
 
-    <div class="form-group">
+    <div class="form-group mod-graphitoubb-field-group" data-types="classify">
         <label><strong>Expected class</strong> (classify only)</label>
         <select name="expected_class" class="form-control">
 HTML;
@@ -238,13 +346,39 @@ echo <<<HTML
         </select>
     </div>
 
-    <div class="form-check">
+    <div class="form-check mod-graphitoubb-field-group" data-types="equivalence classify">
         <input type="checkbox" name="require_table_justification" value="1"
                id="reqjust" class="form-check-input"{$reqjust_attr}>
         <label class="form-check-label" for="reqjust">
             Require table justification (equivalence / classify)
         </label>
     </div>
+    </div><!-- /truth_table tool section -->
+
+    <div class="mod-graphitoubb-tool-section" data-tool="afd">
+        <div class="form-group">
+            <label for="afd_prompt"><strong>Prompt (consigna)</strong></label>
+            <textarea name="afd_prompt" id="afd_prompt" class="form-control" rows="3"
+                      placeholder="Build a DFA over {a, b} that accepts exactly the words containing at least one 'a'.">{$cur_afd_prompt_safe}</textarea>
+            <small class="form-text text-muted">Shown to the student above the editor.</small>
+        </div>
+        <div class="form-group">
+            <label for="afd_alphabet"><strong>Alphabet</strong></label>
+            <input type="text" name="afd_alphabet" id="afd_alphabet" class="form-control"
+                   value="{$cur_afd_alpha_safe}" placeholder="a b">
+            <small class="form-text text-muted">Single alphanumeric symbols, separated by spaces or commas.</small>
+        </div>
+        <div class="form-group">
+            <label for="afd_test_words"><strong>Test words</strong> (one per line)</label>
+            <textarea name="afd_test_words" id="afd_test_words" class="form-control" rows="6"
+                      placeholder="accept:a&#10;accept:aa&#10;accept:ba&#10;reject:&#10;reject:b">{$cur_afd_words_safe}</textarea>
+            <small class="form-text text-muted">
+                Format <code>verdict:word</code> — e.g. <code>accept:aa</code>, <code>reject:b</code>,
+                <code>accept:</code> (empty word ε). Verdicts: accept / reject (also + / -). These are
+                hidden from students and used to grade the automaton on submission.
+            </small>
+        </div>
+    </div><!-- /afd tool section -->
 
     <div class="mt-3">
         <button type="submit" class="btn btn-primary">Save problem</button>
@@ -252,5 +386,39 @@ echo <<<HTML
     </div>
 </form>
 HTML;
+
+// C3: show/hide the type-specific fields client-side instead of reloading the
+// whole form on change (the old onchange="this.form.submit()" lost typed input).
+$PAGE->requires->js_amd_inline(<<<'JS'
+require([], function() {
+    var toolSel = document.getElementById('tool');
+    var typeSel = document.getElementById('exercise_type');
+
+    var toggleTool = function() {
+        var t = toolSel ? toolSel.value : 'truth_table';
+        document.querySelectorAll('.mod-graphitoubb-tool-section').forEach(function(s) {
+            s.style.display = (s.getAttribute('data-tool') === t) ? '' : 'none';
+        });
+    };
+    var toggleType = function() {
+        if (!typeSel) {
+            return;
+        }
+        var t = typeSel.value;
+        document.querySelectorAll('.mod-graphitoubb-field-group').forEach(function(g) {
+            var types = (g.getAttribute('data-types') || '').split(' ');
+            g.style.display = (types.indexOf(t) !== -1) ? '' : 'none';
+        });
+    };
+    if (toolSel) {
+        toolSel.addEventListener('change', toggleTool);
+    }
+    if (typeSel) {
+        typeSel.addEventListener('change', toggleType);
+    }
+    toggleTool();
+    toggleType();
+});
+JS);
 
 echo $OUTPUT->footer();

@@ -33,10 +33,46 @@ define([
     'core/notification',
     'mod_graphitoubb/save_indicator',
     'core/str',
-], function(CytoscapeFactory, SnapshotController, Repository, Toolbar, AlphabetUI, AfdSimulator, AfdAdapter, Notification, SaveIndicator, Str) {
+    'core/modal_save_cancel',
+    'core/modal_events',
+], function(CytoscapeFactory, SnapshotController, Repository, Toolbar, AlphabetUI, AfdSimulator, AfdAdapter, Notification, SaveIndicator, Str, ModalSaveCancel, ModalEvents) {
 
     /** Source node id stored between the two clicks of the add-transition flow. */
     var pendingTransitionSource = null;
+
+    /**
+     * Module-level cache of localised UI strings. Populated by loadStrings()
+     * during init(); handlers read from it with English fallbacks so the editor
+     * never blocks on the async string fetch.
+     */
+    var _str = {};
+
+    /** Keys prefetched into _str (mod_graphitoubb component). */
+    var STRING_KEYS = [
+        'mode_hint_idle', 'mode_hint_adding_state', 'mode_hint_adding_transition_source',
+        'mode_hint_adding_transition_target', 'mode_hint_setting_start',
+        'mode_hint_toggling_final', 'mode_hint_deleting', 'transition_symbol_prompt',
+        'run_hint_needs_start', 'run_hint_needs_alphabet', 'run_hint_ready',
+        'run_disabled_title', 'sim_accepted', 'sim_rejected', 'word_empty',
+    ];
+
+    /**
+     * Prefetch the editor UI strings into _str. Resolves even on failure.
+     *
+     * @return {Promise}
+     */
+    var loadStrings = function() {
+        return Str.get_strings(STRING_KEYS.map(function(key) {
+            return {key: key, component: 'mod_graphitoubb'};
+        })).then(function(values) {
+            STRING_KEYS.forEach(function(key, i) {
+                _str[key] = values[i];
+            });
+            return _str;
+        }).catch(function() {
+            return _str;
+        });
+    };
 
     /**
      * Fetch a translated string and show a Moodle notification.
@@ -51,6 +87,33 @@ define([
                 Notification.addNotification({message: msg, type: type});
                 return;
             });
+    };
+
+    /**
+     * Show a Moodle save/cancel confirmation modal (no native confirm/prompt).
+     *
+     * @param {string} titleKey   Lang key for the modal title.
+     * @param {string} bodyKey    Lang key for the body.
+     * @param {string} confirmKey Lang key for the confirm (save) button.
+     * @param {*} bodyParam       Optional {$a} for the body string.
+     * @param {function} onConfirm Callback run when the user confirms.
+     */
+    var confirmModal = function(titleKey, bodyKey, confirmKey, bodyParam, onConfirm) {
+        Str.get_strings([
+            {key: titleKey, component: 'mod_graphitoubb'},
+            {key: bodyKey, component: 'mod_graphitoubb', param: bodyParam},
+            {key: confirmKey, component: 'mod_graphitoubb'},
+        ]).then(function(s) {
+            return ModalSaveCancel.create({title: s[0], body: s[1]}).then(function(modal) {
+                modal.setSaveButtonText(s[2]);
+                modal.getRoot().on(ModalEvents.save, onConfirm);
+                modal.getRoot().on(ModalEvents.hidden, function() {
+                    modal.destroy();
+                });
+                modal.show();
+                return modal;
+            });
+        }).catch(Notification.exception);
     };
 
     /**
@@ -188,7 +251,8 @@ define([
             return;
         }
 
-        var symbol = window.prompt('Símbolo de transición (1 carácter alfanumérico):');
+        var symbol = window.prompt(_str.transition_symbol_prompt
+            || 'Transition symbol (1 alphanumeric character):');
         if (symbol === null) {
             Toolbar.setMode('idle');
             return;
@@ -278,6 +342,45 @@ define([
     };
 
     /**
+     * A12: delete an element, confirming first when removing a state that still
+     * has connected transitions (which would be silently destroyed too).
+     *
+     * @param {object} cy
+     * @param {object} element Cytoscape node or edge.
+     */
+    var confirmAndDelete = function(cy, element) {
+        var edgeCount = (element.isNode && element.isNode())
+            ? element.connectedEdges().length
+            : 0;
+        if (edgeCount === 0) {
+            handleDelete(cy, element);
+            return;
+        }
+        confirmModal('delete_confirm_title', 'delete_confirm_body', 'delete_confirm_button',
+            edgeCount, function() {
+                handleDelete(cy, element);
+            });
+    };
+
+    /**
+     * A12: clear the whole automaton (states, transitions, alphabet) after
+     * confirmation. Alphabet symbols are removable once their edges are gone.
+     *
+     * @param {object} cy
+     */
+    var resetAutomaton = function(cy) {
+        confirmModal('reset_automaton_title', 'reset_automaton_body', 'reset_automaton_confirm',
+            undefined, function() {
+                cy.elements().remove();
+                AlphabetUI.getAlphabet().slice().forEach(function(sym) {
+                    AlphabetUI.removeSymbol(sym);
+                });
+                cy.scratch('alphabet', []);
+                Toolbar.setMode('idle');
+            });
+    };
+
+    /**
      * Prepend a word result entry to the wordbank list panel.
      *
      * Removes the empty-state placeholder on first entry.
@@ -298,10 +401,47 @@ define([
         }
         var li = document.createElement('li');
         li.className = accepted ? 'accepted' : 'rejected';
-        li.textContent = (accepted ? '\u2713 ' : '\u2717 ') + word;
+        var shown = word === '' ? (_str.word_empty || '\u03b5 (empty)') : word;
+        li.textContent = (accepted ? '\u2713 ' : '\u2717 ') + shown;
         list.insertBefore(li, list.firstChild);
         while (list.children.length > 50) {
             list.removeChild(list.lastChild);
+        }
+    };
+
+    /**
+     * A2: switch the editor into the read-only "finished/submitted" state —
+     * disable structural tools, the simulator, alphabet editing and the finish
+     * button, and flip the status badge to "Finished".
+     *
+     * @param {Element|null} editorRoot .mod-graphitoubb-editor element.
+     */
+    var applyFinishedState = function(editorRoot) {
+        if (!editorRoot) {
+            return;
+        }
+        editorRoot.setAttribute('data-finished', '1');
+        editorRoot.querySelectorAll('.mod-graphitoubb-tool-btn').forEach(function(b) {
+            b.disabled = true;
+        });
+        ['.mod-graphitoubb-run', '.mod-graphitoubb-alphabet-add',
+            '.mod-graphitoubb-alphabet-input', '[data-region="finish-btn"]',
+            '.mod-graphitoubb-reset-automaton-btn'].forEach(function(sel) {
+            var el = editorRoot.querySelector(sel);
+            if (el) {
+                el.disabled = true;
+            }
+        });
+        var badge = editorRoot.querySelector('[data-region="attempt-status"]');
+        if (badge) {
+            badge.classList.remove('badge-warning', 'bg-warning', 'text-dark');
+            badge.classList.add('badge-success', 'bg-success');
+            Str.get_string('status_finished', 'mod_graphitoubb').then(function(s) {
+                badge.textContent = s;
+                return;
+            }).catch(function() {
+                return;
+            });
         }
     };
 
@@ -349,6 +489,113 @@ define([
                     Toolbar.init(toolbarEl);
                 }
 
+                // A11: forward-declared so the cy change handler can call the live
+                // implementation once the simulator wiring (below) reassigns it.
+                var updateRunValidity = function() {};
+
+                // A5: contextual mode hint — reflects the active toolbar mode so
+                // the student always knows what the next click does.
+                var modeHintEl = editorRoot
+                    ? editorRoot.querySelector('.mod-graphitoubb-mode-hint')
+                    : null;
+                if (modeHintEl && editorRoot) {
+                    editorRoot.addEventListener('graphitoubb:modechange', function(evt) {
+                        var mode = (evt.detail && evt.detail.mode) || 'idle';
+                        var hint = _str['mode_hint_' + mode];
+                        if (hint) {
+                            modeHintEl.textContent = hint;
+                        }
+                    });
+                }
+
+                // A6: zoom / fit / reset controls. The wheel-zoom and drag-pan that
+                // Cytoscape already supports are otherwise undiscoverable.
+                var zoomControls = container.querySelector('.mod-graphitoubb-zoom-controls');
+                if (zoomControls) {
+                    zoomControls.addEventListener('click', function(e) {
+                        var btn = e.target.closest('.mod-graphitoubb-zoom-btn');
+                        if (!btn) {
+                            return;
+                        }
+                        var action = btn.dataset.zoom;
+                        var center = {x: cy.width() / 2, y: cy.height() / 2};
+                        if (action === 'in') {
+                            cy.zoom({level: cy.zoom() * 1.2, renderedPosition: center});
+                        } else if (action === 'out') {
+                            cy.zoom({level: cy.zoom() / 1.2, renderedPosition: center});
+                        } else if (action === 'fit') {
+                            if (cy.nodes().length) {
+                                cy.fit(cy.nodes(), 50);
+                            }
+                        } else if (action === 'reset') {
+                            cy.zoom(1);
+                            cy.center();
+                        }
+                    });
+                }
+
+                // A12: reset-automaton button (confirmed, no native dialog).
+                var resetBtn = editorRoot
+                    ? editorRoot.querySelector('.mod-graphitoubb-reset-automaton-btn')
+                    : null;
+                if (resetBtn) {
+                    resetBtn.addEventListener('click', function() {
+                        resetAutomaton(cy);
+                    });
+                }
+
+                // A2: finish/submit the attempt with a confirmation modal, then
+                // lock the editor and surface a success toast.
+                var doFinish = function() {
+                    Repository.finishAttempt(attemptid).then(function(result) {
+                        applyFinishedState(editorRoot);
+                        // C1: when the AFD exercise is graded, surface the score.
+                        if (result && result.graded) {
+                            if (result.invalid) {
+                                return Str.get_string('afd_result_invalid', 'mod_graphitoubb');
+                            }
+                            return Str.get_string('afd_finish_graded_toast', 'mod_graphitoubb',
+                                {correct: result.words_correct, total: result.words_total});
+                        }
+                        return Str.get_string('afd_finish_success', 'mod_graphitoubb');
+                    }).then(function(msg) {
+                        Notification.addNotification({message: msg, type: 'success'});
+                        return;
+                    }).catch(function() {
+                        Str.get_string('afd_finish_error', 'mod_graphitoubb').then(function(msg) {
+                            Notification.addNotification({message: msg, type: 'error'});
+                            return;
+                        });
+                    });
+                };
+
+                var finishBtn = editorRoot
+                    ? editorRoot.querySelector('[data-region="finish-btn"]')
+                    : null;
+                if (editorRoot && editorRoot.getAttribute('data-finished') === '1') {
+                    applyFinishedState(editorRoot);
+                } else if (finishBtn) {
+                    finishBtn.addEventListener('click', function() {
+                        Str.get_strings([
+                            {key: 'afd_finish_title', component: 'mod_graphitoubb'},
+                            {key: 'afd_finish_body', component: 'mod_graphitoubb'},
+                            {key: 'afd_finish_confirm', component: 'mod_graphitoubb'},
+                        ]).then(function(s) {
+                            return ModalSaveCancel.create({title: s[0], body: s[1]}).then(function(modal) {
+                                modal.setSaveButtonText(s[2]);
+                                modal.getRoot().on(ModalEvents.save, function() {
+                                    doFinish();
+                                });
+                                modal.getRoot().on(ModalEvents.hidden, function() {
+                                    modal.destroy();
+                                });
+                                modal.show();
+                                return modal;
+                            });
+                        }).catch(Notification.exception);
+                    });
+                }
+
                 // S13: wire save indicator and give snapshot_controller the dispatch target.
                 SnapshotController.init(editorRoot || null);
                 var indicatorEl = editorRoot
@@ -362,6 +609,7 @@ define([
                     cy,
                     function() {
                         SnapshotController.onchange(attemptid, extractCanonical(cy), schemaversion);
+                        updateRunValidity();
                     }
                 );
 
@@ -378,6 +626,43 @@ define([
                 if (simPanel) {
                     var runBtn = simPanel.querySelector('.mod-graphitoubb-run');
                     var inputEl = simPanel.querySelector('#graphitoubb-simulator-input');
+                    var runHintEl = simPanel.querySelector('.mod-graphitoubb-run-hint');
+                    var traceEl = simPanel.querySelector('.mod-graphitoubb-trace');
+
+                    // A11: disable Run until the automaton can actually run, with an
+                    // explicit reason instead of a generic toast after the fact.
+                    updateRunValidity = function() {
+                        if (!runBtn) {
+                            return;
+                        }
+                        var hasStart = cy.nodes().some(function(n) {
+                            return !!n.data('start');
+                        });
+                        var alpha = AlphabetUI.getAlphabet() || [];
+                        var hasAlphabet = alpha.length > 0;
+                        var ready = hasStart && hasAlphabet;
+
+                        runBtn.disabled = !ready;
+                        if (ready) {
+                            runBtn.removeAttribute('title');
+                        } else {
+                            runBtn.title = _str.run_disabled_title || '';
+                        }
+
+                        if (runHintEl) {
+                            var msg;
+                            if (!hasStart) {
+                                msg = _str.run_hint_needs_start;
+                            } else if (!hasAlphabet) {
+                                msg = _str.run_hint_needs_alphabet;
+                            } else {
+                                msg = _str.run_hint_ready;
+                            }
+                            runHintEl.textContent = msg || '';
+                            runHintEl.classList.toggle('text-danger', !ready);
+                            runHintEl.classList.toggle('text-muted', ready);
+                        }
+                    };
 
                     if (runBtn && inputEl) {
                         runBtn.addEventListener('click', function() {
@@ -405,6 +690,16 @@ define([
 
                             // afd_simulator.run() returns {accepted, trace} — trace is string[].
                             var result = AfdSimulator.run(afdSim, word);
+
+                            // E2: multimodal verdict (icon + text), not colour alone.
+                            if (traceEl) {
+                                var verdict = result.accepted
+                                    ? (_str.sim_accepted || 'Accepted')
+                                    : (_str.sim_rejected || 'Rejected');
+                                traceEl.textContent = (result.accepted ? '✓ ' : '✗ ') + verdict;
+                                traceEl.classList.remove('trace-accept', 'trace-reject');
+                                traceEl.classList.add(result.accepted ? 'trace-accept' : 'trace-reject');
+                            }
 
                             // S14: surface rejection reason as a toast.
                             if (!result.accepted) {
@@ -446,6 +741,7 @@ define([
 
                 cy.on('add remove data', function() {
                     SnapshotController.onchange(attemptid, extractCanonical(cy), schemaversion);
+                    updateRunValidity();
                 });
 
                 cy.on('tap', function(evt) {
@@ -482,10 +778,23 @@ define([
                             break;
                         case 'deleting':
                             if (isNode || (!isCanvas && typeof target.isEdge === 'function' && target.isEdge())) {
-                                handleDelete(cy, target);
+                                confirmAndDelete(cy, target);
                             }
                             break;
                     }
+                });
+
+                // Initial validity (button disabled state needs no strings), then
+                // refresh hints once the localised strings have loaded.
+                updateRunValidity();
+                loadStrings().then(function() {
+                    if (modeHintEl && Toolbar.getMode() === 'idle') {
+                        modeHintEl.textContent = _str.mode_hint_idle || modeHintEl.textContent;
+                    }
+                    updateRunValidity();
+                    return;
+                }).catch(function() {
+                    return;
                 });
 
                 return cy;

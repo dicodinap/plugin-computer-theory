@@ -1,0 +1,16 @@
+{{!
+    AFD task prompt (consigna) shown above the student editor.
+
+    Context: {prompt (string), alphabet (string, comma-joined)}
+
+    @template mod_graphitoubb/afd_consigna
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-consigna card card-body mb-3">
+    <h3 class="h5">{{#str}}afd_consigna_title, mod_graphitoubb{{/str}}</h3>
+    <p class="mod-graphitoubb-consigna-prompt mb-2">{{prompt}}</p>
+    <p class="text-muted mb-0">
+        <strong>{{#str}}alphabet_label, mod_graphitoubb{{/str}}</strong> {{alphabet}}
+    </p>
+</div>

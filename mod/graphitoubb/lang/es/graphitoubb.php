@@ -83,6 +83,96 @@ $string['viewreport'] = 'Ver informe';
 $string['warn_logword_failed'] = 'Error al registrar la palabra. Revisa tu conexión.';
 $string['wordbank_empty'] = 'Ninguna palabra probada todavía.';
 
+// Mejoras UX/UI — editor AFD + panel docente.
+$string['save_indicator_saving'] = 'Guardando…';
+$string['save_indicator_saved'] = 'Guardado ✓';
+$string['save_indicator_error'] = 'Error al guardar ✕';
+$string['mode_hint_idle'] = 'Elige una herramienta para empezar a construir tu autómata.';
+$string['mode_hint_adding_state'] = 'Haz clic en el lienzo para colocar un nuevo estado.';
+$string['mode_hint_adding_transition_source'] = 'Haz clic en el estado de origen de la transición.';
+$string['mode_hint_adding_transition_target'] = 'Ahora haz clic en el estado de destino.';
+$string['mode_hint_setting_start'] = 'Haz clic en el estado que será el estado inicial.';
+$string['mode_hint_toggling_final'] = 'Haz clic en un estado para marcarlo como final (de aceptación).';
+$string['mode_hint_deleting'] = 'Haz clic en un estado o transición para eliminarlo.';
+$string['transition_symbol_prompt'] = 'Símbolo de transición (1 carácter alfanumérico):';
+$string['zoom_in'] = 'Acercar';
+$string['zoom_out'] = 'Alejar';
+$string['zoom_fit'] = 'Ajustar autómata a la vista';
+$string['zoom_reset'] = 'Restablecer zoom (100%)';
+$string['legend_title'] = 'Leyenda';
+$string['legend_start'] = 'Estado inicial (borde azul)';
+$string['legend_final'] = 'Estado final (doble anillo)';
+$string['legend_visited'] = 'Visitado durante la simulación';
+$string['run_hint_needs_start'] = 'Define un estado inicial para ejecutar el simulador.';
+$string['run_hint_needs_alphabet'] = 'Agrega al menos un símbolo al alfabeto para ejecutar el simulador.';
+$string['run_hint_ready'] = 'Listo — escribe una palabra y ejecuta el simulador.';
+$string['run_disabled_title'] = 'El autómata aún no está listo para ejecutarse.';
+$string['sim_accepted'] = 'Aceptada';
+$string['sim_rejected'] = 'Rechazada';
+$string['word_empty'] = 'ε (vacía)';
+$string['reset_modal_title'] = 'Reiniciar intentos del estudiante';
+$string['reset_modal_body'] = '¿Reiniciar todos los intentos de {$a}? Esto elimina permanentemente sus capturas, palabras probadas y envíos en esta actividad. No se puede deshacer.';
+$string['reset_confirm_button'] = 'Reiniciar intentos';
+$string['reset_success'] = 'Intentos reiniciados para {$a}.';
+$string['reset_error'] = 'No se pudieron reiniciar los intentos. Inténtalo de nuevo.';
+$string['submit_grading'] = 'Corrigiendo…';
+
+// Sweep i18n (§7.1) — editor de tabla de verdad, feedback, modal de conflicto, parser, panel.
+$string['helpers_label'] = 'Operadores lógicos';
+$string['op_negation'] = 'Negación ¬';
+$string['op_conjunction'] = 'Conjunción ∧';
+$string['op_disjunction'] = 'Disyunción ∨';
+$string['op_implication'] = 'Implicación →';
+$string['op_biconditional'] = 'Bicondicional ↔';
+$string['op_xor'] = 'Disyunción exclusiva ⊕';
+$string['op_true'] = 'Verdad ⊤';
+$string['op_false'] = 'Falsedad ⊥';
+$string['cell_aria'] = 'Fila {$a->row}, columna {$a->col}';
+$string['radio_equivalence_legend'] = '¿Son lógicamente equivalentes?';
+$string['radio_classify_legend'] = 'Clasificación de la fórmula';
+$string['radio_yes'] = 'Sí';
+$string['radio_no'] = 'No';
+$string['class_tautology'] = 'Tautología';
+$string['class_contradiction'] = 'Contradicción';
+$string['class_contingency'] = 'Contingencia';
+$string['feedback_location'] = 'Fila {$a}';
+$string['feedback_submitted'] = 'enviado';
+$string['feedback_expected'] = 'esperado';
+$string['conflict_server_version'] = 'Versión del servidor: {$a}';
+$string['conflict_your_version'] = 'Tu versión: {$a}';
+$string['parse_unexpected_char'] = 'Carácter inesperado "{$a->ch}" en la posición {$a->pos}.';
+$string['parse_expected_token'] = 'Se esperaba {$a->type} en la posición {$a->pos}, se encontró "{$a->val}".';
+$string['parse_expected_operand'] = 'Se esperaba una variable, constante o "(" en la posición {$a->pos}, se encontró "{$a->val}".';
+$string['parse_incomplete'] = 'Fórmula incompleta: carácter inesperado en la posición {$a}.';
+$string['panel_row'] = 'Fila';
+$string['panel_no_data'] = 'sin datos';
+$string['panel_students_soon'] = '(Lista de alumnos disponible próximamente)';
+
+// Entrega del AFD / finalizar intento (A2).
+$string['afd_status_label'] = 'Estado:';
+$string['afd_finish_button'] = 'Marcar como terminado';
+$string['afd_finish_title'] = '¿Entregar tu autómata?';
+$string['afd_finish_body'] = 'Una vez entregado no podrás editar este autómata.';
+$string['afd_finish_confirm'] = 'Entregar';
+$string['afd_finish_success'] = 'Autómata entregado.';
+$string['afd_finish_error'] = 'No se pudo entregar. Inténtalo de nuevo.';
+
+// Confirmaciones de acciones destructivas del AFD (A12 / G1).
+$string['delete_confirm_title'] = '¿Eliminar estado?';
+$string['delete_confirm_body'] = 'Este estado tiene {$a} transición(es) conectada(s). Al eliminarlo también se eliminarán.';
+$string['delete_confirm_button'] = 'Eliminar';
+$string['reset_automaton_button'] = 'Reiniciar autómata';
+$string['reset_automaton_title'] = '¿Reiniciar el autómata?';
+$string['reset_automaton_body'] = 'Esto elimina todos los estados, transiciones y símbolos del alfabeto. No se puede deshacer.';
+$string['reset_automaton_confirm'] = 'Reiniciar';
+
+// Autoría + calificación de AFD (C1).
+$string['afd_consigna_title'] = 'Tu tarea';
+$string['afd_result_score'] = 'Puntaje: {$a->correct}/{$a->total} palabras de prueba correctas ({$a->pct}%)';
+$string['afd_result_passed'] = 'Aprobado';
+$string['afd_result_invalid'] = 'No se pudo calificar tu autómata — asegúrate de definir un estado inicial.';
+$string['afd_finish_graded_toast'] = 'Entregado — {$a->correct}/{$a->total} palabras de prueba correctas.';
+
 // Cadenas iter1 — tabla de verdad.
 $string['truth_table_editor_label'] = 'Editor de tabla de verdad';
 $string['formula_label'] = 'Fórmula:';
@@ -198,6 +288,14 @@ $string['export_json']                   = 'JSON';
 $string['export_pdf']                    = 'PDF';
 $string['export_button']                 = 'Descargar exportación';
 $string['error_loading_panel']           = 'Error al cargar los datos del panel. Actualiza la página e intenta de nuevo.';
+$string['panel_hist_title']              = 'Distribución de notas';
+$string['panel_hist_range']              = 'Rango';
+$string['panel_hist_count']              = 'Cantidad';
+$string['panel_drawer_score']            = 'Nota';
+$string['panel_drawer_attempts']         = 'Intentos';
+$string['panel_drawer_time']             = 'Tiempo';
+$string['panel_drawer_status']           = 'Estado';
+$string['panel_drawer_draft']            = 'Borrador';
 
 $string['privacy:metadata:graphitoubb_grade_cache'] = 'Calificación agregada en caché por intento de estudiante tras aplicar la política de calificación.';
 $string['privacy:metadata:graphitoubb_grade_cache:attemptid'] = 'Intento cuya calificación está en caché.';

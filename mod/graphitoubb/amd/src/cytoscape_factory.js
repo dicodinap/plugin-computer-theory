@@ -68,9 +68,19 @@ define(['mod_graphitoubb/cytoscape'], function(cytoscape) {
             });
         });
 
-        return cytoscape({
+        // Only run the force-directed layout when there is something to lay out.
+        // For a fresh (empty) automaton, `cose` with the default `fit: true` would
+        // zoom the empty viewport to an extreme factor, leaving the first states a
+        // student adds huge and overlapping. A preset/no-op layout keeps zoom at 1.
+        var hasElements = elements.length > 0;
+
+        var cy = cytoscape({
             container: container,
             elements: elements,
+            // Clamp zoom so auto-fit (on a saved automaton with few nodes) never
+            // overshoots into an unusable 2-3x zoom.
+            minZoom: 0.3,
+            maxZoom: 1.5,
             style: [
                 {
                     selector: 'node',
@@ -111,8 +121,30 @@ define(['mod_graphitoubb/cytoscape'], function(cytoscape) {
                     },
                 },
             ],
-            layout: {name: 'cose'},
+            layout: hasElements
+                ? {
+                    name: 'cose',
+                    fit: true,
+                    padding: 60,
+                    animate: false,
+                    // Spread states apart so they do not pile up / overlap.
+                    idealEdgeLength: 90,
+                    nodeRepulsion: 9000,
+                    nodeOverlap: 24,
+                }
+                : {name: 'preset'},
         });
+
+        // Belt-and-braces: after the initial layout settles, guarantee a usable
+        // viewport even if a saved automaton fit pushed zoom to the clamp ceiling.
+        cy.ready(function() {
+            if (!isFinite(cy.zoom()) || cy.zoom() <= 0) {
+                cy.zoom(1);
+                cy.center();
+            }
+        });
+
+        return cy;
     };
 
     return {

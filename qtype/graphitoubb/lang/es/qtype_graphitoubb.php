@@ -74,3 +74,10 @@ $string['privacy:metadata:qtype_graphitoubb_options'] = 'Almacena el payload del
 $string['err_missing_formula']    = 'Debe proporcionar al menos una fórmula para este tipo de ejercicio.';
 $string['err_schema_validation']  = 'El payload del problema no pasó la validación de esquema: {$a}';
 $string['err_internal']           = 'Ocurrió un error interno al guardar la pregunta. Por favor, inténtelo de nuevo.';
+
+// Resumen de respuesta (sweep i18n §7.1).
+$string['summary_equivalence'] = 'Equivalencia: {$a}';
+$string['summary_classify']    = 'Clasificación: {$a}';
+$string['summary_complete']    = 'Tabla de verdad enviada con {$a} filas';
+$string['summary_rows']        = ' ({$a} filas)';
+$string['summary_no_answer']   = '(sin respuesta)';

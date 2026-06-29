@@ -62,7 +62,9 @@ define([], function() {
 
         if (toolbarEl) {
             toolbarEl.querySelectorAll('.mod-graphitoubb-tool-btn').forEach(function(btn) {
-                btn.classList.toggle('active', btn.dataset.mode === mode);
+                var isActive = btn.dataset.mode === mode;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             });
 
             toolbarEl.dispatchEvent(new CustomEvent('graphitoubb:modechange', {

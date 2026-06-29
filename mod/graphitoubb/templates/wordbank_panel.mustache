@@ -12,7 +12,7 @@
     <ul class="mod-graphitoubb-wordbank-list">
         {{#words}}
         <li class="{{#accepted}}accepted{{/accepted}}{{^accepted}}rejected{{/accepted}}">
-            {{word}}
+            {{#accepted}}&#x2713;{{/accepted}}{{^accepted}}&#x2717;{{/accepted}} {{word}}
         </li>
         {{/words}}
         {{^words}}

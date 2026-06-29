@@ -92,19 +92,27 @@ class qtype_graphitoubb_question extends question_graded_automatically {
         $rows = $data['table']['rows'] ?? [];
         $row_count = count($rows);
 
+        $rows_suffix = $row_count > 0
+            ? get_string('summary_rows', 'qtype_graphitoubb', $row_count)
+            : '';
+
         switch ($this->exercise_type) {
             case 'equivalence':
                 $radio = $data['radio_answer'] ?? null;
-                $label = ($radio === true || $radio === 'true') ? 'Sí' : 'No';
-                return "Equivalencia: {$label}" . ($row_count > 0 ? " ({$row_count} filas)" : '');
+                $label = ($radio === true || $radio === 'true')
+                    ? get_string('yes')
+                    : get_string('no');
+                return get_string('summary_equivalence', 'qtype_graphitoubb', $label) . $rows_suffix;
 
             case 'classify':
                 $radio = $data['radio_answer'] ?? null;
-                $radio_str = is_string($radio) ? $radio : '(sin respuesta)';
-                return "Clasificación: {$radio_str}" . ($row_count > 0 ? " ({$row_count} filas)" : '');
+                $radio_str = is_string($radio)
+                    ? $radio
+                    : get_string('summary_no_answer', 'qtype_graphitoubb');
+                return get_string('summary_classify', 'qtype_graphitoubb', $radio_str) . $rows_suffix;
 
             default: // complete
-                return "Tabla de verdad enviada con {$row_count} filas";
+                return get_string('summary_complete', 'qtype_graphitoubb', $row_count);
         }
     }
 

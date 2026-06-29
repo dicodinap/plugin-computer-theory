@@ -49,23 +49,23 @@
     </div>
 
     {{! Helper buttons — Unicode operator palette }}
-    <div class="mod-graphitoubb-tte__helpers" role="toolbar" aria-label="Operadores lógicos">
+    <div class="mod-graphitoubb-tte__helpers" role="toolbar" aria-label="{{#str}}helpers_label, mod_graphitoubb{{/str}}">
         <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
-                data-symbol="¬" aria-label="Negación ¬">¬</button>
+                data-symbol="¬" aria-label="{{#str}}op_negation, mod_graphitoubb{{/str}}" title="{{#str}}op_negation, mod_graphitoubb{{/str}}">¬</button>
         <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
-                data-symbol="∧" aria-label="Conjunción ∧">∧</button>
+                data-symbol="∧" aria-label="{{#str}}op_conjunction, mod_graphitoubb{{/str}}" title="{{#str}}op_conjunction, mod_graphitoubb{{/str}}">∧</button>
         <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
-                data-symbol="∨" aria-label="Disyunción ∨">∨</button>
+                data-symbol="∨" aria-label="{{#str}}op_disjunction, mod_graphitoubb{{/str}}" title="{{#str}}op_disjunction, mod_graphitoubb{{/str}}">∨</button>
         <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
-                data-symbol="→" aria-label="Implicación →">→</button>
+                data-symbol="→" aria-label="{{#str}}op_implication, mod_graphitoubb{{/str}}" title="{{#str}}op_implication, mod_graphitoubb{{/str}}">→</button>
         <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
-                data-symbol="↔" aria-label="Bicondicional ↔">↔</button>
+                data-symbol="↔" aria-label="{{#str}}op_biconditional, mod_graphitoubb{{/str}}" title="{{#str}}op_biconditional, mod_graphitoubb{{/str}}">↔</button>
         <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
-                data-symbol="⊕" aria-label="XOR ⊕">⊕</button>
+                data-symbol="⊕" aria-label="{{#str}}op_xor, mod_graphitoubb{{/str}}" title="{{#str}}op_xor, mod_graphitoubb{{/str}}">⊕</button>
         <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
-                data-symbol="⊤" aria-label="Verdad ⊤">⊤</button>
+                data-symbol="⊤" aria-label="{{#str}}op_true, mod_graphitoubb{{/str}}" title="{{#str}}op_true, mod_graphitoubb{{/str}}">⊤</button>
         <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tte__helper"
-                data-symbol="⊥" aria-label="Falsedad ⊥">⊥</button>
+                data-symbol="⊥" aria-label="{{#str}}op_false, mod_graphitoubb{{/str}}" title="{{#str}}op_false, mod_graphitoubb{{/str}}">⊥</button>
     </div>
 
     {{! Truth table }}
@@ -90,7 +90,7 @@
                         <select class="form-control form-control-sm mod-graphitoubb-tte__cell-select"
                                 data-row="{{../index}}"
                                 data-col="{{col_index}}"
-                                aria-label="Fila {{../index}}, columna {{col_index}}"
+                                aria-label="{{aria_label}}"
                                 {{#../readonly}}disabled{{/../readonly}}>
                             <option value=""></option>
                             <option value="V" {{#v_selected}}selected{{/v_selected}}>V</option>

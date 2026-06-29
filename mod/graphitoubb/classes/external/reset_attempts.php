@@ -26,9 +26,11 @@ use core_external\external_value;
 /**
  * External function: reset attempts for a student (or all students) in an instance.
  *
- * Requires mod/graphitoubb:reattempt. Deletes graphitoubb_submission and
- * graphitoubb_grade_cache rows; resets attempt.status = 'inprogress',
- * attempt.timefinished = null, attempt.current_draft = null. Logs a
+ * Requires mod/graphitoubb:reattempt. Deletes graphitoubb_submission,
+ * graphitoubb_grade_cache, graphitoubb_snapshot and graphitoubb_wordbank_log
+ * rows (the latter two hold the AFD editor's automaton + tested words); resets
+ * attempt.status = 'inprogress', attempt.timefinished = null,
+ * attempt.current_draft = null. Logs a
  * mod_graphitoubb\event\attempt_started-style event for audit purposes.
  *
  * Design note: we keep the attempt row itself (so the user can re-use the
@@ -82,6 +84,12 @@ final class reset_attempts extends external_api {
             // 1. Delete submissions and grade cache — the data associated with the attempt.
             $DB->delete_records('graphitoubb_submission', ['attemptid' => $aid]);
             $DB->delete_records('graphitoubb_grade_cache', ['attemptid' => $aid]);
+
+            // 1b. Delete the student's actual work: AFD editor snapshots and wordbank log.
+            // Without this, resetting an AFD attempt leaves the student's automaton and
+            // tested words intact (they reappear on reload), making the reset a no-op for AFD.
+            $DB->delete_records('graphitoubb_snapshot', ['attemptid' => $aid]);
+            $DB->delete_records('graphitoubb_wordbank_log', ['attemptid' => $aid]);
 
             // 2. Reset attempt to inprogress (keep the attempt row for FK integrity with events).
             $DB->set_field('graphitoubb_attempt', 'status', 'inprogress', ['id' => $aid]);
