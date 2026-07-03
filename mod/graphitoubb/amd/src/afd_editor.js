@@ -54,6 +54,8 @@ define([
         'mode_hint_toggling_final', 'mode_hint_deleting', 'transition_symbol_prompt',
         'run_hint_needs_start', 'run_hint_needs_alphabet', 'run_hint_ready',
         'run_disabled_title', 'sim_accepted', 'sim_rejected', 'word_empty',
+        'toolbar_add_transition', 'rename_state_title', 'rename_state_label',
+        'trace_play', 'trace_pause', 'trace_step',
     ];
 
     /**
@@ -113,6 +115,58 @@ define([
                 modal.show();
                 return modal;
             });
+        }).catch(Notification.exception);
+    };
+
+    /**
+     * Minimal HTML-escape for values injected into a modal body.
+     *
+     * @param {string} s
+     * @return {string}
+     */
+    var escapeHtml = function(s) {
+        return String(s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    };
+
+    /**
+     * Show a Moodle modal containing a single text input (replaces window.prompt,
+     * completing G1). Calls onConfirm(value) when the user saves.
+     *
+     * @param {string} title    Resolved modal title.
+     * @param {string} label    Resolved input label.
+     * @param {string} initial  Initial input value.
+     * @param {number} maxlen   maxlength attribute (0 = none).
+     * @param {function} onConfirm Receives the trimmed input value.
+     */
+    var inputModal = function(title, label, initial, maxlen, onConfirm) {
+        var body = '<div class="form-group mb-0">'
+            + '<label class="mod-graphitoubb-input-modal-label">' + escapeHtml(label) + '</label>'
+            + '<input type="text" class="form-control mod-graphitoubb-input-modal-field" '
+            + 'value="' + escapeHtml(initial) + '"' + (maxlen ? ' maxlength="' + maxlen + '"' : '') + '>'
+            + '</div>';
+        ModalSaveCancel.create({title: title, body: body}).then(function(modal) {
+            var root = modal.getRoot();
+            var getField = function() {
+                return root[0].querySelector('.mod-graphitoubb-input-modal-field');
+            };
+            root.on(ModalEvents.save, function() {
+                var field = getField();
+                onConfirm(field ? field.value.trim() : '');
+            });
+            root.on(ModalEvents.shown, function() {
+                var field = getField();
+                if (field) {
+                    field.focus();
+                    field.select();
+                }
+            });
+            root.on(ModalEvents.hidden, function() {
+                modal.destroy();
+            });
+            modal.show();
+            return modal;
         }).catch(Notification.exception);
     };
 
@@ -206,19 +260,75 @@ define([
      * @param {Element|null} toolbarEl
      * @param {object} evt Cytoscape tap event.
      */
-    var handleAddState = function(cy, toolbarEl, evt) {
+    var addState = function(cy, toolbarEl, position) {
         if (cy.nodes().length >= bound(toolbarEl, 'maxStates', 64)) {
             notify('error', 'err_max_states', bound(toolbarEl, 'maxStates', 64));
-            Toolbar.setMode('idle');
-            return;
+            return null;
         }
         var id = nextStateId(cy);
         cy.add({
             group: 'nodes',
             data: {id: id, label: id, start: false, final: false},
-            position: evt.position,
+            position: position,
         });
+        return id;
+    };
+
+    var handleAddState = function(cy, toolbarEl, evt) {
+        addState(cy, toolbarEl, evt.position);
         Toolbar.setMode('idle');
+    };
+
+    /**
+     * Validate and create a transition edge (shared by the pointer modal flow and
+     * the keyboard form alternative, A14). Returns true on success.
+     *
+     * @param {object} cy
+     * @param {Element|null} toolbarEl
+     * @param {string} sourceId
+     * @param {string} targetId
+     * @param {string} rawSymbol
+     * @return {boolean}
+     */
+    var createTransition = function(cy, toolbarEl, sourceId, targetId, rawSymbol) {
+        var symbol = (rawSymbol || '').charAt(0);
+        if (!symbol || !/^[a-zA-Z0-9]$/.test(symbol)) {
+            return false;
+        }
+        if (!sourceId || !targetId || cy.$('#' + sourceId).length === 0 || cy.$('#' + targetId).length === 0) {
+            return false;
+        }
+        if (cy.edges().length >= bound(toolbarEl, 'maxTransitions', 512)) {
+            notify('error', 'err_max_transitions', bound(toolbarEl, 'maxTransitions', 512));
+            return false;
+        }
+        var currentAlphabet = AlphabetUI.getAlphabet();
+        var isNewSymbol = currentAlphabet.indexOf(symbol) === -1;
+        if (isNewSymbol && currentAlphabet.length >= bound(toolbarEl, 'maxAlphabet', 16)) {
+            notify('error', 'err_max_alphabet', bound(toolbarEl, 'maxAlphabet', 16));
+            return false;
+        }
+        var isDuplicate = cy.edges().some(function(e) {
+            return e.source().id() === sourceId && e.data('symbol') === symbol;
+        });
+        if (isDuplicate) {
+            notify('warning', 'err_duplicate_transition', sourceId + " → '" + symbol + "'");
+            return false;
+        }
+        if (isNewSymbol) {
+            AlphabetUI.addSymbol(symbol);
+        }
+        cy.add({
+            group: 'edges',
+            data: {
+                id: sourceId + '__' + symbol + '__' + targetId,
+                source: sourceId,
+                target: targetId,
+                symbol: symbol,
+                label: symbol,
+            },
+        });
+        return true;
     };
 
     /**
@@ -244,58 +354,19 @@ define([
     var handleTransitionTarget = function(cy, toolbarEl, targetNode) {
         var sourceId = pendingTransitionSource;
         pendingTransitionSource = null;
-
-        if (cy.edges().length >= bound(toolbarEl, 'maxTransitions', 512)) {
-            notify('error', 'err_max_transitions', bound(toolbarEl, 'maxTransitions', 512));
-            Toolbar.setMode('idle');
-            return;
-        }
-
-        var symbol = window.prompt(_str.transition_symbol_prompt
-            || 'Transition symbol (1 alphanumeric character):');
-        if (symbol === null) {
-            Toolbar.setMode('idle');
-            return;
-        }
-        symbol = symbol.trim().charAt(0);
-        if (!symbol || !/^[a-zA-Z0-9]$/.test(symbol)) {
-            Toolbar.setMode('idle');
-            return;
-        }
-
-        var currentAlphabet = AlphabetUI.getAlphabet();
-        var isNewSymbol = currentAlphabet.indexOf(symbol) === -1;
-        if (isNewSymbol && currentAlphabet.length >= bound(toolbarEl, 'maxAlphabet', 16)) {
-            notify('error', 'err_max_alphabet', bound(toolbarEl, 'maxAlphabet', 16));
-            Toolbar.setMode('idle');
-            return;
-        }
-
-        var isDuplicate = cy.edges().some(function(e) {
-            return e.source().id() === sourceId && e.data('symbol') === symbol;
-        });
-        if (isDuplicate) {
-            notify('warning', 'err_duplicate_transition', sourceId + " \u2192 '" + symbol + "'");
-            Toolbar.setMode('idle');
-            return;
-        }
-
-        if (isNewSymbol) {
-            AlphabetUI.addSymbol(symbol);
-        }
-
-        var targetId = targetNode.id();
-        cy.add({
-            group: 'edges',
-            data: {
-                id: sourceId + '__' + symbol + '__' + targetId,
-                source: sourceId,
-                target: targetId,
-                symbol: symbol,
-                label: symbol,
-            },
-        });
         Toolbar.setMode('idle');
+        var targetId = targetNode.id();
+
+        // A3/G1: collect the symbol via a Moodle modal input, not window.prompt.
+        inputModal(
+            _str.toolbar_add_transition || 'Add transition',
+            _str.transition_symbol_prompt || 'Transition symbol (1 alphanumeric character):',
+            '',
+            1,
+            function(value) {
+                createTransition(cy, toolbarEl, sourceId, targetId, value);
+            }
+        );
     };
 
     /**
@@ -426,12 +497,19 @@ define([
         });
         ['.mod-graphitoubb-run', '.mod-graphitoubb-alphabet-add',
             '.mod-graphitoubb-alphabet-input', '[data-region="finish-btn"]',
-            '.mod-graphitoubb-reset-automaton-btn'].forEach(function(sel) {
+            '.mod-graphitoubb-reset-automaton-btn', '.mod-graphitoubb-tidy-btn',
+            '.mod-graphitoubb-undo-btn', '.mod-graphitoubb-redo-btn'].forEach(function(sel) {
             var el = editorRoot.querySelector(sel);
             if (el) {
                 el.disabled = true;
             }
         });
+        // A14: lock the keyboard form alternative too.
+        editorRoot.querySelectorAll('.mod-graphitoubb-kbd-panel button, '
+            + '.mod-graphitoubb-kbd-panel select, .mod-graphitoubb-kbd-panel input')
+            .forEach(function(el) {
+                el.disabled = true;
+            });
         var badge = editorRoot.querySelector('[data-region="attempt-status"]');
         if (badge) {
             badge.classList.remove('badge-warning', 'bg-warning', 'text-dark');
@@ -493,6 +571,10 @@ define([
                 // implementation once the simulator wiring (below) reassigns it.
                 var updateRunValidity = function() {};
 
+                // A14: forward-declared; the keyboard panel reassigns it to repopulate
+                // its state/transition selects whenever the graph changes.
+                var refreshKbdSelects = function() {};
+
                 // A5: contextual mode hint — reflects the active toolbar mode so
                 // the student always knows what the next click does.
                 var modeHintEl = editorRoot
@@ -541,6 +623,26 @@ define([
                 if (resetBtn) {
                     resetBtn.addEventListener('click', function() {
                         resetAutomaton(cy);
+                    });
+                }
+
+                // A7: tidy / auto-arrange the graph on demand (cose layout).
+                var tidyBtn = editorRoot
+                    ? editorRoot.querySelector('.mod-graphitoubb-tidy-btn')
+                    : null;
+                if (tidyBtn) {
+                    tidyBtn.addEventListener('click', function() {
+                        if (cy.nodes().length) {
+                            cy.layout({
+                                name: 'cose',
+                                animate: true,
+                                padding: 60,
+                                idealEdgeLength: 90,
+                                nodeRepulsion: 9000,
+                                nodeOverlap: 24,
+                                fit: true,
+                            }).run();
+                        }
                     });
                 }
 
@@ -603,6 +705,113 @@ define([
                     : null;
                 SaveIndicator.init(indicatorEl, editorRoot || null);
 
+                // A4: undo/redo over graph + alphabet mutations. `onMutation` is
+                // referenced by the alphabet callback below (hoisted var) and the
+                // cy change handler; it debounces so one user action = one history entry.
+                var undoStack = [];
+                var redoStack = [];
+                var historyRestoring = false;
+                var lastState = null;
+                var mutationTimer = null;
+                var undoBtn = editorRoot ? editorRoot.querySelector('.mod-graphitoubb-undo-btn') : null;
+                var redoBtn = editorRoot ? editorRoot.querySelector('.mod-graphitoubb-redo-btn') : null;
+
+                var captureState = function() {
+                    return JSON.stringify({
+                        elements: cy.elements().jsons(),
+                        alphabet: (cy.scratch('alphabet') || []).slice(),
+                    });
+                };
+                var updateHistoryButtons = function() {
+                    if (undoBtn) {
+                        undoBtn.disabled = undoStack.length === 0;
+                    }
+                    if (redoBtn) {
+                        redoBtn.disabled = redoStack.length === 0;
+                    }
+                };
+                var restoreState = function(stateStr) {
+                    var state;
+                    try {
+                        state = JSON.parse(stateStr);
+                    } catch (e) {
+                        return;
+                    }
+                    historyRestoring = true;
+                    cy.elements().remove();
+                    cy.add(state.elements);
+                    cy.scratch('alphabet', (state.alphabet || []).slice());
+                    historyRestoring = false;
+                    AlphabetUI.refresh();
+                    updateRunValidity();
+                    updateHistoryButtons();
+                    SnapshotController.onchange(attemptid, extractCanonical(cy), schemaversion);
+                };
+                var recordMutation = function() {
+                    if (lastState !== null) {
+                        undoStack.push(lastState);
+                        if (undoStack.length > 50) {
+                            undoStack.shift();
+                        }
+                    }
+                    lastState = captureState();
+                    redoStack = [];
+                    updateHistoryButtons();
+                };
+                var onMutation = function() {
+                    if (historyRestoring) {
+                        return;
+                    }
+                    clearTimeout(mutationTimer);
+                    mutationTimer = setTimeout(recordMutation, 80);
+                };
+                var undo = function() {
+                    if (!undoStack.length) {
+                        return;
+                    }
+                    redoStack.push(captureState());
+                    var prev = undoStack.pop();
+                    lastState = prev;
+                    restoreState(prev);
+                };
+                var redo = function() {
+                    if (!redoStack.length) {
+                        return;
+                    }
+                    undoStack.push(captureState());
+                    var next = redoStack.pop();
+                    lastState = next;
+                    restoreState(next);
+                };
+                if (undoBtn) {
+                    undoBtn.addEventListener('click', undo);
+                }
+                if (redoBtn) {
+                    redoBtn.addEventListener('click', redo);
+                }
+                document.addEventListener('keydown', function(e) {
+                    if (!(e.ctrlKey || e.metaKey)) {
+                        return;
+                    }
+                    var tag = (e.target && e.target.tagName) || '';
+                    if (tag === 'INPUT' || tag === 'TEXTAREA') {
+                        return;
+                    }
+                    var k = (e.key || '').toLowerCase();
+                    if (k === 'z') {
+                        if (e.shiftKey) {
+                            redo();
+                        } else {
+                            undo();
+                        }
+                        e.preventDefault();
+                    } else if (k === 'y') {
+                        redo();
+                        e.preventDefault();
+                    }
+                });
+                cy.on('dragfree', 'node', onMutation);
+
                 // Always init AlphabetUI with cy so getAlphabet()/addSymbol() work in handlers.
                 AlphabetUI.init(
                     editorRoot ? editorRoot.querySelector('.mod-graphitoubb-alphabet-panel') : null,
@@ -610,6 +819,7 @@ define([
                     function() {
                         SnapshotController.onchange(attemptid, extractCanonical(cy), schemaversion);
                         updateRunValidity();
+                        onMutation();
                     }
                 );
 
@@ -664,6 +874,122 @@ define([
                         }
                     };
 
+                    // A10: step-by-step trace playback over the simulation result.
+                    var traceControlsEl = simPanel.querySelector('.mod-graphitoubb-trace-controls');
+                    var traceStepEl = simPanel.querySelector('.mod-graphitoubb-trace-step');
+                    var playBtn = simPanel.querySelector('.mod-graphitoubb-trace-play');
+                    var traceState = null;
+                    var traceTimer = null;
+
+                    var clearTraceHighlights = function() {
+                        cy.nodes().removeClass('trace-visited');
+                        cy.edges().removeClass('trace-edge');
+                    };
+                    var findEdge = function(from, sym, to) {
+                        var match = null;
+                        cy.edges().forEach(function(e) {
+                            if (!match && e.source().id() === from && e.target().id() === to
+                                    && e.data('symbol') === sym) {
+                                match = e;
+                            }
+                        });
+                        return match;
+                    };
+                    var setPlayLabel = function(playing) {
+                        if (!playBtn) {
+                            return;
+                        }
+                        playBtn.textContent = playing ? '⏸' : '▶';
+                        var key = playing ? 'trace_pause' : 'trace_play';
+                        if (_str[key]) {
+                            playBtn.setAttribute('aria-label', _str[key]);
+                            playBtn.setAttribute('title', _str[key]);
+                        }
+                    };
+                    var renderStep = function(i) {
+                        if (!traceState) {
+                            return;
+                        }
+                        var trace = traceState.trace;
+                        i = Math.max(0, Math.min(i, trace.length - 1));
+                        traceState.pos = i;
+                        clearTraceHighlights();
+                        for (var k = 0; k <= i; k++) {
+                            cy.$('#' + trace[k]).addClass('trace-visited');
+                        }
+                        if (i > 0) {
+                            var edge = findEdge(trace[i - 1], traceState.word[i - 1], trace[i]);
+                            if (edge) {
+                                edge.addClass('trace-edge');
+                            }
+                        }
+                        if (traceStepEl) {
+                            // Synchronous, order-safe formatting from the prefetched
+                            // template (avoids out-of-order async updates while stepping).
+                            var tpl = _str.trace_step || 'Step {$a->i} of {$a->n}';
+                            traceStepEl.textContent = tpl
+                                .replace('{$a->i}', i).replace('{$a->n}', trace.length - 1);
+                        }
+                        if (editorRoot) {
+                            editorRoot.classList.remove('trace-accept', 'trace-reject');
+                            if (i === trace.length - 1) {
+                                editorRoot.classList.add(traceState.accepted ? 'trace-accept' : 'trace-reject');
+                            }
+                        }
+                    };
+                    var pauseTrace = function() {
+                        if (traceTimer) {
+                            clearInterval(traceTimer);
+                            traceTimer = null;
+                        }
+                        setPlayLabel(false);
+                    };
+                    var playTrace = function() {
+                        if (!traceState) {
+                            return;
+                        }
+                        pauseTrace();
+                        if (traceState.pos >= traceState.trace.length - 1) {
+                            renderStep(0);
+                        }
+                        setPlayLabel(true);
+                        traceTimer = setInterval(function() {
+                            if (!traceState || traceState.pos >= traceState.trace.length - 1) {
+                                pauseTrace();
+                                return;
+                            }
+                            renderStep(traceState.pos + 1);
+                        }, 600);
+                    };
+
+                    if (traceControlsEl) {
+                        traceControlsEl.addEventListener('click', function(e) {
+                            var btn = e.target.closest('[data-step]');
+                            if (!btn || !traceState) {
+                                return;
+                            }
+                            var action = btn.dataset.step;
+                            if (action === 'playpause') {
+                                if (traceTimer) {
+                                    pauseTrace();
+                                } else {
+                                    playTrace();
+                                }
+                                return;
+                            }
+                            pauseTrace();
+                            if (action === 'first') {
+                                renderStep(0);
+                            } else if (action === 'prev') {
+                                renderStep(traceState.pos - 1);
+                            } else if (action === 'next') {
+                                renderStep(traceState.pos + 1);
+                            } else if (action === 'last') {
+                                renderStep(traceState.trace.length - 1);
+                            }
+                        });
+                    }
+
                     if (runBtn && inputEl) {
                         runBtn.addEventListener('click', function() {
                             var word = inputEl.value;
@@ -715,14 +1041,20 @@ define([
                                 notify('warning', 'err_simulator_reject', rejDetail);
                             }
 
-                            result.trace.forEach(function(nodeId, i) {
-                                setTimeout(function() {
-                                    cy.$('#' + nodeId).addClass('trace-visited');
-                                    if (i === result.trace.length - 1 && editorRoot) {
-                                        editorRoot.classList.add(result.accepted ? 'trace-accept' : 'trace-reject');
-                                    }
-                                }, i * 400);
-                            });
+                            // A10: drive the trace through the step controls, auto-playing
+                            // once; the student can then pause, step and replay.
+                            pauseTrace();
+                            traceState = {
+                                trace: result.trace,
+                                word: word,
+                                accepted: result.accepted,
+                                pos: 0,
+                            };
+                            if (traceControlsEl) {
+                                traceControlsEl.hidden = false;
+                            }
+                            renderStep(0);
+                            playTrace();
 
                             // S12: log word to WS and update wordbank panel.
                             Repository.logWord(attemptid, word, result.accepted)
@@ -742,6 +1074,8 @@ define([
                 cy.on('add remove data', function() {
                     SnapshotController.onchange(attemptid, extractCanonical(cy), schemaversion);
                     updateRunValidity();
+                    onMutation();
+                    refreshKbdSelects();
                 });
 
                 cy.on('tap', function(evt) {
@@ -783,6 +1117,105 @@ define([
                             break;
                     }
                 });
+
+                // A8: double-tap a state (in idle mode) to rename its label via the
+                // shared input modal — respecting MAX_LABEL_LENGTH.
+                var promptRenameNode = function(node) {
+                    inputModal(
+                        _str.rename_state_title || 'Rename state',
+                        _str.rename_state_label || 'State label',
+                        node.data('label') || node.id(),
+                        bound(toolbarEl, 'maxLabelLength', 32),
+                        function(value) {
+                            if (value) {
+                                node.data('label', value);
+                            }
+                        }
+                    );
+                };
+                var lastTap = {id: null, t: 0};
+                cy.on('tap', 'node', function(evt) {
+                    if (Toolbar.getMode() !== 'idle') {
+                        lastTap = {id: null, t: 0};
+                        return;
+                    }
+                    var node = evt.target;
+                    var now = (new Date()).getTime();
+                    if (lastTap.id === node.id() && (now - lastTap.t) < 350) {
+                        lastTap = {id: null, t: 0};
+                        promptRenameNode(node);
+                    } else {
+                        lastTap = {id: node.id(), t: now};
+                    }
+                });
+
+                // A14/E1: keyboard-accessible form alternative to the pointer canvas.
+                var kbdPanel = editorRoot ? editorRoot.querySelector('.mod-graphitoubb-kbd-panel') : null;
+                if (kbdPanel) {
+                    var kbdState = kbdPanel.querySelector('.mod-graphitoubb-kbd-state');
+                    var kbdFrom = kbdPanel.querySelector('.mod-graphitoubb-kbd-from');
+                    var kbdTo = kbdPanel.querySelector('.mod-graphitoubb-kbd-to');
+                    var kbdSymbol = kbdPanel.querySelector('.mod-graphitoubb-kbd-symbol');
+
+                    var fillSelect = function(sel) {
+                        if (!sel) {
+                            return;
+                        }
+                        var prev = sel.value;
+                        sel.innerHTML = '';
+                        cy.nodes().forEach(function(n) {
+                            var opt = document.createElement('option');
+                            opt.value = n.id();
+                            opt.textContent = n.data('label') || n.id();
+                            sel.appendChild(opt);
+                        });
+                        if (prev) {
+                            sel.value = prev;
+                        }
+                    };
+                    refreshKbdSelects = function() {
+                        fillSelect(kbdState);
+                        fillSelect(kbdFrom);
+                        fillSelect(kbdTo);
+                    };
+                    refreshKbdSelects();
+
+                    kbdPanel.addEventListener('click', function(e) {
+                        var btn = e.target.closest('[data-kbd]');
+                        if (!btn) {
+                            return;
+                        }
+                        var action = btn.dataset.kbd;
+                        if (action === 'add-state') {
+                            var n = cy.nodes().length;
+                            addState(cy, toolbarEl, {x: 80 + (n % 5) * 90, y: 80 + Math.floor(n / 5) * 90});
+                        } else if (action === 'set-start' && kbdState && kbdState.value) {
+                            var s = cy.$('#' + kbdState.value);
+                            if (s.length) {
+                                handleSetStart(cy, s);
+                            }
+                        } else if (action === 'toggle-final' && kbdState && kbdState.value) {
+                            var f = cy.$('#' + kbdState.value);
+                            if (f.length) {
+                                handleToggleFinal(f);
+                            }
+                        } else if (action === 'delete-state' && kbdState && kbdState.value) {
+                            var d = cy.$('#' + kbdState.value);
+                            if (d.length) {
+                                confirmAndDelete(cy, d);
+                            }
+                        } else if (action === 'add-transition') {
+                            if (createTransition(cy, toolbarEl, kbdFrom.value, kbdTo.value, kbdSymbol.value)) {
+                                kbdSymbol.value = '';
+                            }
+                        }
+                    });
+                }
+
+                // A4: set the undo baseline AFTER the saved automaton is loaded, so
+                // the initial state is not itself an undoable step.
+                lastState = captureState();
+                updateHistoryButtons();
 
                 // Initial validity (button disabled state needs no strings), then
                 // refresh hints once the localised strings have loaded.

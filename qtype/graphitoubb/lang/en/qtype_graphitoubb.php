@@ -81,3 +81,13 @@ $string['summary_classify']    = 'Classification: {$a}';
 $string['summary_complete']    = 'Truth table submitted with {$a} rows';
 $string['summary_rows']        = ' ({$a} rows)';
 $string['summary_no_answer']   = '(no answer)';
+
+// Preset Question Bank seeding.
+$string['preset_category_name'] = 'GraphitoUBB — Truth tables (preinstalled)';
+$string['preset_category_info'] = 'Ready-to-use truth-table questions shipped with the GraphitoUBB question type.';
+
+// Interactive truth-table grid (qtype renderer).
+$string['fill_table_instruction'] = 'Fill in each cell with V (true) or F (false).';
+$string['radio_equivalence_prompt'] = 'Are the two formulas logically equivalent?';
+$string['radio_classify_prompt'] = 'How do you classify the formula?';
+$string['cell_aria_label'] = 'Row {$a->row}, column {$a->col}';

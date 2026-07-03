@@ -74,9 +74,35 @@ class renderer extends \plugin_renderer_base {
     public function render_afd_consigna(\stdClass $problem): string {
         $pdata  = json_decode($problem->payload, true) ?: [];
         $config = $pdata['config'] ?? [];
+
+        // Surface only the test words the teacher explicitly marked as examples,
+        // so students get concrete accept/reject samples without seeing the full
+        // (hidden) grading set. The empty word renders as ε.
+        $accepts = [];
+        $rejects = [];
+        foreach (($config['test_words'] ?? []) as $tw) {
+            if (empty($tw['example'])) {
+                continue;
+            }
+            $w = ($tw['word'] ?? '') === '' ? 'ε' : $tw['word'];
+            if (!empty($tw['accept'])) {
+                $accepts[] = $w;
+            } else {
+                $rejects[] = $w;
+            }
+        }
+
+        $passpct = (int) round(\local_graphitoubb\tools\afd\grader\afd_grader::PASS_THRESHOLD * 100);
+
         return $this->render_from_template('mod_graphitoubb/afd_consigna', [
-            'prompt'   => (string) ($config['prompt'] ?? ''),
-            'alphabet' => implode(', ', $config['alphabet'] ?? []),
+            'prompt'          => (string) ($config['prompt'] ?? ''),
+            'alphabet'        => implode(', ', $config['alphabet'] ?? []),
+            'has_examples'    => !empty($accepts) || !empty($rejects),
+            'has_accepts'     => !empty($accepts),
+            'examples_accept' => implode(', ', $accepts),
+            'has_rejects'     => !empty($rejects),
+            'examples_reject' => implode(', ', $rejects),
+            'grading_info'    => get_string('consigna_grading_info', 'mod_graphitoubb', $passpct),
         ]);
     }
 

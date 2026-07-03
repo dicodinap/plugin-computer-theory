@@ -1,0 +1,326 @@
+[
+  {
+    "key": "tt-complete-and",
+    "tool": "truth_table", "type": "complete", "difficulty": "easy", "tags": ["and", "basic"],
+    "title": { "es": "Completar: conjunción A ∧ B", "en": "Complete: conjunction A ∧ B" },
+    "summary": { "es": "Rellena la tabla de verdad de A ∧ B.", "en": "Fill the truth table of A ∧ B." },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "complete",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "config": { "formula": "A ∧ B" }
+    }
+  },
+  {
+    "key": "tt-complete-or",
+    "tool": "truth_table", "type": "complete", "difficulty": "easy", "tags": ["or", "basic"],
+    "title": { "es": "Completar: disyunción A ∨ B", "en": "Complete: disjunction A ∨ B" },
+    "summary": { "es": "Rellena la tabla de verdad de A ∨ B.", "en": "Fill the truth table of A ∨ B." },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "complete",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "config": { "formula": "A ∨ B" }
+    }
+  },
+  {
+    "key": "tt-complete-not",
+    "tool": "truth_table", "type": "complete", "difficulty": "easy", "tags": ["not", "basic"],
+    "title": { "es": "Completar: negación ¬A", "en": "Complete: negation ¬A" },
+    "summary": { "es": "Rellena la tabla de verdad de ¬A.", "en": "Fill the truth table of ¬A." },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "complete",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "config": { "formula": "¬A" }
+    }
+  },
+  {
+    "key": "tt-complete-impl",
+    "tool": "truth_table", "type": "complete", "difficulty": "easy", "tags": ["implication", "basic"],
+    "title": { "es": "Completar: condicional A → B", "en": "Complete: conditional A → B" },
+    "summary": { "es": "Rellena la tabla de verdad de A → B.", "en": "Fill the truth table of A → B." },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "complete",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "config": { "formula": "A → B" }
+    }
+  },
+  {
+    "key": "tt-complete-iff",
+    "tool": "truth_table", "type": "complete", "difficulty": "easy", "tags": ["biconditional", "basic"],
+    "title": { "es": "Completar: bicondicional A ↔ B", "en": "Complete: biconditional A ↔ B" },
+    "summary": { "es": "Rellena la tabla de verdad de A ↔ B.", "en": "Fill the truth table of A ↔ B." },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "complete",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "config": { "formula": "A ↔ B" }
+    }
+  },
+  {
+    "key": "tt-complete-xor",
+    "tool": "truth_table", "type": "complete", "difficulty": "easy", "tags": ["xor", "basic"],
+    "title": { "es": "Completar: o exclusivo A ⊕ B", "en": "Complete: exclusive or A ⊕ B" },
+    "summary": { "es": "Rellena la tabla de verdad de A ⊕ B.", "en": "Fill the truth table of A ⊕ B." },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "complete",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "config": { "formula": "A ⊕ B" }
+    }
+  },
+  {
+    "key": "tt-complete-nand",
+    "tool": "truth_table", "type": "complete", "difficulty": "medium", "tags": ["nand", "compound"],
+    "title": { "es": "Completar: NAND ¬(A ∧ B)", "en": "Complete: NAND ¬(A ∧ B)" },
+    "summary": { "es": "Rellena la tabla de verdad de ¬(A ∧ B).", "en": "Fill the truth table of ¬(A ∧ B)." },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "complete",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "config": { "formula": "¬(A ∧ B)" }
+    }
+  },
+  {
+    "key": "tt-complete-nor",
+    "tool": "truth_table", "type": "complete", "difficulty": "medium", "tags": ["nor", "compound"],
+    "title": { "es": "Completar: NOR ¬(A ∨ B)", "en": "Complete: NOR ¬(A ∨ B)" },
+    "summary": { "es": "Rellena la tabla de verdad de ¬(A ∨ B).", "en": "Fill the truth table of ¬(A ∨ B)." },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "complete",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "config": { "formula": "¬(A ∨ B)" }
+    }
+  },
+  {
+    "key": "tt-complete-and-or-c",
+    "tool": "truth_table", "type": "complete", "difficulty": "medium", "tags": ["three-vars", "compound"],
+    "title": { "es": "Completar: (A ∧ B) ∨ C", "en": "Complete: (A ∧ B) ∨ C" },
+    "summary": { "es": "Tabla de tres variables: (A ∧ B) ∨ C.", "en": "Three-variable table: (A ∧ B) ∨ C." },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "complete",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "config": { "formula": "(A ∧ B) ∨ C" }
+    }
+  },
+  {
+    "key": "tt-complete-impl-chain",
+    "tool": "truth_table", "type": "complete", "difficulty": "hard", "tags": ["three-vars", "implication"],
+    "title": { "es": "Completar: A → (B → C)", "en": "Complete: A → (B → C)" },
+    "summary": { "es": "Tabla de tres variables con condicionales anidados.", "en": "Three-variable table with nested conditionals." },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "complete",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "config": { "formula": "A → (B → C)" }
+    }
+  },
+  {
+    "key": "tt-complete-or-and-notc",
+    "tool": "truth_table", "type": "complete", "difficulty": "hard", "tags": ["three-vars", "compound"],
+    "title": { "es": "Completar: (A ∨ B) ∧ ¬C", "en": "Complete: (A ∨ B) ∧ ¬C" },
+    "summary": { "es": "Tabla de tres variables: (A ∨ B) ∧ ¬C.", "en": "Three-variable table: (A ∨ B) ∧ ¬C." },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "complete",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "config": { "formula": "(A ∨ B) ∧ ¬C" }
+    }
+  },
+  {
+    "key": "tt-complete-iff-and-c",
+    "tool": "truth_table", "type": "complete", "difficulty": "hard", "tags": ["three-vars", "biconditional"],
+    "title": { "es": "Completar: (A ↔ B) ∧ C", "en": "Complete: (A ↔ B) ∧ C" },
+    "summary": { "es": "Tabla de tres variables: (A ↔ B) ∧ C.", "en": "Three-variable table: (A ↔ B) ∧ C." },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "complete",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "config": { "formula": "(A ↔ B) ∧ C" }
+    }
+  },
+  {
+    "key": "tt-equiv-demorgan-and",
+    "tool": "truth_table", "type": "equivalence", "difficulty": "medium", "tags": ["de-morgan", "equivalent"],
+    "title": { "es": "Equivalencia: De Morgan (∧)", "en": "Equivalence: De Morgan (∧)" },
+    "summary": { "es": "¿Es ¬(A ∧ B) equivalente a ¬A ∨ ¬B?", "en": "Is ¬(A ∧ B) equivalent to ¬A ∨ ¬B?" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "equivalence",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula_1": "¬(A ∧ B)", "formula_2": "¬A ∨ ¬B", "expected_equivalent": true, "require_table_justification": true }
+    }
+  },
+  {
+    "key": "tt-equiv-demorgan-or",
+    "tool": "truth_table", "type": "equivalence", "difficulty": "medium", "tags": ["de-morgan", "equivalent"],
+    "title": { "es": "Equivalencia: De Morgan (∨)", "en": "Equivalence: De Morgan (∨)" },
+    "summary": { "es": "¿Es ¬(A ∨ B) equivalente a ¬A ∧ ¬B?", "en": "Is ¬(A ∨ B) equivalent to ¬A ∧ ¬B?" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "equivalence",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula_1": "¬(A ∨ B)", "formula_2": "¬A ∧ ¬B", "expected_equivalent": true, "require_table_justification": true }
+    }
+  },
+  {
+    "key": "tt-equiv-impl-disj",
+    "tool": "truth_table", "type": "equivalence", "difficulty": "medium", "tags": ["implication", "equivalent"],
+    "title": { "es": "Equivalencia: condicional como disyunción", "en": "Equivalence: conditional as disjunction" },
+    "summary": { "es": "¿Es A → B equivalente a ¬A ∨ B?", "en": "Is A → B equivalent to ¬A ∨ B?" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "equivalence",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula_1": "A → B", "formula_2": "¬A ∨ B", "expected_equivalent": true, "require_table_justification": true }
+    }
+  },
+  {
+    "key": "tt-equiv-contrapositive",
+    "tool": "truth_table", "type": "equivalence", "difficulty": "medium", "tags": ["implication", "contrapositive", "equivalent"],
+    "title": { "es": "Equivalencia: contrarrecíproco", "en": "Equivalence: contrapositive" },
+    "summary": { "es": "¿Es A → B equivalente a ¬B → ¬A?", "en": "Is A → B equivalent to ¬B → ¬A?" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "equivalence",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula_1": "A → B", "formula_2": "¬B → ¬A", "expected_equivalent": true, "require_table_justification": true }
+    }
+  },
+  {
+    "key": "tt-equiv-distributive",
+    "tool": "truth_table", "type": "equivalence", "difficulty": "hard", "tags": ["distributive", "three-vars", "equivalent"],
+    "title": { "es": "Equivalencia: distributiva", "en": "Equivalence: distributive law" },
+    "summary": { "es": "¿Es A ∧ (B ∨ C) equivalente a (A ∧ B) ∨ (A ∧ C)?", "en": "Is A ∧ (B ∨ C) equivalent to (A ∧ B) ∨ (A ∧ C)?" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "equivalence",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula_1": "A ∧ (B ∨ C)", "formula_2": "(A ∧ B) ∨ (A ∧ C)", "expected_equivalent": true, "require_table_justification": true }
+    }
+  },
+  {
+    "key": "tt-equiv-double-neg",
+    "tool": "truth_table", "type": "equivalence", "difficulty": "easy", "tags": ["negation", "equivalent"],
+    "title": { "es": "Equivalencia: doble negación", "en": "Equivalence: double negation" },
+    "summary": { "es": "¿Es ¬¬A equivalente a A?", "en": "Is ¬¬A equivalent to A?" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "equivalence",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula_1": "¬¬A", "formula_2": "A", "expected_equivalent": true, "require_table_justification": true }
+    }
+  },
+  {
+    "key": "tt-equiv-iff-expansion",
+    "tool": "truth_table", "type": "equivalence", "difficulty": "hard", "tags": ["biconditional", "equivalent"],
+    "title": { "es": "Equivalencia: bicondicional desarrollado", "en": "Equivalence: biconditional expansion" },
+    "summary": { "es": "¿Es A ↔ B equivalente a (A → B) ∧ (B → A)?", "en": "Is A ↔ B equivalent to (A → B) ∧ (B → A)?" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "equivalence",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula_1": "A ↔ B", "formula_2": "(A → B) ∧ (B → A)", "expected_equivalent": true, "require_table_justification": true }
+    }
+  },
+  {
+    "key": "tt-equiv-converse-trap",
+    "tool": "truth_table", "type": "equivalence", "difficulty": "medium", "tags": ["implication", "trap", "not-equivalent"],
+    "title": { "es": "Equivalencia (trampa): recíproco", "en": "Equivalence (trap): converse" },
+    "summary": { "es": "¿Es A → B equivalente a B → A? (No lo es.)", "en": "Is A → B equivalent to B → A? (It is not.)" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "equivalence",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula_1": "A → B", "formula_2": "B → A", "expected_equivalent": false, "require_table_justification": true }
+    }
+  },
+  {
+    "key": "tt-equiv-demorgan-trap",
+    "tool": "truth_table", "type": "equivalence", "difficulty": "medium", "tags": ["de-morgan", "trap", "not-equivalent"],
+    "title": { "es": "Equivalencia (trampa): De Morgan mal aplicado", "en": "Equivalence (trap): misapplied De Morgan" },
+    "summary": { "es": "¿Es ¬(A ∧ B) equivalente a ¬A ∧ ¬B? (No lo es.)", "en": "Is ¬(A ∧ B) equivalent to ¬A ∧ ¬B? (It is not.)" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "equivalence",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula_1": "¬(A ∧ B)", "formula_2": "¬A ∧ ¬B", "expected_equivalent": false, "require_table_justification": true }
+    }
+  },
+  {
+    "key": "tt-classify-excluded-middle",
+    "tool": "truth_table", "type": "classify", "difficulty": "easy", "tags": ["tautology"],
+    "title": { "es": "Clasificar: tercero excluido A ∨ ¬A", "en": "Classify: excluded middle A ∨ ¬A" },
+    "summary": { "es": "¿Tautología, contradicción o contingencia?", "en": "Tautology, contradiction or contingency?" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "classify",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula": "A ∨ ¬A", "expected_class": "tautology", "require_table_justification": true }
+    }
+  },
+  {
+    "key": "tt-classify-contradiction",
+    "tool": "truth_table", "type": "classify", "difficulty": "easy", "tags": ["contradiction"],
+    "title": { "es": "Clasificar: A ∧ ¬A", "en": "Classify: A ∧ ¬A" },
+    "summary": { "es": "¿Tautología, contradicción o contingencia?", "en": "Tautology, contradiction or contingency?" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "classify",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula": "A ∧ ¬A", "expected_class": "contradiction", "require_table_justification": true }
+    }
+  },
+  {
+    "key": "tt-classify-self-impl",
+    "tool": "truth_table", "type": "classify", "difficulty": "easy", "tags": ["tautology", "implication"],
+    "title": { "es": "Clasificar: A → A", "en": "Classify: A → A" },
+    "summary": { "es": "¿Tautología, contradicción o contingencia?", "en": "Tautology, contradiction or contingency?" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "classify",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula": "A → A", "expected_class": "tautology", "require_table_justification": true }
+    }
+  },
+  {
+    "key": "tt-classify-peirce",
+    "tool": "truth_table", "type": "classify", "difficulty": "hard", "tags": ["contingency", "implication"],
+    "title": { "es": "Clasificar: (A → B) → A", "en": "Classify: (A → B) → A" },
+    "summary": { "es": "¿Tautología, contradicción o contingencia?", "en": "Tautology, contradiction or contingency?" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "classify",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula": "(A → B) → A", "expected_class": "contingency", "require_table_justification": true }
+    }
+  },
+  {
+    "key": "tt-classify-simplification",
+    "tool": "truth_table", "type": "classify", "difficulty": "medium", "tags": ["tautology", "implication"],
+    "title": { "es": "Clasificar: (A ∧ B) → A", "en": "Classify: (A ∧ B) → A" },
+    "summary": { "es": "¿Tautología, contradicción o contingencia?", "en": "Tautology, contradiction or contingency?" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "classify",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula": "(A ∧ B) → A", "expected_class": "tautology", "require_table_justification": true }
+    }
+  },
+  {
+    "key": "tt-classify-iff-neg",
+    "tool": "truth_table", "type": "classify", "difficulty": "medium", "tags": ["contradiction", "biconditional"],
+    "title": { "es": "Clasificar: A ↔ ¬A", "en": "Classify: A ↔ ¬A" },
+    "summary": { "es": "¿Tautología, contradicción o contingencia?", "en": "Tautology, contradiction or contingency?" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "classify",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula": "A ↔ ¬A", "expected_class": "contradiction", "require_table_justification": true }
+    }
+  },
+  {
+    "key": "tt-classify-or-contingency",
+    "tool": "truth_table", "type": "classify", "difficulty": "easy", "tags": ["contingency", "or"],
+    "title": { "es": "Clasificar: A ∨ B", "en": "Classify: A ∨ B" },
+    "summary": { "es": "¿Tautología, contradicción o contingencia?", "en": "Tautology, contradiction or contingency?" },
+    "payload": {
+      "tool": "truth_table", "schema_version": 1, "type": "classify",
+      "ui": { "intermediate_subformulas": "auto", "manual_subformulas": [], "row_order": "canonical" },
+      "scoring": { "radio_weight": 50, "table_weight": 50, "wrong_radio_policy": "strict" },
+      "config": { "formula": "A ∨ B", "expected_class": "contingency", "require_table_justification": true }
+    }
+  }
+]

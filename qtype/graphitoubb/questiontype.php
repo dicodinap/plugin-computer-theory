@@ -56,13 +56,15 @@ class qtype_graphitoubb extends question_type {
      * @return array
      */
     public function extra_question_fields(): array {
+        // Only scalar columns are listed here: the question engine copies each listed
+        // column straight onto the question instance, which would assign the raw JSON
+        // strings to the array-typed $problem_payload/$scoring_config/$ui_config
+        // properties and throw a TypeError. Those JSON columns are still loaded into
+        // $questiondata->options (full row) and decoded in initialise_question_instance().
         return [
             'qtype_graphitoubb_options',
             'tool',
             'exercise_type',
-            'problem_payload',
-            'scoring_config',
-            'ui_config',
         ];
     }
 
@@ -139,14 +141,33 @@ class qtype_graphitoubb extends question_type {
     /**
      * Load question-type options from DB into $question->options.
      *
-     * Delegates entirely to the parent, which reads the row via extra_question_fields().
-     * The parent populates $question->options with the qtype_graphitoubb_options record.
+     * The parent only selects the columns named in extra_question_fields() — which we
+     * deliberately keep to the scalar tool/exercise_type to avoid the engine assigning
+     * the raw JSON strings to the array-typed question properties. So here we explicitly
+     * load the JSON columns the parent skips, ready for initialise_question_instance()
+     * to decode.
      *
      * @param  object $question The question object, modified in-place.
      * @return bool
      */
     public function get_question_options($question): bool {
-        return parent::get_question_options($question);
+        global $DB;
+
+        $ok = parent::get_question_options($question);
+
+        $row = $DB->get_record('qtype_graphitoubb_options', ['questionid' => $question->id]);
+        if ($row) {
+            if (!isset($question->options)) {
+                $question->options = new \stdClass();
+            }
+            $question->options->problem_payload = $row->problem_payload;
+            $question->options->scoring_config  = $row->scoring_config;
+            $question->options->ui_config       = $row->ui_config;
+            $question->options->payload_hash    = $row->payload_hash;
+            $question->options->schema_version  = $row->schema_version;
+        }
+
+        return $ok;
     }
 
     /**
@@ -273,7 +294,47 @@ class qtype_graphitoubb extends question_type {
         $ser             = new serializer();
         $qo->payload_hash = $ser->hash($problem);
 
+        // Hydrate the individual form-style fields from the decoded payload. The engine
+        // saves an imported question through save_question_options(), which rebuilds the
+        // payload from these fields via build_problem_array(); without this the imported
+        // formulas/scoring would be lost and an empty payload stored.
+        $this->hydrate_fields_from_problem($qo, $problem);
+
         return $qo;
+    }
+
+    /**
+     * Populate the form-style fields (formula, formula_1, scoring, …) on an imported
+     * question object from its decoded problem payload, so save_question_options()
+     * reconstructs the identical payload.
+     *
+     * @param  object $qo      The imported question object (modified in place).
+     * @param  array  $problem Decoded canonical problem payload.
+     * @return void
+     */
+    private function hydrate_fields_from_problem(object $qo, array $problem): void {
+        $config  = $problem['config'] ?? [];
+        $scoring = $problem['scoring'] ?? [];
+        $type    = $qo->exercise_type ?? 'complete';
+
+        if ($type === 'complete') {
+            $qo->formula = $config['formula'] ?? '';
+        } else if ($type === 'equivalence') {
+            $qo->formula_1                   = $config['formula_1'] ?? '';
+            $qo->formula_2                   = $config['formula_2'] ?? '';
+            $qo->expected_equivalent         = !empty($config['expected_equivalent']);
+            $qo->require_table_justification = !empty($config['require_table_justification']);
+        } else if ($type === 'classify') {
+            $qo->formula                     = $config['formula'] ?? '';
+            $qo->expected_class              = $config['expected_class'] ?? 'tautology';
+            $qo->require_table_justification = !empty($config['require_table_justification']);
+        }
+
+        if ($type === 'equivalence' || $type === 'classify') {
+            $qo->radio_weight       = (int) ($scoring['radio_weight'] ?? 50);
+            $qo->table_weight       = (int) ($scoring['table_weight'] ?? 50);
+            $qo->wrong_radio_policy = $scoring['wrong_radio_policy'] ?? 'strict';
+        }
     }
 
     // -------------------------------------------------------------------------

@@ -168,10 +168,55 @@ $string['reset_automaton_confirm'] = 'Reiniciar';
 
 // Autoría + calificación de AFD (C1).
 $string['afd_consigna_title'] = 'Tu tarea';
+$string['consigna_accepts'] = 'Debe aceptar';
+$string['consigna_rejects'] = 'Debe rechazar';
+$string['consigna_grading_info'] = 'Al entregar, tu autómata se prueba contra varias palabras ocultas. Necesitas {$a}% correcto para aprobar.';
 $string['afd_result_score'] = 'Puntaje: {$a->correct}/{$a->total} palabras de prueba correctas ({$a->pct}%)';
 $string['afd_result_passed'] = 'Aprobado';
 $string['afd_result_invalid'] = 'No se pudo calificar tu autómata — asegúrate de definir un estado inicial.';
 $string['afd_finish_graded_toast'] = 'Entregado — {$a->correct}/{$a->total} palabras de prueba correctas.';
+
+// Onboarding y affordances del editor AFD (A13 / A7 / H3).
+$string['help_panel_title'] = '¿Cómo funciona este editor?';
+$string['help_step_states'] = 'Agrega estados con "Agregar estado" y haz clic en el lienzo para colocar cada uno.';
+$string['help_step_transition'] = 'Para una transición, elige "Agregar transición", haz clic en el estado de origen, luego en el de destino, y escribe el símbolo.';
+$string['help_step_start'] = 'Marca el estado inicial con "Definir estado inicial".';
+$string['help_step_final'] = 'Marca los estados de aceptación con "Alternar estado final".';
+$string['help_step_run'] = 'Escribe una palabra y pulsa "Ejecutar" para probar si tu autómata la acepta.';
+$string['help_step_rename'] = 'Haz doble clic en un estado para renombrarlo (p. ej. "par", "impar").';
+$string['tidy_button'] = 'Ordenar';
+$string['tidy_tooltip'] = 'Reorganiza los estados automáticamente para que no se solapen.';
+$string['tooltip_reset'] = 'Elimina todos los estados, transiciones y símbolos del alfabeto.';
+$string['rename_state_title'] = 'Renombrar estado';
+$string['rename_state_label'] = 'Etiqueta del estado';
+
+// A10: controles de reproducción de la traza paso a paso.
+$string['trace_controls_label'] = 'Reproducción de la traza';
+$string['trace_first'] = 'Primer paso';
+$string['trace_prev'] = 'Paso anterior';
+$string['trace_play'] = 'Reproducir';
+$string['trace_pause'] = 'Pausar';
+$string['trace_next'] = 'Paso siguiente';
+$string['trace_last'] = 'Último paso';
+$string['trace_step'] = 'Paso {$a->i} de {$a->n}';
+
+// A4: deshacer / rehacer.
+$string['undo_button'] = 'Deshacer';
+$string['redo_button'] = 'Rehacer';
+$string['undo_tooltip'] = 'Deshacer (Ctrl+Z)';
+$string['redo_tooltip'] = 'Rehacer (Ctrl+Y)';
+
+// A14/E1: alternativa por formulario, operable por teclado, al lienzo con puntero.
+$string['kbd_panel_title'] = 'Controles por teclado';
+$string['kbd_panel_hint'] = 'Construye el autómata sin ratón: agrega estados y luego define inicial/final, elimina o agrega transiciones eligiéndolos aquí.';
+$string['kbd_state_label'] = 'Estado';
+$string['kbd_from'] = 'Desde';
+$string['kbd_to'] = 'Hasta';
+$string['kbd_symbol'] = 'Símbolo';
+
+// H2: encabezados de sección para jerarquía visual.
+$string['section_simulator'] = 'Simulador';
+$string['section_wordbank'] = 'Palabras probadas';
 
 // Cadenas iter1 — tabla de verdad.
 $string['truth_table_editor_label'] = 'Editor de tabla de verdad';
@@ -288,6 +333,7 @@ $string['export_json']                   = 'JSON';
 $string['export_pdf']                    = 'PDF';
 $string['export_button']                 = 'Descargar exportación';
 $string['error_loading_panel']           = 'Error al cargar los datos del panel. Actualiza la página e intenta de nuevo.';
+$string['panel_loading']                 = 'Cargando…';
 $string['panel_hist_title']              = 'Distribución de notas';
 $string['panel_hist_range']              = 'Rango';
 $string['panel_hist_count']              = 'Cantidad';
@@ -311,3 +357,14 @@ $string['task_cleanup_orphans'] = 'GraphitoUBB limpieza de registros huérfanos'
 // Helpers para Behat — iter1.
 $string['behat_invalid_cell_value'] = 'Valor de celda inválido "{$a}". Los valores aceptados son "V", "F" o "" (vacío).';
 $string['behat_reset_confirm'] = '¿Resetear todos los intentos de este estudiante?';
+
+// Catálogo de plantillas (banco de ejercicios pre-instalados).
+$string['preset_catalog_title'] = 'Catálogo de ejercicios (plantillas listas para usar)';
+$string['preset_catalog_help'] = 'Elige un ejercicio curado para precargar el formulario de abajo. Puedes editarlo antes de guardar.';
+$string['preset_group_afd'] = 'AFD — autómatas finitos';
+$string['preset_group_truth_table'] = 'Tablas de verdad (lógica)';
+$string['preset_load'] = 'Cargar';
+$string['preset_loaded'] = 'Plantilla cargada: «{$a}». Revisa los campos de abajo y pulsa Guardar problema.';
+$string['preset_difficulty_easy'] = 'Fácil';
+$string['preset_difficulty_medium'] = 'Media';
+$string['preset_difficulty_hard'] = 'Difícil';

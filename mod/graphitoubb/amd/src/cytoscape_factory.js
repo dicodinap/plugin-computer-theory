@@ -120,6 +120,17 @@ define(['mod_graphitoubb/cytoscape'], function(cytoscape) {
                         'target-arrow-shape': 'triangle',
                     },
                 },
+                {
+                    // A10: highlight the transition used at the current trace step.
+                    selector: 'edge.trace-edge',
+                    style: {
+                        'line-color': '#f39c12',
+                        'target-arrow-color': '#f39c12',
+                        'width': 4,
+                        'transition-property': 'line-color, width',
+                        'transition-duration': '200ms',
+                    },
+                },
             ],
             layout: hasElements
                 ? {

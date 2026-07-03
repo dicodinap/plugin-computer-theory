@@ -15,20 +15,22 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version metadata for mod_graphitoubb.
+ * Install hook for qtype_graphitoubb — seeds the preset Question Bank.
  *
- * @package    mod_graphitoubb
+ * @package    qtype_graphitoubb
  * @copyright  2026 GraphitoUBB
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component    = 'mod_graphitoubb';
-$plugin->version      = 2026062915;
-$plugin->requires     = 2024100700;
-$plugin->maturity     = MATURITY_ALPHA;
-$plugin->release      = '0.6.0-alpha';
-$plugin->dependencies = [
-    'local_graphitoubb' => 2026062901,
-];
+/**
+ * Post-install: seed the curated truth_table presets into the system Question Bank.
+ *
+ * @return bool
+ */
+function xmldb_qtype_graphitoubb_install(): bool {
+    // Seed the shipped truth_table presets. Defensive: never breaks install.
+    \qtype_graphitoubb\catalog_seeder::seed(2026062904);
+    return true;
+}

@@ -18,37 +18,63 @@
     <button type="button"
             class="btn btn-outline-secondary mod-graphitoubb-tool-btn"
             data-mode="adding_state"
-            aria-pressed="false">
-        {{#str}}toolbar_add_state, mod_graphitoubb{{/str}}
+            aria-pressed="false"
+            title="{{#str}}mode_hint_adding_state, mod_graphitoubb{{/str}}">
+        <i class="icon fa fa-plus-circle" aria-hidden="true"></i>{{#str}}toolbar_add_state, mod_graphitoubb{{/str}}
     </button>
     <button type="button"
             class="btn btn-outline-secondary mod-graphitoubb-tool-btn"
             data-mode="adding_transition_source"
-            aria-pressed="false">
-        {{#str}}toolbar_add_transition, mod_graphitoubb{{/str}}
+            aria-pressed="false"
+            title="{{#str}}mode_hint_adding_transition_source, mod_graphitoubb{{/str}}">
+        <i class="icon fa fa-arrow-right" aria-hidden="true"></i>{{#str}}toolbar_add_transition, mod_graphitoubb{{/str}}
     </button>
     <button type="button"
             class="btn btn-outline-secondary mod-graphitoubb-tool-btn"
             data-mode="setting_start"
-            aria-pressed="false">
-        {{#str}}toolbar_set_start, mod_graphitoubb{{/str}}
+            aria-pressed="false"
+            title="{{#str}}mode_hint_setting_start, mod_graphitoubb{{/str}}">
+        <i class="icon fa fa-play" aria-hidden="true"></i>{{#str}}toolbar_set_start, mod_graphitoubb{{/str}}
     </button>
     <button type="button"
             class="btn btn-outline-secondary mod-graphitoubb-tool-btn"
             data-mode="toggling_final"
-            aria-pressed="false">
-        {{#str}}toolbar_toggle_final, mod_graphitoubb{{/str}}
+            aria-pressed="false"
+            title="{{#str}}mode_hint_toggling_final, mod_graphitoubb{{/str}}">
+        <i class="icon fa fa-bullseye" aria-hidden="true"></i>{{#str}}toolbar_toggle_final, mod_graphitoubb{{/str}}
+    </button>
+    <button type="button"
+            class="btn btn-outline-secondary mod-graphitoubb-tidy-btn"
+            data-action="tidy"
+            title="{{#str}}tidy_tooltip, mod_graphitoubb{{/str}}">
+        <i class="icon fa fa-sitemap" aria-hidden="true"></i>{{#str}}tidy_button, mod_graphitoubb{{/str}}
     </button>
     <button type="button"
             class="btn btn-outline-danger mod-graphitoubb-tool-btn"
             data-mode="deleting"
-            aria-pressed="false">
-        {{#str}}toolbar_delete, mod_graphitoubb{{/str}}
+            aria-pressed="false"
+            title="{{#str}}mode_hint_deleting, mod_graphitoubb{{/str}}">
+        <i class="icon fa fa-trash" aria-hidden="true"></i>{{#str}}toolbar_delete, mod_graphitoubb{{/str}}
     </button>
     <button type="button"
             class="btn btn-outline-danger mod-graphitoubb-reset-automaton-btn"
-            data-action="reset-automaton">
-        {{#str}}reset_automaton_button, mod_graphitoubb{{/str}}
+            data-action="reset-automaton"
+            title="{{#str}}tooltip_reset, mod_graphitoubb{{/str}}">
+        <i class="icon fa fa-eraser" aria-hidden="true"></i>{{#str}}reset_automaton_button, mod_graphitoubb{{/str}}
+    </button>
+    <button type="button"
+            class="btn btn-outline-secondary mod-graphitoubb-history-btn mod-graphitoubb-undo-btn"
+            data-action="undo" disabled
+            aria-label="{{#str}}undo_tooltip, mod_graphitoubb{{/str}}"
+            title="{{#str}}undo_tooltip, mod_graphitoubb{{/str}}">
+        <i class="icon fa fa-undo" aria-hidden="true"></i>{{#str}}undo_button, mod_graphitoubb{{/str}}
+    </button>
+    <button type="button"
+            class="btn btn-outline-secondary mod-graphitoubb-history-btn mod-graphitoubb-redo-btn"
+            data-action="redo" disabled
+            aria-label="{{#str}}redo_tooltip, mod_graphitoubb{{/str}}"
+            title="{{#str}}redo_tooltip, mod_graphitoubb{{/str}}">
+        <i class="icon fa fa-redo" aria-hidden="true"></i>{{#str}}redo_button, mod_graphitoubb{{/str}}
     </button>
     <span class="mod-graphitoubb-save-indicator" aria-live="polite"></span>
 </div>

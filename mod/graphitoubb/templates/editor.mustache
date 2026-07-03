@@ -17,6 +17,54 @@
     data-max-transitions="{{max_transitions}}"
     data-max-label-length="{{max_label_length}}"
     data-max-input-length="{{max_input_length}}">
+    <details class="mod-graphitoubb-help">
+        <summary>{{#str}}help_panel_title, mod_graphitoubb{{/str}}</summary>
+        <ol class="mod-graphitoubb-help-steps">
+            <li>{{#str}}help_step_states, mod_graphitoubb{{/str}}</li>
+            <li>{{#str}}help_step_transition, mod_graphitoubb{{/str}}</li>
+            <li>{{#str}}help_step_start, mod_graphitoubb{{/str}}</li>
+            <li>{{#str}}help_step_final, mod_graphitoubb{{/str}}</li>
+            <li>{{#str}}help_step_rename, mod_graphitoubb{{/str}}</li>
+            <li>{{#str}}help_step_run, mod_graphitoubb{{/str}}</li>
+        </ol>
+    </details>
+    <details class="mod-graphitoubb-kbd-panel">
+        <summary>{{#str}}kbd_panel_title, mod_graphitoubb{{/str}}</summary>
+        <p class="text-muted small mb-2">{{#str}}kbd_panel_hint, mod_graphitoubb{{/str}}</p>
+        <div class="mod-graphitoubb-kbd-row">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-kbd="add-state">
+                {{#str}}toolbar_add_state, mod_graphitoubb{{/str}}
+            </button>
+        </div>
+        <div class="mod-graphitoubb-kbd-row">
+            <label>{{#str}}kbd_state_label, mod_graphitoubb{{/str}}
+                <select class="form-control form-control-sm mod-graphitoubb-kbd-state"></select>
+            </label>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-kbd="set-start">
+                {{#str}}toolbar_set_start, mod_graphitoubb{{/str}}
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-kbd="toggle-final">
+                {{#str}}toolbar_toggle_final, mod_graphitoubb{{/str}}
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger" data-kbd="delete-state">
+                {{#str}}toolbar_delete, mod_graphitoubb{{/str}}
+            </button>
+        </div>
+        <div class="mod-graphitoubb-kbd-row">
+            <label>{{#str}}kbd_from, mod_graphitoubb{{/str}}
+                <select class="form-control form-control-sm mod-graphitoubb-kbd-from"></select>
+            </label>
+            <label>{{#str}}kbd_to, mod_graphitoubb{{/str}}
+                <select class="form-control form-control-sm mod-graphitoubb-kbd-to"></select>
+            </label>
+            <label>{{#str}}kbd_symbol, mod_graphitoubb{{/str}}
+                <input type="text" maxlength="1" class="form-control form-control-sm mod-graphitoubb-kbd-symbol" />
+            </label>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-kbd="add-transition">
+                {{#str}}toolbar_add_transition, mod_graphitoubb{{/str}}
+            </button>
+        </div>
+    </details>
     {{> mod_graphitoubb/toolbar }}
     <div id="graphitoubb-canvas-{{instanceid}}" class="mod-graphitoubb-canvas">
         <p class="mod-graphitoubb-loading">{{#str}}editor_loading, mod_graphitoubb{{/str}}</p>

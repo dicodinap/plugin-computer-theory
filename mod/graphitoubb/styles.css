@@ -1,7 +1,28 @@
+/* H1: shared visual tokens for the AFD editor colour system. */
+:root {
+    --graphitoubb-start: #1e88e5;
+    --graphitoubb-final: #333;
+    --graphitoubb-visited-bg: #ffe066;
+    --graphitoubb-visited-border: #f39c12;
+    --graphitoubb-ok: #1b7e3c;   /* WCAG-AA green for text on white. */
+    --graphitoubb-bad: #c0392b;  /* WCAG-AA red for text on white. */
+    --graphitoubb-muted: #495057;
+}
+
 .mod-graphitoubb-editor {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+}
+
+/* H2: section titles to give the stacked editor a clear visual hierarchy. */
+.mod-graphitoubb-section-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    color: var(--graphitoubb-muted, #495057);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .mod-graphitoubb-toolbar {
@@ -84,8 +105,8 @@
 }
 
 .mod-graphitoubb-canvas .trace-visited {
-    background-color: #ffe066;
-    border-color: #f39c12;
+    background-color: var(--graphitoubb-visited-bg, #ffe066);
+    border-color: var(--graphitoubb-visited-border, #f39c12);
 }
 
 .mod-graphitoubb-save-indicator {
@@ -98,15 +119,83 @@
 }
 
 .mod-graphitoubb-save-indicator--saving {
-    color: #6c757d;
+    color: var(--graphitoubb-muted, #495057);
 }
 
 .mod-graphitoubb-save-indicator--saved {
-    color: #28a745;
+    /* B8: was #28a745 (~2.6:1 on white — fails AA); token green is AA-compliant. */
+    color: var(--graphitoubb-ok, #1b7e3c);
 }
 
 .mod-graphitoubb-save-indicator--error {
-    color: #dc3545;
+    /* B8: was #dc3545 (~4.0:1 — borderline); token red meets AA. */
+    color: var(--graphitoubb-bad, #c0392b);
+}
+
+/* A13: collapsible "how it works" help panel. */
+.mod-graphitoubb-help {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: #f8f9fa;
+    padding: 0.5rem 0.75rem;
+}
+
+.mod-graphitoubb-help > summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.mod-graphitoubb-help-steps {
+    margin: 0.5rem 0 0;
+    padding-left: 1.25rem;
+}
+
+.mod-graphitoubb-help-steps li {
+    margin-bottom: 0.25rem;
+}
+
+/* A14: keyboard form-alternative panel. */
+.mod-graphitoubb-kbd-panel {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: #f8f9fa;
+    padding: 0.5rem 0.75rem;
+}
+
+.mod-graphitoubb-kbd-panel > summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.mod-graphitoubb-kbd-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.mod-graphitoubb-kbd-row label {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.mod-graphitoubb-kbd-row select,
+.mod-graphitoubb-kbd-row input {
+    width: auto;
+    min-width: 5rem;
+}
+
+/* H3: spacing for toolbar button icons. */
+.mod-graphitoubb-toolbar-buttons .mod-graphitoubb-tool-btn .icon,
+.mod-graphitoubb-toolbar-buttons .mod-graphitoubb-tidy-btn .icon,
+.mod-graphitoubb-toolbar-buttons .mod-graphitoubb-reset-automaton-btn .icon,
+.mod-graphitoubb-toolbar-buttons .mod-graphitoubb-history-btn .icon {
+    margin-right: 0.35rem;
+    width: auto;
+    height: auto;
 }
 
 /* A5: contextual mode hint under the toolbar. */
@@ -167,7 +256,7 @@
 }
 
 .mod-graphitoubb-legend-start {
-    border: 3px solid #1e88e5;
+    border: 3px solid var(--graphitoubb-start, #1e88e5);
 }
 
 .mod-graphitoubb-legend-final {
@@ -175,8 +264,8 @@
 }
 
 .mod-graphitoubb-legend-visited {
-    background: #ffe066;
-    border: 1px solid #f39c12;
+    background: var(--graphitoubb-visited-bg, #ffe066);
+    border: 1px solid var(--graphitoubb-visited-border, #f39c12);
 }
 
 /* A11: run-validity hint. */
@@ -205,13 +294,72 @@
     margin-left: auto;
 }
 
+/* A10: trace playback controls. */
+.mod-graphitoubb-trace-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+}
+
+.mod-graphitoubb-trace-controls[hidden] {
+    display: none;
+}
+
+.mod-graphitoubb-trace-step {
+    margin-left: 0.5rem;
+    font-size: 0.85rem;
+    color: #495057;
+}
+
 /* E2: simulation verdict — icon + text, not colour alone. */
 .mod-graphitoubb-trace.trace-accept {
-    color: #1b7e3c;
+    color: var(--graphitoubb-ok, #1b7e3c);
     font-weight: 600;
 }
 
 .mod-graphitoubb-trace.trace-reject {
-    color: #c0392b;
+    color: var(--graphitoubb-bad, #c0392b);
     font-weight: 600;
+}
+
+/* F1–F3: responsive adjustments for small viewports (≤768px / ≤576px). */
+@media (max-width: 768px) {
+    .mod-graphitoubb-canvas {
+        min-height: 340px;
+    }
+    /* F2: keep wide panel tables/heatmap usable via horizontal scroll. */
+    [data-region="heatmap-grid"],
+    [data-region="student-table-wrapper"] {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .graphitoubb-heatmap-row {
+        width: max-content;
+    }
+}
+
+@media (max-width: 576px) {
+    .mod-graphitoubb-canvas {
+        min-height: 280px;
+    }
+    /* Toolbar buttons stack/wrap comfortably instead of overflowing. */
+    .mod-graphitoubb-toolbar-buttons .btn {
+        margin-bottom: 0.25rem;
+    }
+    /* A2 submission bar: finish button drops to its own full-width row. */
+    .mod-graphitoubb-submission-bar {
+        flex-wrap: wrap;
+    }
+    .mod-graphitoubb-submission-bar .mod-graphitoubb-finish-btn {
+        margin-left: 0;
+        width: 100%;
+    }
+    /* F3: stack the teacher authoring fields and zoom cluster tighter. */
+    .mod-graphitoubb-zoom-controls {
+        flex-direction: row;
+    }
+    .mod-graphitoubb-legend {
+        font-size: 0.8rem;
+    }
 }

@@ -25,10 +25,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component    = 'qtype_graphitoubb';
-$plugin->version      = 2026062902;
+$plugin->version      = 2026062906;
 $plugin->requires     = 2024100700;
 $plugin->maturity     = MATURITY_ALPHA;
-$plugin->release      = '0.2.1-alpha';
+$plugin->release      = '0.4.1-alpha';
 $plugin->dependencies = [
-    'local_graphitoubb' => 2026051800,
+    'local_graphitoubb' => 2026062901,
 ];

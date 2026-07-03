@@ -81,8 +81,8 @@ class qtype_graphitoubb_renderer extends qtype_renderer {
             $config = $question->problem_payload['config'] ?? [];
             switch ($question->exercise_type) {
                 case 'equivalence':
-                    $f1 = htmlspecialchars($config['formula_1'] ?? '', ENT_QUOTES);
-                    $f2 = htmlspecialchars($config['formula_2'] ?? '', ENT_QUOTES);
+                    $f1 = htmlspecialchars($this->canonical_formula($config['formula_1'] ?? ''), ENT_QUOTES);
+                    $f2 = htmlspecialchars($this->canonical_formula($config['formula_2'] ?? ''), ENT_QUOTES);
                     $html .= html_writer::tag(
                         'p',
                         html_writer::tag('strong', 'F1: ') . $f1 . ' &nbsp; ' .
@@ -91,7 +91,7 @@ class qtype_graphitoubb_renderer extends qtype_renderer {
                     );
                     break;
                 default:
-                    $formula = htmlspecialchars($config['formula'] ?? '', ENT_QUOTES);
+                    $formula = htmlspecialchars($this->canonical_formula($config['formula'] ?? ''), ENT_QUOTES);
                     $html .= html_writer::tag(
                         'p',
                         html_writer::tag('strong', get_string('formula', 'qtype_graphitoubb') . ': ') . $formula,
@@ -101,10 +101,16 @@ class qtype_graphitoubb_renderer extends qtype_renderer {
             }
         }
 
-        // Truth table editor container (filled by AMD).
-        $html .= html_writer::div('', 'qtype_graphitoubb_editor', ['data-exercise-type' => $exercise_type]);
+        // Interactive grid: rendered server-side from the shared skeleton so the
+        // student fills a fixed-formula table. The same CSS hooks the mod editor uses
+        // let a small inline serializer build the answer payload on change.
+        $html .= html_writer::div(
+            get_string('fill_table_instruction', 'qtype_graphitoubb'),
+            'qtype_graphitoubb_instruction text-muted small mb-2'
+        );
+        $html .= $this->render_grid($question, $qa, $options);
 
-        // Hidden input carrying the current JSON answer.
+        // Hidden input carrying the current JSON answer (submitted by the quiz form).
         $input_attrs = [
             'type'  => 'hidden',
             'name'  => $input_name,
@@ -118,20 +124,236 @@ class qtype_graphitoubb_renderer extends qtype_renderer {
 
         $html .= html_writer::end_div();
 
-        // Initialise the AMD truth table editor module.
+        // Wire the grid to the hidden input. No AMD build needed; this replicates the
+        // mod editor's buildPayload() exactly so the shared grader receives an
+        // identical submission shape.
         if (!$options->readonly) {
-            $PAGE->requires->js_call_amd(
-                'mod_graphitoubb/truth_table_editor',
-                'init',
-                [
-                    '#' . $wrapper_id,
-                    $problem_json,
-                    $input_name,
-                ]
-            );
+            $rootjs  = json_encode($wrapper_id);
+            $inputjs = json_encode($input_name);
+            $typejs  = json_encode($question->exercise_type);
+            $PAGE->requires->js_amd_inline(<<<JS
+require([], function() {
+    var root = document.getElementById($rootjs);
+    var input = document.getElementById($inputjs);
+    if (!root || !input) { return; }
+    var problemType = $typejs;
+    var build = function() {
+        var table = {columns: [], rows: []};
+        root.querySelectorAll('.mod-graphitoubb-tte__col-header').forEach(function(th) {
+            table.columns.push(th.textContent.trim());
+        });
+        root.querySelectorAll('[data-row-index]').forEach(function(tr) {
+            var vars = {};
+            tr.querySelectorAll('.mod-graphitoubb-tte__cell--var').forEach(function(td, i) {
+                var letter = table.columns[i] || String.fromCharCode(65 + i);
+                vars[letter] = td.textContent.trim();
+            });
+            var values = [];
+            tr.querySelectorAll('.mod-graphitoubb-tte__cell-select').forEach(function(sel) {
+                values.push(sel.value || '');
+            });
+            table.rows.push({vars: vars, values: values});
+        });
+        var radioAnswer = null;
+        var r = root.querySelector('.mod-graphitoubb-tte__radio:checked');
+        if (r) {
+            radioAnswer = (r.value === 'true' || r.value === 'false') ? (r.value === 'true') : r.value;
+        }
+        input.value = JSON.stringify({
+            tool: 'truth_table',
+            schema_version: 1,
+            type: problemType,
+            table: table,
+            radio_answer: radioAnswer
+        });
+    };
+    root.addEventListener('change', function(e) {
+        if (e.target.matches('.mod-graphitoubb-tte__cell-select, .mod-graphitoubb-tte__radio')) {
+            build();
+        }
+    });
+});
+JS);
         }
 
         return $html;
+    }
+
+    /**
+     * Render the interactive (or read-only) truth-table grid plus the radio answer.
+     *
+     * Uses the shared grid_skeleton so the column/row layout matches the grader, and
+     * pre-fills cells/radio from any saved response for review.
+     *
+     * @param  qtype_graphitoubb_question $question
+     * @param  question_attempt           $qa
+     * @param  question_display_options   $options
+     * @return string
+     */
+    private function render_grid(
+        qtype_graphitoubb_question $question,
+        question_attempt $qa,
+        question_display_options $options
+    ): string {
+        $skeleton = \local_graphitoubb\tools\truth_table\domain\grid_skeleton::build($question->problem_payload);
+        $vars  = $skeleton['variables'];
+        $cols  = $skeleton['columns'];
+        $rows  = $skeleton['rows'];
+        $nvars = count($vars);
+
+        if (empty($cols) || empty($rows)) {
+            return html_writer::div(
+                get_string('err_internal', 'qtype_graphitoubb'),
+                'alert alert-warning'
+            );
+        }
+
+        // Pre-fill from a saved response (review / regrade / redisplay).
+        $saved       = json_decode((string) $qa->get_last_qt_var('answer_payload', ''), true);
+        $saved_rows  = (is_array($saved) && isset($saved['table']['rows'])) ? $saved['table']['rows'] : [];
+        $saved_radio = is_array($saved) ? ($saved['radio_answer'] ?? null) : null;
+        $disabled    = $options->readonly;
+
+        $out  = html_writer::start_div('mod-graphitoubb-tte__table-wrapper table-responsive');
+        $out .= html_writer::start_tag('table', [
+            'class' => 'table table-bordered mod-graphitoubb-tte__table',
+            'style' => 'width:auto',
+        ]);
+
+        $out .= '<thead><tr>';
+        foreach ($cols as $label) {
+            $out .= html_writer::tag('th', s((string) $label), [
+                'scope' => 'col',
+                'class' => 'mod-graphitoubb-tte__col-header text-center',
+            ]);
+        }
+        $out .= '</tr></thead><tbody>';
+
+        foreach ($rows as $i => $erow) {
+            $out .= '<tr data-row-index="' . (int) $i . '">';
+            foreach ($vars as $v) {
+                $out .= html_writer::tag(
+                    'td',
+                    !empty($erow['vars'][$v]) ? 'V' : 'F',
+                    ['class' => 'mod-graphitoubb-tte__cell mod-graphitoubb-tte__cell--var text-center']
+                );
+            }
+            $saved_values = $saved_rows[$i]['values'] ?? [];
+            for ($ci = $nvars; $ci < count($cols); $ci++) {
+                $cur  = $saved_values[$ci - $nvars] ?? '';
+                $opts_html = '<option value=""></option>'
+                    . '<option value="V"' . ($cur === 'V' ? ' selected' : '') . '>V</option>'
+                    . '<option value="F"' . ($cur === 'F' ? ' selected' : '') . '>F</option>';
+                $selattrs = [
+                    'class'      => 'form-control form-control-sm mod-graphitoubb-tte__cell-select',
+                    'data-row'   => (int) $i,
+                    'data-col'   => $ci,
+                    'aria-label' => get_string('cell_aria_label', 'qtype_graphitoubb',
+                        (object) ['row' => $i + 1, 'col' => (string) $cols[$ci]]),
+                ];
+                if ($disabled) {
+                    $selattrs['disabled'] = 'disabled';
+                }
+                $out .= html_writer::tag(
+                    'td',
+                    html_writer::tag('select', $opts_html, $selattrs),
+                    ['class' => 'mod-graphitoubb-tte__cell']
+                );
+            }
+            $out .= '</tr>';
+        }
+        $out .= '</tbody></table>';
+        $out .= html_writer::end_div();
+
+        // Radio answer for equivalence / classify.
+        if ($question->exercise_type !== 'complete') {
+            $out .= $this->render_radio($question, $qa, $saved_radio, $disabled);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Render the verdict radio group for equivalence / classify questions.
+     *
+     * @param  qtype_graphitoubb_question $question
+     * @param  question_attempt           $qa
+     * @param  mixed                      $saved_radio Saved radio answer (bool|string|null).
+     * @param  bool                       $disabled
+     * @return string
+     */
+    private function render_radio(
+        qtype_graphitoubb_question $question,
+        question_attempt $qa,
+        $saved_radio,
+        bool $disabled
+    ): string {
+        if ($question->exercise_type === 'equivalence') {
+            $legend  = get_string('radio_equivalence_prompt', 'qtype_graphitoubb');
+            $choices = [
+                ['value' => 'true',  'label' => get_string('yes')],
+                ['value' => 'false', 'label' => get_string('no')],
+            ];
+            $current = is_bool($saved_radio) ? ($saved_radio ? 'true' : 'false') : null;
+        } else {
+            $legend  = get_string('radio_classify_prompt', 'qtype_graphitoubb');
+            $choices = [
+                ['value' => 'tautology',     'label' => get_string('expected_class_tautology', 'qtype_graphitoubb')],
+                ['value' => 'contradiction', 'label' => get_string('expected_class_contradiction', 'qtype_graphitoubb')],
+                ['value' => 'contingency',   'label' => get_string('expected_class_contingency', 'qtype_graphitoubb')],
+            ];
+            $current = is_string($saved_radio) ? $saved_radio : null;
+        }
+
+        $name = 'qtype_graphitoubb_radio_' . $qa->get_database_id();
+        $out  = html_writer::start_tag('fieldset', ['class' => 'mod-graphitoubb-tte__radio-group mt-3']);
+        $out .= html_writer::tag('legend', s($legend), ['class' => 'h6']);
+        foreach ($choices as $idx => $choice) {
+            $id = $name . '_' . $choice['value'];
+            $attrs = [
+                'class' => 'form-check-input mod-graphitoubb-tte__radio',
+                'type'  => 'radio',
+                'name'  => $name,
+                'id'    => $id,
+                'value' => $choice['value'],
+            ];
+            if ($current === $choice['value']) {
+                $attrs['checked'] = 'checked';
+            }
+            if ($disabled) {
+                $attrs['disabled'] = 'disabled';
+            }
+            $out .= html_writer::start_div('form-check');
+            $out .= html_writer::empty_tag('input', $attrs);
+            $out .= html_writer::tag('label', s($choice['label']), [
+                'class' => 'form-check-label',
+                'for'   => $id,
+            ]);
+            $out .= html_writer::end_div();
+        }
+        $out .= html_writer::end_tag('fieldset');
+
+        return $out;
+    }
+
+    /**
+     * C6: render a formula in the same canonical form the student sees in the
+     * editor (explicit parentheses, Unicode operators). Falls back to the raw
+     * formula if it cannot be parsed, so a malformed problem never breaks output.
+     *
+     * @param  string $raw Raw stored formula.
+     * @return string Canonical formula, or the trimmed raw on parse failure.
+     */
+    private function canonical_formula(string $raw): string {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return '';
+        }
+        try {
+            return (new \local_graphitoubb\tools\truth_table\domain\parser())->parse($raw)->canonical();
+        } catch (\Throwable $e) {
+            return $raw;
+        }
     }
 
     /**

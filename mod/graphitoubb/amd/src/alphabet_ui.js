@@ -173,5 +173,8 @@ define(['core/notification', 'core/str'], function(Notification, Str) {
         getAlphabet: getAlphabet,
         addSymbol: addSymbol,
         removeSymbol: removeSymbol,
+        // A4: re-render the list from cy.scratch('alphabet') after an undo/redo
+        // restores the alphabet outside the add/removeSymbol path.
+        refresh: renderList,
     };
 });

@@ -187,10 +187,55 @@ $string['reset_automaton_confirm'] = 'Reset';
 
 // AFD authoring + grading (C1).
 $string['afd_consigna_title'] = 'Your task';
+$string['consigna_accepts'] = 'Should accept';
+$string['consigna_rejects'] = 'Should reject';
+$string['consigna_grading_info'] = 'When you submit, your automaton is checked against several hidden test words. You need {$a}% correct to pass.';
 $string['afd_result_score'] = 'Score: {$a->correct}/{$a->total} test words correct ({$a->pct}%)';
 $string['afd_result_passed'] = 'Passed';
 $string['afd_result_invalid'] = 'Your automaton could not be graded — make sure it has a start state.';
 $string['afd_finish_graded_toast'] = 'Submitted — {$a->correct}/{$a->total} test words correct.';
+
+// AFD editor onboarding + affordances (A13 / A7 / H3).
+$string['help_panel_title'] = 'How does this editor work?';
+$string['help_step_states'] = 'Add states with "Add state", then click the canvas to place each one.';
+$string['help_step_transition'] = 'For a transition, choose "Add transition", click the source state, then the target state, and type the symbol.';
+$string['help_step_start'] = 'Mark the start state with "Set start state".';
+$string['help_step_final'] = 'Mark accepting states with "Toggle final state".';
+$string['help_step_run'] = 'Type a word and press "Run" to test whether your automaton accepts it.';
+$string['help_step_rename'] = 'Double-click a state to rename it (e.g. "even", "odd").';
+$string['tidy_button'] = 'Tidy layout';
+$string['tidy_tooltip'] = 'Auto-arrange the states so they do not overlap.';
+$string['tooltip_reset'] = 'Clear all states, transitions and alphabet symbols.';
+$string['rename_state_title'] = 'Rename state';
+$string['rename_state_label'] = 'State label';
+
+// A10: step-by-step trace playback controls.
+$string['trace_controls_label'] = 'Trace playback';
+$string['trace_first'] = 'First step';
+$string['trace_prev'] = 'Previous step';
+$string['trace_play'] = 'Play';
+$string['trace_pause'] = 'Pause';
+$string['trace_next'] = 'Next step';
+$string['trace_last'] = 'Last step';
+$string['trace_step'] = 'Step {$a->i} of {$a->n}';
+
+// A4: undo / redo.
+$string['undo_button'] = 'Undo';
+$string['redo_button'] = 'Redo';
+$string['undo_tooltip'] = 'Undo (Ctrl+Z)';
+$string['redo_tooltip'] = 'Redo (Ctrl+Y)';
+
+// A14/E1: keyboard-accessible form alternative to the pointer-driven canvas.
+$string['kbd_panel_title'] = 'Keyboard controls';
+$string['kbd_panel_hint'] = 'Build the automaton without the mouse: add states, then set start/final, delete, or add transitions by choosing them here.';
+$string['kbd_state_label'] = 'State';
+$string['kbd_from'] = 'From';
+$string['kbd_to'] = 'To';
+$string['kbd_symbol'] = 'Symbol';
+
+// H2: section headings for visual hierarchy.
+$string['section_simulator'] = 'Simulator';
+$string['section_wordbank'] = 'Tested words';
 
 // Truth-table iter1 strings.
 $string['truth_table_editor_label'] = 'Truth table editor';
@@ -271,6 +316,7 @@ $string['export_json']                   = 'JSON';
 $string['export_pdf']                    = 'PDF';
 $string['export_button']                 = 'Download export';
 $string['error_loading_panel']           = 'Error loading panel data. Please refresh and try again.';
+$string['panel_loading']                 = 'Loading…';
 $string['panel_hist_title']              = 'Score distribution';
 $string['panel_hist_range']              = 'Range';
 $string['panel_hist_count']              = 'Count';
@@ -314,3 +360,14 @@ $string['task_cleanup_orphans'] = 'GraphitoUBB cleanup orphans';
 // Behat helpers — iter1.
 $string['behat_invalid_cell_value'] = 'Invalid cell value "{$a}". Accepted values are "V", "F", or "" (empty).';
 $string['behat_reset_confirm'] = 'Reset all attempts for this student?';
+
+// Preset catalogue (banco de ejercicios pre-instalados).
+$string['preset_catalog_title'] = 'Exercise catalogue (ready-made templates)';
+$string['preset_catalog_help'] = 'Pick a curated exercise to preload the form below. You can edit it before saving.';
+$string['preset_group_afd'] = 'AFD — finite automata';
+$string['preset_group_truth_table'] = 'Truth tables (logic)';
+$string['preset_load'] = 'Load';
+$string['preset_loaded'] = 'Template loaded: "{$a}". Review the fields below and click Save problem.';
+$string['preset_difficulty_easy'] = 'Easy';
+$string['preset_difficulty_medium'] = 'Medium';
+$string['preset_difficulty_hard'] = 'Hard';

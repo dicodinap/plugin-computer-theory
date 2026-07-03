@@ -81,3 +81,13 @@ $string['summary_classify']    = 'Clasificación: {$a}';
 $string['summary_complete']    = 'Tabla de verdad enviada con {$a} filas';
 $string['summary_rows']        = ' ({$a} filas)';
 $string['summary_no_answer']   = '(sin respuesta)';
+
+// Semilla del banco de preguntas con plantillas.
+$string['preset_category_name'] = 'GraphitoUBB — Tablas de verdad (preinstaladas)';
+$string['preset_category_info'] = 'Preguntas de tabla de verdad listas para usar, incluidas con el tipo de pregunta GraphitoUBB.';
+
+// Grilla interactiva de tabla de verdad (renderer del qtype).
+$string['fill_table_instruction'] = 'Completa cada celda con V (verdadero) o F (falso).';
+$string['radio_equivalence_prompt'] = '¿Son las dos fórmulas lógicamente equivalentes?';
+$string['radio_classify_prompt'] = '¿Cómo clasificas la fórmula?';
+$string['cell_aria_label'] = 'Fila {$a->row}, columna {$a->col}';
