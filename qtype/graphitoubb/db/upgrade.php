@@ -40,5 +40,12 @@ function xmldb_qtype_graphitoubb_upgrade(int $oldversion): bool {
     // upgrade_plugin_savepoint(true, 2026052000, 'qtype', 'graphitoubb');
     // }
 
+    // Seed the curated truth_table presets into the system Question Bank on existing
+    // installs. Idempotent (guarded by a config version) and defensive (never throws).
+    if ($oldversion < 2026062904) {
+        \qtype_graphitoubb\catalog_seeder::seed(2026062904);
+        upgrade_plugin_savepoint(true, 2026062904, 'qtype', 'graphitoubb');
+    }
+
     return true;
 }

@@ -74,3 +74,20 @@ $string['privacy:metadata:qtype_graphitoubb_options'] = 'Stores the truth_table 
 $string['err_missing_formula']    = 'You must provide at least one formula for this exercise type.';
 $string['err_schema_validation']  = 'The problem payload failed schema validation: {$a}';
 $string['err_internal']           = 'An internal error occurred while saving the question. Please try again.';
+
+// Response summary (i18n sweep §7.1).
+$string['summary_equivalence'] = 'Equivalence: {$a}';
+$string['summary_classify']    = 'Classification: {$a}';
+$string['summary_complete']    = 'Truth table submitted with {$a} rows';
+$string['summary_rows']        = ' ({$a} rows)';
+$string['summary_no_answer']   = '(no answer)';
+
+// Preset Question Bank seeding.
+$string['preset_category_name'] = 'GraphitoUBB — Truth tables (preinstalled)';
+$string['preset_category_info'] = 'Ready-to-use truth-table questions shipped with the GraphitoUBB question type.';
+
+// Interactive truth-table grid (qtype renderer).
+$string['fill_table_instruction'] = 'Fill in each cell with V (true) or F (false).';
+$string['radio_equivalence_prompt'] = 'Are the two formulas logically equivalent?';
+$string['radio_classify_prompt'] = 'How do you classify the formula?';
+$string['cell_aria_label'] = 'Row {$a->row}, column {$a->col}';

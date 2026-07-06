@@ -11,17 +11,94 @@
 <div class="mod-graphitoubb-editor"
     data-attemptid="{{attemptid}}"
     data-instanceid="{{instanceid}}"
+    data-finished="{{#is_finished}}1{{/is_finished}}{{^is_finished}}0{{/is_finished}}"
     data-max-states="{{max_states}}"
     data-max-alphabet="{{max_alphabet}}"
     data-max-transitions="{{max_transitions}}"
     data-max-label-length="{{max_label_length}}"
     data-max-input-length="{{max_input_length}}">
+    <details class="mod-graphitoubb-help">
+        <summary>{{#str}}help_panel_title, mod_graphitoubb{{/str}}</summary>
+        <ol class="mod-graphitoubb-help-steps">
+            <li>{{#str}}help_step_states, mod_graphitoubb{{/str}}</li>
+            <li>{{#str}}help_step_transition, mod_graphitoubb{{/str}}</li>
+            <li>{{#str}}help_step_start, mod_graphitoubb{{/str}}</li>
+            <li>{{#str}}help_step_final, mod_graphitoubb{{/str}}</li>
+            <li>{{#str}}help_step_rename, mod_graphitoubb{{/str}}</li>
+            <li>{{#str}}help_step_run, mod_graphitoubb{{/str}}</li>
+        </ol>
+    </details>
+    <details class="mod-graphitoubb-kbd-panel">
+        <summary>{{#str}}kbd_panel_title, mod_graphitoubb{{/str}}</summary>
+        <p class="text-muted small mb-2">{{#str}}kbd_panel_hint, mod_graphitoubb{{/str}}</p>
+        <div class="mod-graphitoubb-kbd-row">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-kbd="add-state">
+                {{#str}}toolbar_add_state, mod_graphitoubb{{/str}}
+            </button>
+        </div>
+        <div class="mod-graphitoubb-kbd-row">
+            <label>{{#str}}kbd_state_label, mod_graphitoubb{{/str}}
+                <select class="form-control form-control-sm mod-graphitoubb-kbd-state"></select>
+            </label>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-kbd="set-start">
+                {{#str}}toolbar_set_start, mod_graphitoubb{{/str}}
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-kbd="toggle-final">
+                {{#str}}toolbar_toggle_final, mod_graphitoubb{{/str}}
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger" data-kbd="delete-state">
+                {{#str}}toolbar_delete, mod_graphitoubb{{/str}}
+            </button>
+        </div>
+        <div class="mod-graphitoubb-kbd-row">
+            <label>{{#str}}kbd_from, mod_graphitoubb{{/str}}
+                <select class="form-control form-control-sm mod-graphitoubb-kbd-from"></select>
+            </label>
+            <label>{{#str}}kbd_to, mod_graphitoubb{{/str}}
+                <select class="form-control form-control-sm mod-graphitoubb-kbd-to"></select>
+            </label>
+            <label>{{#str}}kbd_symbol, mod_graphitoubb{{/str}}
+                <input type="text" maxlength="1" class="form-control form-control-sm mod-graphitoubb-kbd-symbol" />
+            </label>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-kbd="add-transition">
+                {{#str}}toolbar_add_transition, mod_graphitoubb{{/str}}
+            </button>
+        </div>
+    </details>
     {{> mod_graphitoubb/toolbar }}
     <div id="graphitoubb-canvas-{{instanceid}}" class="mod-graphitoubb-canvas">
         <p class="mod-graphitoubb-loading">{{#str}}editor_loading, mod_graphitoubb{{/str}}</p>
+        <div class="mod-graphitoubb-zoom-controls" role="group" aria-label="{{#str}}zoom_fit, mod_graphitoubb{{/str}}">
+            <button type="button" class="btn btn-sm btn-light mod-graphitoubb-zoom-btn" data-zoom="in"
+                    title="{{#str}}zoom_in, mod_graphitoubb{{/str}}" aria-label="{{#str}}zoom_in, mod_graphitoubb{{/str}}">+</button>
+            <button type="button" class="btn btn-sm btn-light mod-graphitoubb-zoom-btn" data-zoom="out"
+                    title="{{#str}}zoom_out, mod_graphitoubb{{/str}}" aria-label="{{#str}}zoom_out, mod_graphitoubb{{/str}}">−</button>
+            <button type="button" class="btn btn-sm btn-light mod-graphitoubb-zoom-btn" data-zoom="fit"
+                    title="{{#str}}zoom_fit, mod_graphitoubb{{/str}}" aria-label="{{#str}}zoom_fit, mod_graphitoubb{{/str}}">⤢</button>
+            <button type="button" class="btn btn-sm btn-light mod-graphitoubb-zoom-btn" data-zoom="reset"
+                    title="{{#str}}zoom_reset, mod_graphitoubb{{/str}}" aria-label="{{#str}}zoom_reset, mod_graphitoubb{{/str}}">100%</button>
+        </div>
     </div>
+    <ul class="mod-graphitoubb-legend" aria-label="{{#str}}legend_title, mod_graphitoubb{{/str}}">
+        <li><span class="mod-graphitoubb-legend-swatch mod-graphitoubb-legend-start"></span>{{#str}}legend_start, mod_graphitoubb{{/str}}</li>
+        <li><span class="mod-graphitoubb-legend-swatch mod-graphitoubb-legend-final"></span>{{#str}}legend_final, mod_graphitoubb{{/str}}</li>
+        <li><span class="mod-graphitoubb-legend-swatch mod-graphitoubb-legend-visited"></span>{{#str}}legend_visited, mod_graphitoubb{{/str}}</li>
+    </ul>
     {{> mod_graphitoubb/simulator_panel }}
     {{> mod_graphitoubb/wordbank_panel }}
+    <div class="mod-graphitoubb-submission-bar">
+        <span class="mod-graphitoubb-status-label">{{#str}}afd_status_label, mod_graphitoubb{{/str}}</span>
+        <span class="mod-graphitoubb-status-badge badge {{#is_finished}}badge-success bg-success{{/is_finished}}{{^is_finished}}badge-warning bg-warning text-dark{{/is_finished}}"
+              data-region="attempt-status" aria-live="polite">
+            {{#is_finished}}{{#str}}status_finished, mod_graphitoubb{{/str}}{{/is_finished}}{{^is_finished}}{{#str}}status_inprogress, mod_graphitoubb{{/str}}{{/is_finished}}
+        </span>
+        <button type="button"
+                class="btn btn-primary mod-graphitoubb-finish-btn"
+                data-region="finish-btn"
+                {{#is_finished}}disabled{{/is_finished}}>
+            {{#str}}afd_finish_button, mod_graphitoubb{{/str}}
+        </button>
+    </div>
 </div>
 {{#js}}
 require(['mod_graphitoubb/afd_editor'], function(Editor) {

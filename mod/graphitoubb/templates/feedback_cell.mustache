@@ -23,10 +23,10 @@
         {{#is_correct}}✓{{/is_correct}}{{^is_correct}}✗{{/is_correct}}
     </span>
     <span class="mod-graphitoubb-feedback-cell__location">
-        Fila {{row_index}}, <code>{{col_label}}</code>:
+        {{#str}}feedback_location, mod_graphitoubb, {{row_index}}{{/str}}, <code>{{col_label}}</code>:
     </span>
     <span class="mod-graphitoubb-feedback-cell__values">
-        enviado <strong>{{submitted}}</strong> — esperado <strong>{{expected}}</strong>
+        {{#str}}feedback_submitted, mod_graphitoubb{{/str}} <strong>{{submitted}}</strong> — {{#str}}feedback_expected, mod_graphitoubb{{/str}} <strong>{{expected}}</strong>
     </span>
     {{^is_correct}}
     {{#is_root_error}}

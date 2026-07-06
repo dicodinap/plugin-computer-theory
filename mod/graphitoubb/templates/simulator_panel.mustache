@@ -6,6 +6,7 @@
     @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 }}
 <div class="mod-graphitoubb-simulator-panel">
+    <h3 class="mod-graphitoubb-section-title">{{#str}}section_simulator, mod_graphitoubb{{/str}}</h3>
     <label for="graphitoubb-simulator-input">
         {{#str}}simulator_input_label, mod_graphitoubb{{/str}}
     </label>
@@ -13,5 +14,20 @@
     <button type="button" class="btn btn-primary mod-graphitoubb-run">
         {{#str}}simulator_run, mod_graphitoubb{{/str}}
     </button>
+    <p class="mod-graphitoubb-run-hint text-muted" aria-live="polite"></p>
     <div class="mod-graphitoubb-trace" aria-live="polite"></div>
+    <div class="mod-graphitoubb-trace-controls" role="group"
+         aria-label="{{#str}}trace_controls_label, mod_graphitoubb{{/str}}" hidden>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-step="first"
+                aria-label="{{#str}}trace_first, mod_graphitoubb{{/str}}" title="{{#str}}trace_first, mod_graphitoubb{{/str}}">⏮</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-step="prev"
+                aria-label="{{#str}}trace_prev, mod_graphitoubb{{/str}}" title="{{#str}}trace_prev, mod_graphitoubb{{/str}}">←</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-trace-play" data-step="playpause"
+                aria-label="{{#str}}trace_play, mod_graphitoubb{{/str}}" title="{{#str}}trace_play, mod_graphitoubb{{/str}}">▶</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-step="next"
+                aria-label="{{#str}}trace_next, mod_graphitoubb{{/str}}" title="{{#str}}trace_next, mod_graphitoubb{{/str}}">→</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-step="last"
+                aria-label="{{#str}}trace_last, mod_graphitoubb{{/str}}" title="{{#str}}trace_last, mod_graphitoubb{{/str}}">⏭</button>
+        <span class="mod-graphitoubb-trace-step" aria-live="polite"></span>
+    </div>
 </div>

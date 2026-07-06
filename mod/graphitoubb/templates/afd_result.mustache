@@ -1,0 +1,18 @@
+{{!
+    AFD grading result panel (shown after a finished/graded attempt).
+
+    Context: {invalid (bool), score_label (string, pre-localised), passed (bool)}
+
+    @template mod_graphitoubb/afd_result
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-afd-result alert {{#invalid}}alert-warning{{/invalid}}{{^invalid}}{{#passed}}alert-success{{/passed}}{{^passed}}alert-info{{/passed}}{{/invalid}}"
+     data-region="afd-result" role="status">
+    {{#invalid}}
+        <strong>{{#str}}afd_result_invalid, mod_graphitoubb{{/str}}</strong>
+    {{/invalid}}
+    {{^invalid}}
+        <strong>{{score_label}}</strong>{{#passed}} — {{#str}}afd_result_passed, mod_graphitoubb{{/str}}{{/passed}}
+    {{/invalid}}
+</div>

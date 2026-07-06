@@ -32,13 +32,28 @@ class renderer extends \plugin_renderer_base {
      * @param int $attemptid
      * @param int $instanceid
      * @param int $schemaversion
+     * @param string $status Attempt status ('inprogress' | 'finished').
      * @return string HTML.
      */
-    public function render_editor(int $attemptid, int $instanceid, int $schemaversion): string {
+    public function render_editor(int $attemptid, int $instanceid, int $schemaversion,
+            string $status = 'inprogress'): string {
+        // Restore the wordbank history (newest first) so a student resuming an
+        // attempt sees the words they already tested instead of an empty panel.
+        $words   = [];
+        $wbrows  = (new \mod_graphitoubb\wordbank_service())->list_for_attempt($attemptid, 50);
+        foreach (array_reverse($wbrows) as $row) {
+            $words[] = [
+                'word'     => $row->word,
+                'accepted' => (bool) $row->accepted,
+            ];
+        }
+
         $context = [
             'attemptid'        => $attemptid,
             'instanceid'       => $instanceid,
             'schemaversion'    => $schemaversion,
+            'words'            => $words,
+            'is_finished'      => ($status === 'finished'),
             'max_states'       => \local_graphitoubb\tools\afd\domain\validator::MAX_STATES,
             'max_alphabet'     => \local_graphitoubb\tools\afd\domain\validator::MAX_ALPHABET,
             'max_transitions'  => \local_graphitoubb\tools\afd\domain\validator::MAX_TRANSITIONS,
@@ -46,6 +61,70 @@ class renderer extends \plugin_renderer_base {
             'max_input_length' => \local_graphitoubb\tools\afd\domain\validator::MAX_INPUT_LENGTH,
         ];
         return $this->render_from_template('mod_graphitoubb/editor', $context);
+    }
+
+    /**
+     * C1/A1: render the AFD task prompt (consigna) shown above the student editor.
+     *
+     * Only the prompt and alphabet are exposed; the authored test words stay hidden.
+     *
+     * @param \stdClass $problem graphitoubb_problem row (tool='afd').
+     * @return string HTML.
+     */
+    public function render_afd_consigna(\stdClass $problem): string {
+        $pdata  = json_decode($problem->payload, true) ?: [];
+        $config = $pdata['config'] ?? [];
+
+        // Surface only the test words the teacher explicitly marked as examples,
+        // so students get concrete accept/reject samples without seeing the full
+        // (hidden) grading set. The empty word renders as ε.
+        $accepts = [];
+        $rejects = [];
+        foreach (($config['test_words'] ?? []) as $tw) {
+            if (empty($tw['example'])) {
+                continue;
+            }
+            $w = ($tw['word'] ?? '') === '' ? 'ε' : $tw['word'];
+            if (!empty($tw['accept'])) {
+                $accepts[] = $w;
+            } else {
+                $rejects[] = $w;
+            }
+        }
+
+        $passpct = (int) round(\local_graphitoubb\tools\afd\grader\afd_grader::PASS_THRESHOLD * 100);
+
+        return $this->render_from_template('mod_graphitoubb/afd_consigna', [
+            'prompt'          => (string) ($config['prompt'] ?? ''),
+            'alphabet'        => implode(', ', $config['alphabet'] ?? []),
+            'has_examples'    => !empty($accepts) || !empty($rejects),
+            'has_accepts'     => !empty($accepts),
+            'examples_accept' => implode(', ', $accepts),
+            'has_rejects'     => !empty($rejects),
+            'examples_reject' => implode(', ', $rejects),
+            'grading_info'    => get_string('consigna_grading_info', 'mod_graphitoubb', $passpct),
+        ]);
+    }
+
+    /**
+     * C1: render the grading result panel for a finished AFD attempt.
+     *
+     * @param array $gr Decoded grading_result (afd_grader output).
+     * @return string HTML.
+     */
+    public function render_afd_result(array $gr): string {
+        $invalid  = !empty($gr['invalid']);
+        $fraction = (float) ($gr['fraction'] ?? 0);
+        $wc       = (int) ($gr['words_correct'] ?? 0);
+        $wt       = (int) ($gr['words_total'] ?? 0);
+        $pct      = $wt > 0 ? round($fraction * 100, 1) : 0;
+        $scorelabel = get_string('afd_result_score', 'mod_graphitoubb',
+            (object) ['correct' => $wc, 'total' => $wt, 'pct' => $pct]);
+        return $this->render_from_template('mod_graphitoubb/afd_result', [
+            'invalid'     => $invalid,
+            'score_label' => $scorelabel,
+            'passed'      => !empty($gr['passed']),
+        ]);
     }
 
     /**
@@ -73,6 +152,12 @@ class renderer extends \plugin_renderer_base {
             $row['fullname']         = fullname($attempt, $canviewfullnames);
             $row['timestarted_fmt']  = userdate((int) $attempt->timestarted);
             $row['timefinished_fmt'] = $attempt->timefinished ? userdate((int) $attempt->timefinished) : '';
+            // D3: distinguish "tested the empty string" (show ε) from "no word tested" (blank),
+            // since an empty cell otherwise reads as a bug.
+            $lastword = $attempt->last_word_tested ?? null;
+            $row['last_word_tested'] = ($lastword === '')
+                ? get_string('word_empty', 'mod_graphitoubb')
+                : ($lastword ?? '');
             $rows[]                  = $row;
         }
         return $this->render_from_template('mod_graphitoubb/attempt_list', [
@@ -284,6 +369,8 @@ class renderer extends \plugin_renderer_base {
                     'value'      => '',
                     'v_selected' => $vsel,
                     'f_selected' => $fsel,
+                    'aria_label' => get_string('cell_aria', 'mod_graphitoubb',
+                        (object) ['row' => $i, 'col' => $ci]),
                 ];
             }
             $mrows[] = [
@@ -304,17 +391,17 @@ class renderer extends \plugin_renderer_base {
         $radio_options = [];
         $radio_legend  = '';
         if ($type === 'equivalence') {
-            $radio_legend  = '¿Son lógicamente equivalentes?';
+            $radio_legend  = get_string('radio_equivalence_legend', 'mod_graphitoubb');
             $radio_options = [
-                ['value' => 'true',  'label' => 'Sí'],
-                ['value' => 'false', 'label' => 'No'],
+                ['value' => 'true',  'label' => get_string('radio_yes', 'mod_graphitoubb')],
+                ['value' => 'false', 'label' => get_string('radio_no', 'mod_graphitoubb')],
             ];
         } else if ($type === 'classify') {
-            $radio_legend  = 'Clasificación de la fórmula';
+            $radio_legend  = get_string('radio_classify_legend', 'mod_graphitoubb');
             $radio_options = [
-                ['value' => 'tautology',     'label' => 'Tautología'],
-                ['value' => 'contradiction', 'label' => 'Contradicción'],
-                ['value' => 'contingency',   'label' => 'Contingencia'],
+                ['value' => 'tautology',     'label' => get_string('class_tautology', 'mod_graphitoubb')],
+                ['value' => 'contradiction', 'label' => get_string('class_contradiction', 'mod_graphitoubb')],
+                ['value' => 'contingency',   'label' => get_string('class_contingency', 'mod_graphitoubb')],
             ];
         }
 

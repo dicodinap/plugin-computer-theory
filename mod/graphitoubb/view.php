@@ -97,6 +97,30 @@ if ($problem && $problem->tool === 'truth_table') {
             'mt-3'
         );
     }
+} else if ($problem && $problem->tool === 'afd') {
+    // C1: graded AFD exercise — consigna (A1) + editor, graded on finish.
+    if ($canattempt) {
+        $service = new \mod_graphitoubb\attempt_service();
+        $attempt = $service->start_or_resume((int) $instance->id, (int) $USER->id);
+
+        echo $renderer->render_afd_consigna($problem);
+
+        // If already finished+graded, show the result above the editor.
+        $sub = (new \mod_graphitoubb\submission_repository())->find_by_attempt((int) $attempt->id);
+        if ($sub) {
+            $gr = json_decode($sub->grading_result, true) ?: [];
+            echo $renderer->render_afd_result($gr);
+        }
+
+        echo $renderer->render_editor((int) $attempt->id, (int) $instance->id, 1, (string) $attempt->status);
+    }
+    if ($canmanage) {
+        $editurl = new \moodle_url('/mod/graphitoubb/edit_problem.php', ['id' => $cm->id]);
+        echo \html_writer::div(
+            \html_writer::link($editurl, '✏ Edit problem (teacher)'),
+            'mt-3'
+        );
+    }
 } else if ($canmanage) {
     // No problem configured yet: prompt the teacher.
     $editurl = new \moodle_url('/mod/graphitoubb/edit_problem.php', ['id' => $cm->id]);
@@ -106,7 +130,7 @@ if ($problem && $problem->tool === 'truth_table') {
     // Legacy AFD path (existing POC flow).
     $service = new \mod_graphitoubb\attempt_service();
     $attempt = $service->start_or_resume((int) $instance->id, (int) $USER->id);
-    echo $renderer->render_editor((int) $attempt->id, (int) $instance->id, 1);
+    echo $renderer->render_editor((int) $attempt->id, (int) $instance->id, 1, (string) $attempt->status);
 }
 
 echo $renderer->render_view_links((int) $cm->id, $canviewreport, $canattempt);

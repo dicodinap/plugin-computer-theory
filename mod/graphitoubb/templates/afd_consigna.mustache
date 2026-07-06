@@ -1,0 +1,30 @@
+{{!
+    AFD task prompt (consigna) shown above the student editor.
+
+    Context: {prompt, alphabet, has_examples, has_accepts, examples_accept,
+              has_rejects, examples_reject, grading_info}
+
+    @template mod_graphitoubb/afd_consigna
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-consigna card card-body mb-3">
+    <h3 class="h5">{{#str}}afd_consigna_title, mod_graphitoubb{{/str}}</h3>
+    <p class="mod-graphitoubb-consigna-prompt mb-2">{{prompt}}</p>
+    <p class="text-muted mb-2">
+        <strong>{{#str}}alphabet_label, mod_graphitoubb{{/str}}</strong> {{alphabet}}
+    </p>
+    {{#has_examples}}
+    <ul class="mod-graphitoubb-consigna-examples list-unstyled mb-2">
+        {{#has_accepts}}
+        <li><span class="badge badge-success bg-success">{{#str}}consigna_accepts, mod_graphitoubb{{/str}}</span>
+            <code class="mod-graphitoubb-consigna-words">{{examples_accept}}</code></li>
+        {{/has_accepts}}
+        {{#has_rejects}}
+        <li><span class="badge badge-danger bg-danger">{{#str}}consigna_rejects, mod_graphitoubb{{/str}}</span>
+            <code class="mod-graphitoubb-consigna-words">{{examples_reject}}</code></li>
+        {{/has_rejects}}
+    </ul>
+    {{/has_examples}}
+    <p class="text-muted small mb-0">{{grading_info}}</p>
+</div>

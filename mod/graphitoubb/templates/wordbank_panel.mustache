@@ -9,10 +9,11 @@
     @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 }}
 <div class="mod-graphitoubb-wordbank-panel">
+    <h3 class="mod-graphitoubb-section-title">{{#str}}section_wordbank, mod_graphitoubb{{/str}}</h3>
     <ul class="mod-graphitoubb-wordbank-list">
         {{#words}}
         <li class="{{#accepted}}accepted{{/accepted}}{{^accepted}}rejected{{/accepted}}">
-            {{word}}
+            {{#accepted}}&#x2713;{{/accepted}}{{^accepted}}&#x2717;{{/accepted}} {{word}}
         </li>
         {{/words}}
         {{^words}}

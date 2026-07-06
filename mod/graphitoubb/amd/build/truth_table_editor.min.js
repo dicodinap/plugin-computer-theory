@@ -37,9 +37,14 @@ define([
     'mod_graphitoubb/repository',
     'core/templates',
     'core/notification',
-], function(FormulaParser, Autosave, SaveIndicator, Repository, Templates, Notification) {
+    'core/str',
+], function(FormulaParser, Autosave, SaveIndicator, Repository, Templates, Notification, Str) {
 
     var MAX_FORMULA_LENGTH = 128;
+
+    // B3/G3: localised "Grading…" label for the submit spinner. English fallback
+    // until init() prefetches the site language via core/str.
+    var _gradingLabel = 'Grading…';
 
     // -------------------------------------------------------------------------
     // Payload builder — serialize current editor state to JSON string.
@@ -119,6 +124,14 @@ define([
         var attemptid   = parseInt(rootElement.dataset.attemptid, 10) || 0;
         var problemType = rootElement.dataset.problemType || 'complete';
 
+        // Prefetch the localised grading label (English fallback stays otherwise).
+        Str.get_string('submit_grading', 'mod_graphitoubb').then(function(s) {
+            _gradingLabel = s;
+            return s;
+        }).catch(function() {
+            return _gradingLabel;
+        });
+
         // Subregion selectors.
         var formulaInput   = rootElement.querySelector('[data-region="formula-input"]');
         var canonicalEl    = rootElement.querySelector('[data-region="canonical-preview"]');
@@ -131,6 +144,18 @@ define([
         // Formula textarea: normalize + preview
         // -----------------------------------------------------------------------
         if (formulaInput && canonicalEl) {
+            // B4: errors get role="alert" + icon-less inline emphasis; messages are
+            // localised via core/str (the parser throws structured {strKey, strParam}).
+            var setError = function(text) {
+                canonicalEl.textContent = text;
+                canonicalEl.classList.add('text-danger');
+                canonicalEl.setAttribute('role', 'alert');
+            };
+            var clearError = function() {
+                canonicalEl.classList.remove('text-danger');
+                canonicalEl.removeAttribute('role');
+            };
+
             formulaInput.addEventListener('input', function() {
                 var raw  = formulaInput.value;
                 var norm = FormulaParser.normalize(raw);
@@ -143,8 +168,9 @@ define([
                 }
 
                 if (norm.length > MAX_FORMULA_LENGTH) {
-                    canonicalEl.textContent = M.util.get_string('err_max_formula_length', 'mod_graphitoubb', MAX_FORMULA_LENGTH);
-                    canonicalEl.classList.add('text-danger');
+                    Str.get_string('err_max_formula_length', 'mod_graphitoubb', MAX_FORMULA_LENGTH)
+                        .then(setError)
+                        .catch(function() { setError('Formula exceeds the maximum length.'); });
                     return;
                 }
 
@@ -152,10 +178,15 @@ define([
                     var ast  = FormulaParser.parse(norm);
                     var cano = FormulaParser.canonical(ast);
                     canonicalEl.textContent = cano;
-                    canonicalEl.classList.remove('text-danger');
+                    clearError();
                 } catch (e) {
-                    canonicalEl.textContent = e.message;
-                    canonicalEl.classList.add('text-danger');
+                    if (e.strKey) {
+                        Str.get_string(e.strKey, 'mod_graphitoubb', e.strParam)
+                            .then(setError)
+                            .catch(function() { setError(e.message); });
+                    } else {
+                        setError(e.message);
+                    }
                 }
             });
         }
@@ -200,20 +231,26 @@ define([
         // -----------------------------------------------------------------------
         if (submitBtn) {
             submitBtn.addEventListener('click', function() {
+                var originalHtml = submitBtn.innerHTML;
+                // B3/G3: loading state — spinner + "Grading…", blocks double submit.
                 submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" '
+                    + 'role="status" aria-hidden="true"></span> ' + _gradingLabel;
                 var payload = buildPayload(rootElement, problemType);
 
                 Repository.submit(attemptid, payload)
                     .then(function(result) {
                         if (result.error) {
                             submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalHtml;
                             Notification.addNotification({
                                 message: result.error_message,
                                 type:    'error',
                             });
                             return;
                         }
-                        // Disable all inputs after successful submission.
+                        // Restore the label, then disable all inputs after success.
+                        submitBtn.innerHTML = originalHtml;
                         rootElement.querySelectorAll('select, input, textarea, button').forEach(function(el) {
                             el.disabled = true;
                         });
@@ -224,6 +261,7 @@ define([
                     })
                     .catch(function(err) {
                         submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalHtml;
                         Notification.exception(err);
                     });
             });

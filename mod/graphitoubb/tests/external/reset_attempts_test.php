@@ -86,6 +86,21 @@ final class reset_attempts_test extends advanced_testcase {
             'timemodified'   => time(),
         ]);
 
+        // The AFD editor's actual student work: an automaton snapshot and a
+        // tested-word log entry. Reset must clear these too (see reset_attempts).
+        $DB->insert_record('graphitoubb_snapshot', (object) [
+            'attemptid'   => $attemptid,
+            'payload'     => '{"states":[],"transitions":[],"alphabet":[],"start":null,"finals":[]}',
+            'timecreated' => time(),
+        ]);
+
+        $DB->insert_record('graphitoubb_wordbank_log', (object) [
+            'attemptid'   => $attemptid,
+            'word'        => 'ab',
+            'accepted'    => 1,
+            'timecreated' => time(),
+        ]);
+
         return $attemptid;
     }
 
@@ -112,15 +127,19 @@ final class reset_attempts_test extends advanced_testcase {
         $this->assertSame('inprogress', $attempt1->status);
         $this->assertNull($attempt1->timefinished);
 
-        // s1's submission and grade_cache should be deleted.
+        // s1's submission, grade_cache, snapshots and wordbank log should be deleted.
         $this->assertFalse($DB->record_exists('graphitoubb_submission', ['attemptid' => $aid1]));
         $this->assertFalse($DB->record_exists('graphitoubb_grade_cache', ['attemptid' => $aid1]));
+        $this->assertFalse($DB->record_exists('graphitoubb_snapshot', ['attemptid' => $aid1]));
+        $this->assertFalse($DB->record_exists('graphitoubb_wordbank_log', ['attemptid' => $aid1]));
 
         // s2's attempt should be untouched.
         $attempt2 = $DB->get_record('graphitoubb_attempt', ['id' => $aid2], '*', MUST_EXIST);
         $this->assertSame('finished', $attempt2->status);
         $this->assertTrue($DB->record_exists('graphitoubb_submission', ['attemptid' => $aid2]));
         $this->assertTrue($DB->record_exists('graphitoubb_grade_cache', ['attemptid' => $aid2]));
+        $this->assertTrue($DB->record_exists('graphitoubb_snapshot', ['attemptid' => $aid2]));
+        $this->assertTrue($DB->record_exists('graphitoubb_wordbank_log', ['attemptid' => $aid2]));
     }
 
     /**
@@ -147,6 +166,8 @@ final class reset_attempts_test extends advanced_testcase {
             $this->assertNull($attempt->timefinished);
             $this->assertFalse($DB->record_exists('graphitoubb_submission', ['attemptid' => $aid]));
             $this->assertFalse($DB->record_exists('graphitoubb_grade_cache', ['attemptid' => $aid]));
+            $this->assertFalse($DB->record_exists('graphitoubb_snapshot', ['attemptid' => $aid]));
+            $this->assertFalse($DB->record_exists('graphitoubb_wordbank_log', ['attemptid' => $aid]));
         }
     }
 }

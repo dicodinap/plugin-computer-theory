@@ -1,0 +1,8 @@
+# Playwright MCP scratch output (console logs + page snapshots)
+.playwright-mcp/
+
+# Loose screenshots from manual UX testing (kept out of the plugin tree)
+/*.png
+
+# Thesis reports — separate nested git repository, not part of the plugin tree
+informes-tesis/

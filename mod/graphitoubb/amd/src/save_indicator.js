@@ -21,7 +21,7 @@
  * @copyright  2026 GraphitoUBB
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define([], function() {
+define(['core/str'], function(Str) {
 
     var _el = null;
     var _fadeTimer = null;
@@ -32,10 +32,32 @@ define([], function() {
         error:  'mod-graphitoubb-save-indicator--error',
     };
 
+    // English fallbacks; overwritten with the site language in init() via core/str.
     var LABELS = {
         saving: 'Saving\u2026',
         saved:  'Saved \u2713',
         error:  'Save failed \u2715',
+    };
+
+    /**
+     * Prefetch localised indicator labels into LABELS. Resolves even on failure
+     * (English fallbacks remain in place).
+     *
+     * @return {Promise}
+     */
+    var loadLabels = function() {
+        return Str.get_strings([
+            {key: 'save_indicator_saving', component: 'mod_graphitoubb'},
+            {key: 'save_indicator_saved', component: 'mod_graphitoubb'},
+            {key: 'save_indicator_error', component: 'mod_graphitoubb'},
+        ]).then(function(s) {
+            LABELS.saving = s[0];
+            LABELS.saved = s[1];
+            LABELS.error = s[2];
+            return LABELS;
+        }).catch(function() {
+            return LABELS;
+        });
     };
 
     var clearStatus = function() {
@@ -74,6 +96,7 @@ define([], function() {
      */
     var init = function(el, target) {
         _el = el || null;
+        loadLabels();
         if (!target) {
             return;
         }

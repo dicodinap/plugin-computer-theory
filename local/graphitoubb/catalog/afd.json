@@ -1,0 +1,640 @@
+[
+  {
+    "key": "afd-contains-a",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "easy",
+    "tags": ["substring", "basic"],
+    "title": { "es": "Contiene al menos una 'a'", "en": "Contains at least one 'a'" },
+    "summary": { "es": "Acepta toda cadena con una o más 'a'.", "en": "Accepts every string with one or more 'a'." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre el alfabeto {a, b} que acepte exactamente las cadenas que contienen al menos una 'a'.",
+          "en": "Build a DFA over the alphabet {a, b} that accepts exactly the strings containing at least one 'a'."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "a", "accept": true, "example": true },
+          { "word": "ba", "accept": true, "example": false },
+          { "word": "aab", "accept": true, "example": false },
+          { "word": "bbab", "accept": true, "example": false },
+          { "word": "", "accept": false, "example": true },
+          { "word": "b", "accept": false, "example": false },
+          { "word": "bb", "accept": false, "example": false },
+          { "word": "bbbb", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-starts-a",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "easy",
+    "tags": ["prefix", "basic"],
+    "title": { "es": "Empieza con 'a'", "en": "Starts with 'a'" },
+    "summary": { "es": "Acepta las cadenas cuyo primer símbolo es 'a'.", "en": "Accepts strings whose first symbol is 'a'." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas que comienzan con 'a'.",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings that start with 'a'."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "a", "accept": true, "example": true },
+          { "word": "ab", "accept": true, "example": false },
+          { "word": "aba", "accept": true, "example": false },
+          { "word": "abb", "accept": true, "example": false },
+          { "word": "", "accept": false, "example": false },
+          { "word": "b", "accept": false, "example": true },
+          { "word": "ba", "accept": false, "example": false },
+          { "word": "bbb", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-ends-b",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "easy",
+    "tags": ["suffix", "basic"],
+    "title": { "es": "Termina en 'b'", "en": "Ends with 'b'" },
+    "summary": { "es": "Acepta las cadenas cuyo último símbolo es 'b'.", "en": "Accepts strings whose last symbol is 'b'." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas que terminan en 'b'.",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings that end with 'b'."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "b", "accept": true, "example": true },
+          { "word": "ab", "accept": true, "example": false },
+          { "word": "bb", "accept": true, "example": false },
+          { "word": "aab", "accept": true, "example": false },
+          { "word": "", "accept": false, "example": false },
+          { "word": "a", "accept": false, "example": true },
+          { "word": "ba", "accept": false, "example": false },
+          { "word": "aba", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-even-length",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "easy",
+    "tags": ["length", "parity"],
+    "title": { "es": "Longitud par", "en": "Even length" },
+    "summary": { "es": "Acepta las cadenas de longitud par (la cadena vacía incluida).", "en": "Accepts strings of even length (empty string included)." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas de longitud par. La cadena vacía tiene longitud 0 y debe aceptarse.",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings of even length. The empty string has length 0 and must be accepted."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "", "accept": true, "example": true },
+          { "word": "aa", "accept": true, "example": false },
+          { "word": "ab", "accept": true, "example": false },
+          { "word": "abba", "accept": true, "example": false },
+          { "word": "a", "accept": false, "example": true },
+          { "word": "b", "accept": false, "example": false },
+          { "word": "aba", "accept": false, "example": false },
+          { "word": "abb", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-odd-length",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "easy",
+    "tags": ["length", "parity"],
+    "title": { "es": "Longitud impar", "en": "Odd length" },
+    "summary": { "es": "Acepta las cadenas de longitud impar.", "en": "Accepts strings of odd length." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas de longitud impar.",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings of odd length."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "a", "accept": true, "example": true },
+          { "word": "b", "accept": true, "example": false },
+          { "word": "aba", "accept": true, "example": false },
+          { "word": "abb", "accept": true, "example": false },
+          { "word": "", "accept": false, "example": true },
+          { "word": "aa", "accept": false, "example": false },
+          { "word": "ab", "accept": false, "example": false },
+          { "word": "abab", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-even-a",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "medium",
+    "tags": ["count", "parity"],
+    "title": { "es": "Número par de 'a'", "en": "Even number of 'a'" },
+    "summary": { "es": "Acepta las cadenas con una cantidad par de 'a' (cero incluido).", "en": "Accepts strings with an even count of 'a' (zero included)." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas que contienen un número par de 'a'. Cero 'a' cuenta como par.",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings containing an even number of 'a'. Zero 'a' counts as even."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "", "accept": true, "example": true },
+          { "word": "aa", "accept": true, "example": false },
+          { "word": "bb", "accept": true, "example": false },
+          { "word": "baab", "accept": true, "example": false },
+          { "word": "a", "accept": false, "example": true },
+          { "word": "ab", "accept": false, "example": false },
+          { "word": "ba", "accept": false, "example": false },
+          { "word": "aaa", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-contains-ab",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "medium",
+    "tags": ["substring"],
+    "title": { "es": "Contiene la subcadena 'ab'", "en": "Contains the substring 'ab'" },
+    "summary": { "es": "Acepta toda cadena en la que aparece 'ab' de forma consecutiva.", "en": "Accepts every string where 'ab' appears consecutively." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas que contienen la subcadena 'ab'.",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings containing the substring 'ab'."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "ab", "accept": true, "example": true },
+          { "word": "aab", "accept": true, "example": false },
+          { "word": "abb", "accept": true, "example": false },
+          { "word": "bbabb", "accept": true, "example": false },
+          { "word": "", "accept": false, "example": false },
+          { "word": "a", "accept": false, "example": false },
+          { "word": "ba", "accept": false, "example": true },
+          { "word": "bbb", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-no-aa",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "medium",
+    "tags": ["substring", "forbidden"],
+    "title": { "es": "No contiene 'aa'", "en": "Does not contain 'aa'" },
+    "summary": { "es": "Acepta las cadenas en las que nunca aparecen dos 'a' seguidas.", "en": "Accepts strings where two 'a' never appear in a row." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas que NO contienen la subcadena 'aa'.",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings that do NOT contain the substring 'aa'."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "", "accept": true, "example": true },
+          { "word": "a", "accept": true, "example": false },
+          { "word": "ab", "accept": true, "example": false },
+          { "word": "baba", "accept": true, "example": false },
+          { "word": "aa", "accept": false, "example": true },
+          { "word": "aab", "accept": false, "example": false },
+          { "word": "baa", "accept": false, "example": false },
+          { "word": "aaa", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-length-ge-2",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "easy",
+    "tags": ["length"],
+    "title": { "es": "Longitud mayor o igual a 2", "en": "Length at least 2" },
+    "summary": { "es": "Acepta las cadenas con dos o más símbolos.", "en": "Accepts strings with two or more symbols." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas de longitud mayor o igual a 2.",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings of length 2 or more."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "aa", "accept": true, "example": true },
+          { "word": "ab", "accept": true, "example": false },
+          { "word": "ba", "accept": true, "example": false },
+          { "word": "aaa", "accept": true, "example": false },
+          { "word": "", "accept": false, "example": false },
+          { "word": "a", "accept": false, "example": true },
+          { "word": "b", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-exactly-two-a",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "medium",
+    "tags": ["count"],
+    "title": { "es": "Exactamente dos 'a'", "en": "Exactly two 'a'" },
+    "summary": { "es": "Acepta las cadenas que contienen exactamente dos 'a'.", "en": "Accepts strings containing exactly two 'a'." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas con exactamente dos 'a' (en cualquier posición).",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings with exactly two 'a' (in any position)."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "aa", "accept": true, "example": true },
+          { "word": "aba", "accept": true, "example": false },
+          { "word": "baab", "accept": true, "example": false },
+          { "word": "abba", "accept": true, "example": false },
+          { "word": "", "accept": false, "example": false },
+          { "word": "a", "accept": false, "example": true },
+          { "word": "aaa", "accept": false, "example": false },
+          { "word": "aaaa", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-starts-a-ends-b",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "medium",
+    "tags": ["prefix", "suffix"],
+    "title": { "es": "Empieza con 'a' y termina en 'b'", "en": "Starts with 'a' and ends with 'b'" },
+    "summary": { "es": "Acepta las cadenas que empiezan con 'a' y terminan en 'b'.", "en": "Accepts strings that start with 'a' and end with 'b'." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas que empiezan con 'a' y terminan en 'b'.",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings that start with 'a' and end with 'b'."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "ab", "accept": true, "example": true },
+          { "word": "aab", "accept": true, "example": false },
+          { "word": "abb", "accept": true, "example": false },
+          { "word": "abbb", "accept": true, "example": false },
+          { "word": "", "accept": false, "example": false },
+          { "word": "a", "accept": false, "example": true },
+          { "word": "ba", "accept": false, "example": false },
+          { "word": "aba", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-only-a",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "easy",
+    "tags": ["star"],
+    "title": { "es": "Solo 'a' (a*)", "en": "Only 'a' (a*)" },
+    "summary": { "es": "Acepta las cadenas formadas únicamente por 'a' (la vacía incluida).", "en": "Accepts strings made up only of 'a' (empty included)." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas formadas solo por 'a' (es decir, ninguna 'b'). La cadena vacía se acepta.",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings made only of 'a' (no 'b' at all). The empty string is accepted."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "", "accept": true, "example": true },
+          { "word": "a", "accept": true, "example": false },
+          { "word": "aa", "accept": true, "example": false },
+          { "word": "aaaa", "accept": true, "example": false },
+          { "word": "b", "accept": false, "example": true },
+          { "word": "ab", "accept": false, "example": false },
+          { "word": "ba", "accept": false, "example": false },
+          { "word": "bb", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-ab-repeated",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "hard",
+    "tags": ["star", "pattern"],
+    "title": { "es": "Repeticiones de 'ab' ((ab)*)", "en": "Repetitions of 'ab' ((ab)*)" },
+    "summary": { "es": "Acepta cero o más copias de 'ab': '', 'ab', 'abab', …", "en": "Accepts zero or more copies of 'ab': '', 'ab', 'abab', …" },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas de la forma (ab)*, es decir, cero o más repeticiones del bloque 'ab'.",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings of the form (ab)*, i.e. zero or more repetitions of the block 'ab'."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "", "accept": true, "example": true },
+          { "word": "ab", "accept": true, "example": false },
+          { "word": "abab", "accept": true, "example": false },
+          { "word": "ababab", "accept": true, "example": false },
+          { "word": "a", "accept": false, "example": true },
+          { "word": "ba", "accept": false, "example": false },
+          { "word": "aba", "accept": false, "example": false },
+          { "word": "abba", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-length-mult-3",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "medium",
+    "tags": ["length", "modular"],
+    "title": { "es": "Longitud múltiplo de 3", "en": "Length multiple of 3" },
+    "summary": { "es": "Acepta las cadenas cuya longitud es divisible por 3.", "en": "Accepts strings whose length is divisible by 3." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas cuya longitud es múltiplo de 3 (0, 3, 6, …).",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings whose length is a multiple of 3 (0, 3, 6, …)."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "", "accept": true, "example": true },
+          { "word": "aaa", "accept": true, "example": false },
+          { "word": "bab", "accept": true, "example": false },
+          { "word": "abbbba", "accept": true, "example": false },
+          { "word": "a", "accept": false, "example": true },
+          { "word": "aa", "accept": false, "example": false },
+          { "word": "aaaa", "accept": false, "example": false },
+          { "word": "ab", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-bin-even-ones",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "medium",
+    "tags": ["binary", "count", "parity"],
+    "title": { "es": "Binario: número par de unos", "en": "Binary: even number of ones" },
+    "summary": { "es": "Sobre {0, 1}: acepta las cadenas con una cantidad par de '1'.", "en": "Over {0, 1}: accepts strings with an even count of '1'." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre el alfabeto {0, 1} que acepte exactamente las cadenas con un número par de '1' (cero incluido).",
+          "en": "Build a DFA over the alphabet {0, 1} that accepts exactly the strings with an even number of '1' (zero included)."
+        },
+        "alphabet": ["0", "1"],
+        "test_words": [
+          { "word": "", "accept": true, "example": true },
+          { "word": "0", "accept": true, "example": false },
+          { "word": "11", "accept": true, "example": false },
+          { "word": "1010", "accept": true, "example": false },
+          { "word": "1", "accept": false, "example": true },
+          { "word": "10", "accept": false, "example": false },
+          { "word": "111", "accept": false, "example": false },
+          { "word": "100", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-bin-contains-101",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "hard",
+    "tags": ["binary", "substring"],
+    "title": { "es": "Binario: contiene '101'", "en": "Binary: contains '101'" },
+    "summary": { "es": "Sobre {0, 1}: acepta las cadenas que contienen la subcadena '101'.", "en": "Over {0, 1}: accepts strings containing the substring '101'." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {0, 1} que acepte exactamente las cadenas que contienen la subcadena '101'.",
+          "en": "Build a DFA over {0, 1} that accepts exactly the strings containing the substring '101'."
+        },
+        "alphabet": ["0", "1"],
+        "test_words": [
+          { "word": "101", "accept": true, "example": true },
+          { "word": "0101", "accept": true, "example": false },
+          { "word": "1101", "accept": true, "example": false },
+          { "word": "101000", "accept": true, "example": false },
+          { "word": "", "accept": false, "example": false },
+          { "word": "11", "accept": false, "example": true },
+          { "word": "100", "accept": false, "example": false },
+          { "word": "010", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-bin-ends-00",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "medium",
+    "tags": ["binary", "suffix"],
+    "title": { "es": "Binario: termina en '00'", "en": "Binary: ends with '00'" },
+    "summary": { "es": "Sobre {0, 1}: acepta las cadenas que terminan en '00'.", "en": "Over {0, 1}: accepts strings ending with '00'." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {0, 1} que acepte exactamente las cadenas que terminan en '00'.",
+          "en": "Build a DFA over {0, 1} that accepts exactly the strings that end with '00'."
+        },
+        "alphabet": ["0", "1"],
+        "test_words": [
+          { "word": "00", "accept": true, "example": true },
+          { "word": "100", "accept": true, "example": false },
+          { "word": "1000", "accept": true, "example": false },
+          { "word": "1100", "accept": true, "example": false },
+          { "word": "", "accept": false, "example": false },
+          { "word": "0", "accept": false, "example": true },
+          { "word": "10", "accept": false, "example": false },
+          { "word": "11", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-a-then-b",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "hard",
+    "tags": ["pattern", "star"],
+    "title": { "es": "Algunas 'a' y luego algunas 'b' (a*b*)", "en": "Some 'a' then some 'b' (a*b*)" },
+    "summary": { "es": "Acepta las cadenas con cero o más 'a' seguidas de cero o más 'b'.", "en": "Accepts strings with zero or more 'a' followed by zero or more 'b'." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas de la forma a*b*: un bloque de 'a' (posiblemente vacío) seguido de un bloque de 'b' (posiblemente vacío). Ninguna 'a' puede aparecer después de una 'b'.",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings of the form a*b*: a block of 'a' (possibly empty) followed by a block of 'b' (possibly empty). No 'a' may appear after a 'b'."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "", "accept": true, "example": true },
+          { "word": "ab", "accept": true, "example": false },
+          { "word": "aabb", "accept": true, "example": false },
+          { "word": "aaabbb", "accept": true, "example": false },
+          { "word": "ba", "accept": false, "example": true },
+          { "word": "aba", "accept": false, "example": false },
+          { "word": "bab", "accept": false, "example": false },
+          { "word": "baab", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-third-is-a",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "medium",
+    "tags": ["position"],
+    "title": { "es": "El tercer símbolo es 'a'", "en": "Third symbol is 'a'" },
+    "summary": { "es": "Acepta las cadenas de longitud ≥ 3 cuyo tercer símbolo es 'a'.", "en": "Accepts strings of length ≥ 3 whose third symbol is 'a'." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas que tienen al menos 3 símbolos y cuyo tercer símbolo es 'a'.",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings with at least 3 symbols whose third symbol is 'a'."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "aba", "accept": true, "example": true },
+          { "word": "baa", "accept": true, "example": false },
+          { "word": "aaa", "accept": true, "example": false },
+          { "word": "bbab", "accept": true, "example": false },
+          { "word": "", "accept": false, "example": false },
+          { "word": "ab", "accept": false, "example": true },
+          { "word": "abb", "accept": false, "example": false },
+          { "word": "bbb", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-at-most-two-b",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "medium",
+    "tags": ["count"],
+    "title": { "es": "Como mucho dos 'b'", "en": "At most two 'b'" },
+    "summary": { "es": "Acepta las cadenas con cero, una o dos 'b'.", "en": "Accepts strings with zero, one or two 'b'." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas que contienen como mucho dos 'b'.",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings containing at most two 'b'."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "", "accept": true, "example": true },
+          { "word": "aa", "accept": true, "example": false },
+          { "word": "ab", "accept": true, "example": false },
+          { "word": "abba", "accept": true, "example": false },
+          { "word": "bbb", "accept": false, "example": true },
+          { "word": "bbba", "accept": false, "example": false },
+          { "word": "abbb", "accept": false, "example": false },
+          { "word": "bbbb", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-contains-bb",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "medium",
+    "tags": ["substring"],
+    "title": { "es": "Contiene 'bb'", "en": "Contains 'bb'" },
+    "summary": { "es": "Acepta toda cadena con dos 'b' consecutivas.", "en": "Accepts every string with two consecutive 'b'." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas que contienen la subcadena 'bb'.",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings containing the substring 'bb'."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "bb", "accept": true, "example": true },
+          { "word": "abb", "accept": true, "example": false },
+          { "word": "bbaa", "accept": true, "example": false },
+          { "word": "ababb", "accept": true, "example": false },
+          { "word": "", "accept": false, "example": false },
+          { "word": "b", "accept": false, "example": true },
+          { "word": "bab", "accept": false, "example": false },
+          { "word": "abab", "accept": false, "example": false }
+        ]
+      }
+    }
+  },
+  {
+    "key": "afd-even-a-even-b",
+    "tool": "afd",
+    "type": "language",
+    "difficulty": "hard",
+    "tags": ["count", "parity", "product"],
+    "title": { "es": "Número par de 'a' y par de 'b'", "en": "Even 'a' and even 'b'" },
+    "summary": { "es": "Acepta las cadenas con cantidad par de 'a' y, a la vez, par de 'b'.", "en": "Accepts strings with an even count of 'a' and an even count of 'b'." },
+    "payload": {
+      "tool": "afd", "schema_version": 1, "type": "language",
+      "config": {
+        "prompt": {
+          "es": "Construye un AFD sobre {a, b} que acepte exactamente las cadenas que tienen, simultáneamente, un número par de 'a' y un número par de 'b'. Pista: necesitas 4 estados (paridad de 'a' × paridad de 'b').",
+          "en": "Build a DFA over {a, b} that accepts exactly the strings that have, at the same time, an even number of 'a' and an even number of 'b'. Hint: you need 4 states (parity of 'a' × parity of 'b')."
+        },
+        "alphabet": ["a", "b"],
+        "test_words": [
+          { "word": "", "accept": true, "example": true },
+          { "word": "aa", "accept": true, "example": false },
+          { "word": "bb", "accept": true, "example": false },
+          { "word": "aabb", "accept": true, "example": false },
+          { "word": "abab", "accept": true, "example": false },
+          { "word": "a", "accept": false, "example": true },
+          { "word": "b", "accept": false, "example": false },
+          { "word": "ab", "accept": false, "example": false },
+          { "word": "abb", "accept": false, "example": false }
+        ]
+      }
+    }
+  }
+]
