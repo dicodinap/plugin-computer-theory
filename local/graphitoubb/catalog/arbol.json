@@ -1,0 +1,74 @@
+[
+  {
+    "key": "arbol_bst_build_basic",
+    "tool": "arbol",
+    "type": "bst_build",
+    "difficulty": "easy",
+    "tags": ["bst", "construct"],
+    "title": {"en": "Build a BST from an insertion order", "es": "Construye un ABB desde un orden de inserción"},
+    "summary": {"en": "Insert 8, 3, 10, 1, 6 into an initially empty binary search tree.", "es": "Inserta 8, 3, 10, 1, 6 en un árbol binario de búsqueda inicialmente vacío."},
+    "payload": {
+      "tool": "arbol",
+      "schema_version": 1,
+      "type": "bst_build",
+      "config": {
+        "prompt": {"en": "Starting from an empty binary search tree, insert the values 8, 3, 10, 1, 6 in that order. Build the resulting BST on the canvas (set the root, then add left/right children).", "es": "Partiendo de un árbol binario de búsqueda vacío, inserta los valores 8, 3, 10, 1, 6 en ese orden. Construye el ABB resultante en el lienzo (fija la raíz y luego agrega hijos izquierdo/derecho)."},
+        "insertions": [8, 3, 10, 1, 6]
+      }
+    }
+  },
+  {
+    "key": "arbol_traversal_inorder",
+    "tool": "arbol",
+    "type": "traversal_answer",
+    "difficulty": "medium",
+    "tags": ["traversal", "inorder"],
+    "title": {"en": "Reading a tree in order: left, root, right", "es": "Leyendo el árbol en orden: izquierda, raíz, derecha"},
+    "summary": {"en": "Give the in-order traversal of the shown binary tree.", "es": "Indica el recorrido en orden (in-order) del árbol binario mostrado."},
+    "payload": {
+      "tool": "arbol",
+      "schema_version": 1,
+      "type": "traversal_answer",
+      "config": {
+        "prompt": {"en": "Write the in-order (left, root, right) traversal of the tree shown, as a comma-separated sequence of values.", "es": "Escribe el recorrido en orden (izquierda, raíz, derecha) del árbol mostrado, como una secuencia de valores separados por comas."},
+        "order": "in",
+        "given_tree": {
+          "root": "n0",
+          "nodes": [
+            {"id": "n0", "label": "8", "value": 8},
+            {"id": "n1", "label": "3", "value": 3},
+            {"id": "n2", "label": "10", "value": 10},
+            {"id": "n3", "label": "1", "value": 1},
+            {"id": "n4", "label": "6", "value": 6}
+          ],
+          "edges": [
+            {"id": "e0", "parent": "n0", "child": "n1", "side": "L"},
+            {"id": "e1", "parent": "n0", "child": "n2", "side": "R"},
+            {"id": "e2", "parent": "n1", "child": "n3", "side": "L"},
+            {"id": "e3", "parent": "n1", "child": "n4", "side": "R"}
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "arbol_reconstruct_pre_in",
+    "tool": "arbol",
+    "type": "reconstruct",
+    "difficulty": "hard",
+    "tags": ["reconstruct", "preorder", "inorder"],
+    "title": {"en": "Reconstruct a tree (preorder + inorder)", "es": "Reconstruye un árbol (preorden + inorden)"},
+    "summary": {"en": "Given preorder 8,3,1,6,10 and inorder 1,3,6,8,10, rebuild the unique tree.", "es": "Dados preorden 8,3,1,6,10 e inorden 1,3,6,8,10, reconstruye el árbol único."},
+    "payload": {
+      "tool": "arbol",
+      "schema_version": 1,
+      "type": "reconstruct",
+      "config": {
+        "prompt": {"en": "A binary tree has preorder 8, 3, 1, 6, 10 and inorder 1, 3, 6, 8, 10. Reconstruct the unique tree on the canvas.", "es": "Un árbol binario tiene preorden 8, 3, 1, 6, 10 e inorden 1, 3, 6, 8, 10. Reconstruye el árbol único en el lienzo."},
+        "pair": "pre_in",
+        "a": [8, 3, 1, 6, 10],
+        "b": [1, 3, 6, 8, 10]
+      }
+    }
+  }
+]

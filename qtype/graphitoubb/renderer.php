@@ -54,6 +54,11 @@ class qtype_graphitoubb_renderer extends qtype_renderer {
         /** @var qtype_graphitoubb_question $question */
         $question = $qa->get_question();
 
+        // grafo/arbol: render the shared graph canvas host bound to the qt field.
+        if ($question->tool === 'grafo' || $question->tool === 'arbol') {
+            return $this->render_canvas_question($qa, $options, $question);
+        }
+
         $wrapper_id  = 'qtype_graphitoubb_' . $qa->get_database_id();
         $input_name  = $qa->get_qt_field_name('answer_payload');
         $current_val = $qa->get_last_qt_var('answer_payload', '');
@@ -177,6 +182,168 @@ JS);
         }
 
         return $html;
+    }
+
+    /**
+     * Render a grafo/arbol question: the shared graph_canvas host bound to the
+     * quiz's hidden answer field (C1 — first working canvas qtype). No autosave/WS.
+     *
+     * @param  question_attempt         $qa
+     * @param  question_display_options $options
+     * @param  qtype_graphitoubb_question $question
+     * @return string
+     */
+    private function render_canvas_question(
+        question_attempt $qa,
+        question_display_options $options,
+        qtype_graphitoubb_question $question
+    ): string {
+        $qaid       = $qa->get_database_id();
+        $hostid     = 'graphitoubb-graph-' . $qaid;
+        $input_name = $qa->get_qt_field_name('answer_payload');
+        $current    = (string) $qa->get_last_qt_var('answer_payload', '');
+
+        $payload = $question->problem_payload;
+        $tool    = $question->tool;
+        $type    = (string) ($payload['type'] ?? '');
+        $config  = $payload['config'] ?? [];
+
+        $givenmodetypes = ['decision', 'traversal', 'traversal_answer'];
+        $mode = in_array($type, $givenmodetypes, true) ? 'given' : 'build';
+        $directed = !empty($config['directed']) || !empty($config['given_graph']['directed']);
+        $given = ($mode === 'given') ? ($config['given_graph'] ?? ($config['given_tree'] ?? null)) : null;
+
+        $maxnodes = $tool === 'arbol' ? 31 : 20;
+        $maxedges = $tool === 'arbol' ? 60 : 40;
+        $maxlabel = $tool === 'arbol' ? 6 : 12;
+
+        $attr = static function ($v): string {
+            return $v === null ? '' : s(json_encode($v, JSON_UNESCAPED_UNICODE));
+        };
+
+        // Prompt.
+        $out = html_writer::start_div('qtype_graphitoubb_wrapper qtype_graphitoubb_canvas');
+        if (!empty($config['prompt'])) {
+            $out .= html_writer::tag('p', s((string) $config['prompt']), ['class' => 'qtype_graphitoubb_prompt']);
+        }
+
+        // Host.
+        $out .= '<div class="mod-graphitoubb-graph mod-graphitoubb-editor" id="' . $hostid . '"'
+            . ' data-attemptid="' . (int) $qaid . '"'
+            . ' data-instanceid="' . (int) $qaid . '"'
+            . ' data-schemaversion="1"'
+            . ' data-tool="' . s($tool) . '"'
+            . ' data-mode="' . s($mode) . '"'
+            . ' data-type="' . s($type) . '"'
+            . ' data-directed="' . ($directed ? '1' : '0') . '"'
+            . ' data-finished="' . ($options->readonly ? '1' : '0') . '"'
+            . ' data-max-nodes="' . $maxnodes . '"'
+            . ' data-max-edges="' . $maxedges . '"'
+            . ' data-max-label="' . $maxlabel . '"'
+            . ' data-given="' . $attr($given) . '"'
+            . ' data-snapshot="' . s($current) . '"'
+            . ' data-answer-input="' . s($input_name) . '">';
+
+        if ($mode !== 'given') {
+            $out .= $this->canvas_toolbar($tool);
+            $out .= '<p class="mod-graphitoubb-graph-hint text-muted small" aria-live="polite"></p>';
+        }
+        $out .= '<div class="mod-graphitoubb-graph-canvas mod-graphitoubb-canvas">'
+            . '<p class="mod-graphitoubb-loading">' . get_string('editor_loading', 'mod_graphitoubb') . '</p>'
+            . '<div class="mod-graphitoubb-zoom-controls" role="group">'
+            . '<button type="button" class="btn btn-sm btn-light mod-graphitoubb-zoom-btn" data-zoom="in">+</button>'
+            . '<button type="button" class="btn btn-sm btn-light mod-graphitoubb-zoom-btn" data-zoom="out">−</button>'
+            . '<button type="button" class="btn btn-sm btn-light mod-graphitoubb-zoom-btn" data-zoom="fit">⤢</button>'
+            . '<button type="button" class="btn btn-sm btn-light mod-graphitoubb-zoom-btn" data-zoom="reset">100%</button>'
+            . '</div></div>';
+        if ($mode === 'given') {
+            $out .= $this->canvas_answer_control($tool, $type, $qaid, $options->readonly);
+        }
+        $out .= '</div>';
+
+        // Hidden answer field carried by the quiz form.
+        $inattrs = ['type' => 'hidden', 'name' => $input_name, 'id' => $input_name,
+            'value' => htmlspecialchars($current, ENT_QUOTES)];
+        if ($options->readonly) {
+            $inattrs['disabled'] = 'disabled';
+        }
+        $out .= html_writer::empty_tag('input', $inattrs);
+        $out .= html_writer::end_div();
+
+        $this->page->requires->js_call_amd('mod_graphitoubb/graph_canvas', 'init',
+            [(int) $qaid, (int) $qaid, 1, $tool]);
+
+        return $out;
+    }
+
+    /**
+     * Build the build/authoring toolbar for a canvas question.
+     *
+     * @param  string $tool
+     * @return string
+     */
+    private function canvas_toolbar(string $tool): string {
+        $btn = static function (string $mode, string $key, string $cls = 'btn-outline-secondary') use (&$btn): string {
+            return '<button type="button" class="btn btn-sm ' . $cls . ' mod-graphitoubb-tool-btn" '
+                . 'data-gmode="' . $mode . '" aria-pressed="false">'
+                . get_string($key, 'mod_graphitoubb') . '</button>';
+        };
+        $out  = '<div class="mod-graphitoubb-graph-toolbar mod-graphitoubb-toolbar" role="toolbar">';
+        $out .= $btn('addnode', 'graph_btn_addnode');
+        $out .= $btn('addedge', 'graph_btn_addedge');
+        if ($tool === 'arbol') {
+            $out .= $btn('setroot', 'graph_btn_setroot');
+        }
+        $out .= $btn('delete', 'graph_btn_delete', 'btn-outline-danger');
+        $out .= '<button type="button" class="btn btn-sm btn-light" data-gaction="tidy">'
+            . get_string('graph_btn_tidy', 'mod_graphitoubb') . '</button>';
+        $out .= '<button type="button" class="btn btn-sm btn-light" data-gaction="clear">'
+            . get_string('graph_btn_clear', 'mod_graphitoubb') . '</button>';
+        $out .= '</div>';
+        return $out;
+    }
+
+    /**
+     * Build the given-mode answer control for a canvas question.
+     *
+     * @param  string $tool
+     * @param  string $type
+     * @param  int    $qaid
+     * @param  bool   $readonly
+     * @return string
+     */
+    private function canvas_answer_control(string $tool, string $type, int $qaid, bool $readonly): string {
+        $dis = $readonly ? ' disabled' : '';
+        $out = '<div class="mod-graphitoubb-graph-answer card card-body mt-2">';
+        if ($type === 'decision') {
+            $name = 'graph-decision-' . $qaid;
+            $out .= '<fieldset' . $dis . '><legend class="h6">'
+                . get_string('graph_answer_decision_legend', 'mod_graphitoubb') . '</legend>';
+            $out .= '<div class="form-check"><input class="form-check-input" type="radio" name="' . $name . '"'
+                . ' id="' . $name . '-yes" value="true"><label class="form-check-label" for="' . $name . '-yes">'
+                . get_string('graph_decision_yes', 'mod_graphitoubb') . '</label></div>';
+            $out .= '<div class="form-check"><input class="form-check-input" type="radio" name="' . $name . '"'
+                . ' id="' . $name . '-no" value="false"><label class="form-check-label" for="' . $name . '-no">'
+                . get_string('graph_decision_no', 'mod_graphitoubb') . '</label></div></fieldset>';
+        } else if ($type === 'traversal') {
+            $out .= '<p class="h6">' . get_string('graph_answer_traversal_legend', 'mod_graphitoubb') . '</p>';
+            $out .= '<p class="text-muted small">' . get_string('graph_answer_traversal_help', 'mod_graphitoubb') . '</p>';
+            $out .= '<div class="mod-graphitoubb-seq-wrap mb-2"><span class="font-weight-bold">'
+                . get_string('graph_answer_walk_label', 'mod_graphitoubb')
+                . '</span> <span class="mod-graphitoubb-seq-list font-monospace" aria-live="polite"></span></div>';
+            $out .= '<p class="mod-graphitoubb-seq-hint text-info small" aria-live="polite"></p>';
+            $out .= '<button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-seq-undo"' . $dis . '>'
+                . get_string('graph_answer_undo', 'mod_graphitoubb') . '</button> ';
+            $out .= '<button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-seq-clear"' . $dis . '>'
+                . get_string('graph_answer_clear', 'mod_graphitoubb') . '</button>';
+        } else if ($type === 'traversal_answer') {
+            $out .= '<label class="h6" for="graph-seq-' . $qaid . '">'
+                . get_string('graph_answer_sequence_legend', 'mod_graphitoubb') . '</label>';
+            $out .= '<input type="text" id="graph-seq-' . $qaid . '" class="form-control mod-graphitoubb-seq-input"'
+                . ' placeholder="' . s(get_string('graph_answer_sequence_placeholder', 'mod_graphitoubb')) . '"' . $dis . '>';
+        }
+        $out .= '</div>';
+        return $out;
     }
 
     /**

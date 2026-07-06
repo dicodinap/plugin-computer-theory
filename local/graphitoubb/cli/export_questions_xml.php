@@ -69,7 +69,12 @@ $categoryinfo = 'Ejercicios de tabla de verdad listos para usar, instalados con 
 
 $ser     = new serializer();
 $catalog = new preset_catalog($catalogdir);
-$presets = $catalog->all('truth_table');
+// truth_table + the graph/tree tools (grafo, arbol) all ship as "preguntas tipo".
+$presets = array_merge(
+    $catalog->all('truth_table'),
+    $catalog->all('grafo'),
+    $catalog->all('arbol')
+);
 
 /**
  * Escape text for an XML element (not CDATA).
@@ -101,10 +106,18 @@ $lines[] = '  </question>';
 $uijson = json_encode(['intermediate_subformulas' => 'auto', 'row_order' => 'canonical'], JSON_UNESCAPED_UNICODE);
 
 foreach ($presets as $p) {
-    $payload     = $p->payload;
-    $payloadjson = $ser->encode($payload);
-    $hash        = $ser->hash($payload);
-    $scoringjson = $scoringfor($payload);
+    $payload = $p->payload;
+    // truth_table uses the canonical serializer; grafo/arbol store the payload
+    // JSON verbatim (the qtype import recomputes the hash for them).
+    if ($p->tool === 'truth_table') {
+        $payloadjson = $ser->encode($payload);
+        $hash        = $ser->hash($payload);
+        $scoringjson = $scoringfor($payload);
+    } else {
+        $payloadjson = json_encode($payload, JSON_UNESCAPED_UNICODE);
+        $hash        = hash('sha256', $payloadjson);
+        $scoringjson = '{}';
+    }
 
     $lines[] = '  <question type="graphitoubb">';
     $lines[] = '    <name><text>' . $esc($p->title) . '</text></name>';
@@ -114,7 +127,7 @@ foreach ($presets as $p) {
     $lines[] = '    <penalty>0.0000000</penalty>';
     $lines[] = '    <hidden>0</hidden>';
     $lines[] = '    <idnumber>' . $esc($p->key) . '</idnumber>';
-    $lines[] = '    <tool>truth_table</tool>';
+    $lines[] = '    <tool>' . $esc($p->tool) . '</tool>';
     $lines[] = '    <exercise_type>' . $esc($p->type) . '</exercise_type>';
     $lines[] = '    <schema_version>1</schema_version>';
     $lines[] = '    <problem_payload><![CDATA[' . $payloadjson . ']]></problem_payload>';

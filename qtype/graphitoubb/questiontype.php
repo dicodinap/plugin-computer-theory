@@ -90,8 +90,16 @@ class qtype_graphitoubb extends question_type {
     public function save_question_options($question): void {
         global $DB;
 
+        $tool = $question->tool ?? 'truth_table';
+
+        // grafo/arbol: the canonical payload arrives ready-made (XML import / seeding),
+        // not from truth_table form fields. Store it as-is (no truth_table schema).
+        if ($tool === 'grafo' || $tool === 'arbol') {
+            $this->save_canvas_question_options($question, $tool);
+            return;
+        }
+
         $exercise_type = $question->exercise_type ?? 'complete';
-        $tool          = 'truth_table';
 
         // Build the problem_payload array from submitted form fields.
         $problem = $this->build_problem_array($question, $exercise_type);
@@ -127,6 +135,48 @@ class qtype_graphitoubb extends question_type {
             'ui_config'       => json_encode($ui, JSON_UNESCAPED_UNICODE),
             'payload_hash'    => $hash,
             'schema_version'  => 1,
+        ];
+
+        $existing = $DB->get_record('qtype_graphitoubb_options', ['questionid' => $question->id]);
+        if ($existing) {
+            $record->id = $existing->id;
+            $DB->update_record('qtype_graphitoubb_options', $record);
+        } else {
+            $DB->insert_record('qtype_graphitoubb_options', $record);
+        }
+    }
+
+    /**
+     * Persist a grafo/arbol (canvas) question's options. The canonical payload is
+     * taken verbatim from $question->problem_payload (import/seeding) — grafo/arbol
+     * have no truth_table-style form, and no truth_table JSON schema applies.
+     *
+     * @param  object $question
+     * @param  string $tool 'grafo' | 'arbol'
+     * @return void
+     * @throws \moodle_exception When the payload is not valid JSON.
+     */
+    private function save_canvas_question_options($question, string $tool): void {
+        global $DB;
+
+        $payload_json = is_string($question->problem_payload ?? null)
+            ? $question->problem_payload
+            : json_encode($question->problem_payload ?? [], JSON_UNESCAPED_UNICODE);
+        $decoded = json_decode((string) $payload_json, true);
+        if (!is_array($decoded)) {
+            throw new \moodle_exception('err_schema_validation', 'qtype_graphitoubb', '', 'invalid payload JSON');
+        }
+        $exercise_type = (string) ($decoded['type'] ?? ($question->exercise_type ?? ''));
+
+        $record = (object) [
+            'questionid'      => $question->id,
+            'tool'            => $tool,
+            'exercise_type'   => $exercise_type,
+            'problem_payload' => $payload_json,
+            'scoring_config'  => '{}',
+            'ui_config'       => '{}',
+            'payload_hash'    => hash('sha256', json_encode($decoded, JSON_UNESCAPED_UNICODE)),
+            'schema_version'  => (int) ($decoded['schema_version'] ?? 1),
         ];
 
         $existing = $DB->get_record('qtype_graphitoubb_options', ['questionid' => $question->id]);
@@ -281,6 +331,17 @@ class qtype_graphitoubb extends question_type {
         $qo->problem_payload = $format->getpath($data, ['#', 'problem_payload', 0, '#'], '{}');
         $qo->scoring_config  = $format->getpath($data, ['#', 'scoring_config', 0, '#'], '{}');
         $qo->ui_config       = $format->getpath($data, ['#', 'ui_config', 0, '#'], '{}');
+
+        // grafo/arbol: no truth_table schema; keep the payload verbatim, hash the
+        // decoded canonical form, and let save_canvas_question_options() store it.
+        if ($qo->tool === 'grafo' || $qo->tool === 'arbol') {
+            $decoded = $this->json_decode_safe($qo->problem_payload);
+            if (empty($decoded)) {
+                return false;
+            }
+            $qo->payload_hash = hash('sha256', json_encode($decoded, JSON_UNESCAPED_UNICODE));
+            return $qo;
+        }
 
         // Validate the imported problem payload.
         $problem = $this->json_decode_safe($qo->problem_payload);

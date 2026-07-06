@@ -1,0 +1,132 @@
+{{!
+    Shared graph/tree editor shell for grafo & arbol (three modes: build/given/authoring).
+
+    Context: {attemptid, instanceid, schemaversion, tool, mode, type, directed,
+              max_nodes, max_edges, max_label, given_json, snapshot_json, finished,
+              is_build, is_given, is_authoring, is_grafo, is_arbol,
+              is_decision, is_traversal, is_traversal_answer,
+              decision_true_label, decision_false_label}
+
+    @template mod_graphitoubb/graph_editor
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-graph mod-graphitoubb-editor"
+    id="graphitoubb-graph-{{instanceid}}"
+    data-attemptid="{{attemptid}}"
+    data-instanceid="{{instanceid}}"
+    data-schemaversion="{{schemaversion}}"
+    data-tool="{{tool}}"
+    data-mode="{{mode}}"
+    data-type="{{type}}"
+    data-directed="{{directed}}"
+    data-finished="{{#finished}}1{{/finished}}{{^finished}}0{{/finished}}"
+    data-max-nodes="{{max_nodes}}"
+    data-max-edges="{{max_edges}}"
+    data-max-label="{{max_label}}"
+    data-given="{{given_json}}"
+    data-snapshot="{{snapshot_json}}">
+
+    {{#is_build}}{{^finished}}
+    <details class="mod-graphitoubb-help" open>
+        <summary>{{#str}}graph_help_title, mod_graphitoubb{{/str}}</summary>
+        <ol class="mod-graphitoubb-help-steps">
+            <li>{{#str}}graph_help_addnode, mod_graphitoubb{{/str}}</li>
+            <li>{{#str}}graph_help_addedge, mod_graphitoubb{{/str}}</li>
+            {{#is_arbol}}<li>{{#str}}graph_help_setroot, mod_graphitoubb{{/str}}</li>{{/is_arbol}}
+            <li>{{#str}}graph_help_rename, mod_graphitoubb{{/str}}</li>
+            <li>{{#str}}graph_help_delete, mod_graphitoubb{{/str}}</li>
+        </ol>
+    </details>
+    {{/finished}}{{/is_build}}
+
+    {{^is_given}}
+    <div class="mod-graphitoubb-graph-toolbar mod-graphitoubb-toolbar" role="toolbar"
+         aria-label="{{#str}}graph_toolbar_label, mod_graphitoubb{{/str}}">
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tool-btn"
+                data-gmode="addnode" aria-pressed="false">{{#str}}graph_btn_addnode, mod_graphitoubb{{/str}}</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tool-btn"
+                data-gmode="addedge" aria-pressed="false">{{#str}}graph_btn_addedge, mod_graphitoubb{{/str}}</button>
+        {{#is_arbol}}
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-tool-btn"
+                data-gmode="setroot" aria-pressed="false">{{#str}}graph_btn_setroot, mod_graphitoubb{{/str}}</button>
+        {{/is_arbol}}
+        <button type="button" class="btn btn-sm btn-outline-danger mod-graphitoubb-tool-btn"
+                data-gmode="delete" aria-pressed="false">{{#str}}graph_btn_delete, mod_graphitoubb{{/str}}</button>
+        <button type="button" class="btn btn-sm btn-light" data-gaction="tidy">{{#str}}graph_btn_tidy, mod_graphitoubb{{/str}}</button>
+        <button type="button" class="btn btn-sm btn-light" data-gaction="clear">{{#str}}graph_btn_clear, mod_graphitoubb{{/str}}</button>
+    </div>
+    <p class="mod-graphitoubb-graph-hint text-muted small" aria-live="polite"></p>
+    {{/is_given}}
+
+    <div class="mod-graphitoubb-graph-canvas mod-graphitoubb-canvas">
+        <p class="mod-graphitoubb-loading">{{#str}}editor_loading, mod_graphitoubb{{/str}}</p>
+        <div class="mod-graphitoubb-zoom-controls" role="group" aria-label="{{#str}}zoom_fit, mod_graphitoubb{{/str}}">
+            <button type="button" class="btn btn-sm btn-light mod-graphitoubb-zoom-btn" data-zoom="in"
+                    title="{{#str}}zoom_in, mod_graphitoubb{{/str}}" aria-label="{{#str}}zoom_in, mod_graphitoubb{{/str}}">+</button>
+            <button type="button" class="btn btn-sm btn-light mod-graphitoubb-zoom-btn" data-zoom="out"
+                    title="{{#str}}zoom_out, mod_graphitoubb{{/str}}" aria-label="{{#str}}zoom_out, mod_graphitoubb{{/str}}">−</button>
+            <button type="button" class="btn btn-sm btn-light mod-graphitoubb-zoom-btn" data-zoom="fit"
+                    title="{{#str}}zoom_fit, mod_graphitoubb{{/str}}" aria-label="{{#str}}zoom_fit, mod_graphitoubb{{/str}}">⤢</button>
+            <button type="button" class="btn btn-sm btn-light mod-graphitoubb-zoom-btn" data-zoom="reset"
+                    title="{{#str}}zoom_reset, mod_graphitoubb{{/str}}" aria-label="{{#str}}zoom_reset, mod_graphitoubb{{/str}}">100%</button>
+        </div>
+    </div>
+
+    {{#is_given}}
+    <div class="mod-graphitoubb-graph-answer card card-body mt-2">
+        {{#is_decision}}
+        <fieldset {{#finished}}disabled{{/finished}}>
+            <legend class="h6">{{#str}}graph_answer_decision_legend, mod_graphitoubb{{/str}}</legend>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="graph-decision-{{instanceid}}"
+                       id="graph-decision-yes-{{instanceid}}" value="true">
+                <label class="form-check-label" for="graph-decision-yes-{{instanceid}}">{{decision_true_label}}</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="graph-decision-{{instanceid}}"
+                       id="graph-decision-no-{{instanceid}}" value="false">
+                <label class="form-check-label" for="graph-decision-no-{{instanceid}}">{{decision_false_label}}</label>
+            </div>
+        </fieldset>
+        {{/is_decision}}
+        {{#is_traversal}}
+        <p class="h6">{{#str}}graph_answer_traversal_legend, mod_graphitoubb{{/str}}</p>
+        <p class="text-muted small">{{#str}}graph_answer_traversal_help, mod_graphitoubb{{/str}}</p>
+        <div class="mod-graphitoubb-seq-wrap mb-2">
+            <span class="font-weight-bold">{{#str}}graph_answer_walk_label, mod_graphitoubb{{/str}}</span>
+            <span class="mod-graphitoubb-seq-list font-monospace" aria-live="polite"></span>
+        </div>
+        <p class="mod-graphitoubb-seq-hint text-info small" aria-live="polite"></p>
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-seq-undo"
+                {{#finished}}disabled{{/finished}}>{{#str}}graph_answer_undo, mod_graphitoubb{{/str}}</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-seq-clear"
+                {{#finished}}disabled{{/finished}}>{{#str}}graph_answer_clear, mod_graphitoubb{{/str}}</button>
+        {{/is_traversal}}
+        {{#is_traversal_answer}}
+        <label class="h6" for="graph-seq-{{instanceid}}">{{#str}}graph_answer_sequence_legend, mod_graphitoubb{{/str}}</label>
+        <input type="text" id="graph-seq-{{instanceid}}" class="form-control mod-graphitoubb-seq-input"
+               placeholder="{{#str}}graph_answer_sequence_placeholder, mod_graphitoubb{{/str}}"
+               {{#finished}}disabled{{/finished}}>
+        {{/is_traversal_answer}}
+    </div>
+    {{/is_given}}
+</div>
+{{#is_student}}
+<div class="mod-graphitoubb-submission-bar mt-3">
+    <span class="mod-graphitoubb-status-label">{{#str}}afd_status_label, mod_graphitoubb{{/str}}</span>
+    <span class="mod-graphitoubb-status-badge badge {{#finished}}badge-success bg-success{{/finished}}{{^finished}}badge-warning bg-warning text-dark{{/finished}}"
+          data-region="attempt-status" aria-live="polite">
+        {{#finished}}{{#str}}status_finished, mod_graphitoubb{{/str}}{{/finished}}{{^finished}}{{#str}}status_inprogress, mod_graphitoubb{{/str}}{{/finished}}
+    </span>
+    <button type="button" class="btn btn-primary mod-graphitoubb-finish-btn" data-region="graph-finish-btn"
+            {{#finished}}disabled{{/finished}}>{{#str}}afd_finish_button, mod_graphitoubb{{/str}}</button>
+</div>
+{{/is_student}}
+{{#js}}
+require(['mod_graphitoubb/graph_canvas'], function(Canvas) {
+    // graph_canvas wires the finish button itself (flush-then-finish) for the
+    // student surface; authoring/qtype surfaces have no finish button.
+    Canvas.init({{attemptid}}, {{instanceid}}, {{schemaversion}}, '{{tool}}');
+});
+{{/js}}

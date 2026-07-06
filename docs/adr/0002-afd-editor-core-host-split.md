@@ -29,3 +29,19 @@ llama **host**, no "adapter".
   realmente corrige en el question engine, y sienta el patrón que tablas necesitará.
 - Riesgo principal: regresión en el flujo del `mod` (browser-verified) al extraer el
   núcleo. Se acota con las pruebas/behat existentes y verificación en navegador.
+
+## Enmienda 2026-07-05 — el núcleo es `graph_canvas`, compartido entre herramientas
+
+El núcleo de este ADR se materializa como el módulo **`graph_canvas`** (lienzo
+Cytoscape genérico + toolbar/mode-FSM + undo/redo + zoom + modales + autosave), y deja
+de ser exclusivo de AFD: los nuevos tools `grafo` y `arbol` (ver
+`docs/prd-grafo-arbol-tools.md`) se construyen **sobre el mismo núcleo**, cada uno
+aportando su capa de extras (AFD: simulador/alfabeto/start-final; grafo: checks;
+arbol: aristas L/R). `graph_canvas` se construye primero para grafo/arbol; AFD
+**converge** a él después mediante la extracción núcleo+host aquí descrita (trabajo
+aparte, con manejo de riesgo). En consecuencia, el "primer qtype de lienzo que
+realmente corrige" que este ADR anticipaba **será grafo/arbol (Wave C del PRD), no
+AFD**; AFD adopta el mismo host de qtype más tarde. La decisión original no cambia — se ensancha de
+"un núcleo para los dos hosts de AFD" a "un núcleo para todas las herramientas de
+lienzo". La duplicación transitoria mientras AFD no migra es aceptada; el destino es
+convergencia, no un editor paralelo permanente (lo que este ADR rechaza).

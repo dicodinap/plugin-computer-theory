@@ -52,7 +52,7 @@ final class finish_attempt extends external_api {
      * @return array{status: string}
      */
     public static function execute(int $attemptid): array {
-        global $USER;
+        global $USER, $DB;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'attemptid' => $attemptid,
@@ -75,31 +75,43 @@ final class finish_attempt extends external_api {
 
         $response = ['status' => 'ok'];
 
-        // C1: if this instance is an AFD exercise, grade the student's latest
-        // automaton against the authored test words and persist a submission.
+        // Generic tool→grader dispatch (D5): any snapshot-based graded tool
+        // (afd, grafo, arbol) is graded here against its latest snapshot and a
+        // submission is persisted. truth_table stays on submit.php (I3).
         $problem = (new \mod_graphitoubb\problem_repository())->find_by_instance((int) $attempt->instanceid);
-        if ($problem && $problem->tool === 'afd') {
-            $pdata        = json_decode($problem->payload, true) ?: [];
-            $config       = $pdata['config'] ?? [];
-            $latest       = (new \mod_graphitoubb\snapshot_service())->get_latest($params['attemptid']);
-            $snapshotjson = $latest ? $latest->payload : null;
+        if ($problem) {
+            $grader = \local_graphitoubb\grader_dispatch::for($problem->tool);
+            if ($grader !== null) {
+                $pdata        = json_decode($problem->payload, true) ?: [];
+                $latest       = (new \mod_graphitoubb\snapshot_service())->get_latest($params['attemptid']);
+                $snapshotjson = $latest ? $latest->payload : null;
 
-            $grading = (new \local_graphitoubb\tools\afd\grader\afd_grader())->grade($config, $snapshotjson);
+                $grading = $grader->grade($pdata, $snapshotjson);
 
-            $automaton = $snapshotjson ? (json_decode($snapshotjson, true) ?: []) : [];
-            (new \mod_graphitoubb\submission_repository())->save(
-                $params['attemptid'],
-                ['tool' => 'afd', 'automaton' => $automaton],
-                $grading,
-                (string) $problem->payload_hash,
-                1
-            );
+                $snapshotdata = $snapshotjson ? (json_decode($snapshotjson, true) ?: []) : [];
+                (new \mod_graphitoubb\submission_repository())->save(
+                    $params['attemptid'],
+                    ['tool' => $problem->tool, 'snapshot' => $snapshotdata],
+                    $grading,
+                    (string) $problem->payload_hash,
+                    1
+                );
 
-            $response['graded']        = true;
-            $response['invalid']       = (bool) $grading['invalid'];
-            $response['fraction']      = (float) $grading['fraction'];
-            $response['words_correct'] = (int) $grading['words_correct'];
-            $response['words_total']   = (int) $grading['words_total'];
+                // D15: recompute grade_cache for every graded attempt (also fixes
+                // the latent AFD bug where finish_attempt never populated it).
+                $instance = $DB->get_record('graphitoubb', ['id' => $attempt->instanceid], 'attempts_policy');
+                $policy   = $instance ? ($instance->attempts_policy ?: 'best') : 'best';
+                (new \mod_graphitoubb\grade_cache_service())->recompute_for_attempt($params['attemptid'], $policy);
+
+                $response['graded']   = (bool) ($grading['graded'] ?? true);
+                $response['invalid']  = (bool) ($grading['invalid'] ?? false);
+                $response['fraction'] = (float) ($grading['fraction'] ?? 0);
+                // items_* is the generic count pair; words_* preserved for AFD (I1).
+                $response['items_correct'] = (int) ($grading['items_correct'] ?? ($grading['words_correct'] ?? 0));
+                $response['items_total']   = (int) ($grading['items_total'] ?? ($grading['words_total'] ?? 0));
+                $response['words_correct'] = (int) ($grading['words_correct'] ?? $response['items_correct']);
+                $response['words_total']   = (int) ($grading['words_total'] ?? $response['items_total']);
+            }
         }
 
         return $response;
@@ -116,6 +128,8 @@ final class finish_attempt extends external_api {
             'graded'        => new external_value(PARAM_BOOL, 'Whether AFD grading ran', VALUE_OPTIONAL),
             'invalid'       => new external_value(PARAM_BOOL, 'Automaton ungradeable (e.g. no start)', VALUE_OPTIONAL),
             'fraction'      => new external_value(PARAM_FLOAT, 'Score fraction 0–1', VALUE_OPTIONAL),
+            'items_correct' => new external_value(PARAM_INT, 'Generic correct-item count', VALUE_OPTIONAL),
+            'items_total'   => new external_value(PARAM_INT, 'Generic total-item count', VALUE_OPTIONAL),
             'words_correct' => new external_value(PARAM_INT, 'Test words classified correctly', VALUE_OPTIONAL),
             'words_total'   => new external_value(PARAM_INT, 'Total test words', VALUE_OPTIONAL),
         ]);

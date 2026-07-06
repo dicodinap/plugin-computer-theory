@@ -45,7 +45,11 @@ define(['mod_graphitoubb/repository', 'core/notification'], function(Repository,
 
     /**
      * Returns true if the new state differs from the last saved state.
-     * Significant = any change to states, transitions, or alphabet.
+     *
+     * AFD path (unchanged): significant = any change to states, transitions or
+     * alphabet. Generic path (grafo/arbol answer envelopes — no AFD triad): diff
+     * the whole payload (nodes/edges/answer_kind/value/edges/values). Additive
+     * branch; the AFD behaviour is preserved byte-for-byte (I1/AC6).
      *
      * @param {object} state
      * @return {boolean}
@@ -54,9 +58,15 @@ define(['mod_graphitoubb/repository', 'core/notification'], function(Repository,
         if (!lastSavedState) {
             return true;
         }
-        return JSON.stringify(state.states) !== JSON.stringify(lastSavedState.states) ||
-               JSON.stringify(state.transitions) !== JSON.stringify(lastSavedState.transitions) ||
-               JSON.stringify(state.alphabet) !== JSON.stringify(lastSavedState.alphabet);
+        var isAfd = function(s) {
+            return s && (s.states !== undefined || s.transitions !== undefined || s.alphabet !== undefined);
+        };
+        if (isAfd(state) || isAfd(lastSavedState)) {
+            return JSON.stringify(state.states) !== JSON.stringify(lastSavedState.states) ||
+                   JSON.stringify(state.transitions) !== JSON.stringify(lastSavedState.transitions) ||
+                   JSON.stringify(state.alphabet) !== JSON.stringify(lastSavedState.alphabet);
+        }
+        return JSON.stringify(state) !== JSON.stringify(lastSavedState);
     };
 
     /**
@@ -95,8 +105,17 @@ define(['mod_graphitoubb/repository', 'core/notification'], function(Repository,
         }, DEBOUNCE_MS);
     };
 
+    /**
+     * Cancel any pending (debounced) save. Used before the finish flush so a late
+     * autosave cannot insert a snapshot after the authoritative final answer.
+     */
+    var cancel = function() {
+        clearTimeout(debounceTimer);
+    };
+
     return {
         init: init,
         onchange: onchange,
+        cancel: cancel,
     };
 });

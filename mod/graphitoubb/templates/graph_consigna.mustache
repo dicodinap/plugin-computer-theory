@@ -1,0 +1,15 @@
+{{!
+    grafo/arbol task prompt (consigna) shown above the student editor.
+
+    Context: {prompt, type_label, grading_info}
+
+    @template mod_graphitoubb/graph_consigna
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-consigna card card-body mb-3">
+    <h3 class="h5">{{#str}}graph_consigna_title, mod_graphitoubb{{/str}}
+        <span class="badge badge-info bg-info">{{type_label}}</span></h3>
+    <p class="mod-graphitoubb-consigna-prompt mb-2">{{prompt}}</p>
+    <p class="text-muted small mb-0">{{grading_info}}</p>
+</div>
