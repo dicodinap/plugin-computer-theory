@@ -80,7 +80,8 @@ final class afd_grader_test extends \basic_testcase {
         $this->assertFalse($result['invalid']);
         $this->assertSame(6, $result['words_total']);
         $this->assertSame(6, $result['words_correct']);
-        $this->assertSame(1.0, $result['fraction']);
+        // Exact integer division yields int(1) in PHP; compare numerically.
+        $this->assertEqualsWithDelta(1.0, $result['fraction'], 0.0001);
         $this->assertTrue($result['passed']);
         $this->assertCount(6, $result['results']);
     }
@@ -125,7 +126,8 @@ final class afd_grader_test extends \basic_testcase {
         $result = (new afd_grader())->grade($config, $snapshot);
 
         $this->assertSame(2, $result['words_correct']);
-        $this->assertSame(1.0, $result['fraction']);
+        // Exact integer division yields int(1) in PHP; compare numerically.
+        $this->assertEqualsWithDelta(1.0, $result['fraction'], 0.0001);
     }
 
     public function test_no_snapshot_is_invalid(): void {

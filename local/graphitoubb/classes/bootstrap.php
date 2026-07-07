@@ -25,6 +25,8 @@
 namespace local_graphitoubb;
 
 use local_graphitoubb\tools\afd\afd_tool;
+use local_graphitoubb\tools\arbol\arbol_tool;
+use local_graphitoubb\tools\grafo\grafo_tool;
 use local_graphitoubb\tools\truth_table\truth_table_tool;
 
 /**
@@ -52,6 +54,8 @@ class bootstrap {
     public static function register_default_tools(): void {
         $registry = tool_registry::instance();
         $registry->register(new afd_tool());
+        $registry->register(new grafo_tool());
+        $registry->register(new arbol_tool());
         $registry->register(new truth_table_tool());
     }
 }

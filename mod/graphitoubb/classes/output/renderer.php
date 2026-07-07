@@ -128,6 +128,144 @@ class renderer extends \plugin_renderer_base {
     }
 
     /**
+     * Map a grafo/arbol problem type to the canvas mode.
+     *
+     * @param  string $tool 'grafo' | 'arbol'
+     * @param  string $type problem type
+     * @return string 'build' | 'given'
+     */
+    private function graph_mode_for(string $tool, string $type): string {
+        $given = ['decision', 'traversal', 'traversal_answer'];
+        return in_array($type, $given, true) ? 'given' : 'build';
+    }
+
+    /**
+     * Render the shared graph/tree editor for a grafo/arbol attempt (student) or
+     * for the authoring canvas (teacher, $isstudent=false, $authoringmode=true).
+     *
+     * @param int       $attemptid
+     * @param int       $instanceid
+     * @param \stdClass $problem    graphitoubb_problem row (tool grafo|arbol).
+     * @param bool      $isstudent  True for the student surface (finish bar + WS).
+     * @param ?string   $snapshotjson Latest snapshot envelope JSON, or null.
+     * @param bool      $finished
+     * @param bool      $authoringmode Force authoring mode (teacher given-canvas).
+     * @return string HTML.
+     */
+    public function render_graph_editor(
+        int $attemptid,
+        int $instanceid,
+        \stdClass $problem,
+        bool $isstudent = true,
+        ?string $snapshotjson = null,
+        bool $finished = false,
+        bool $authoringmode = false
+    ): string {
+        $payload = json_decode($problem->payload, true) ?: [];
+        $tool    = (string) ($problem->tool ?? 'grafo');
+        $type    = (string) ($payload['type'] ?? '');
+        $config  = $payload['config'] ?? [];
+
+        $mode = $authoringmode ? 'authoring' : $this->graph_mode_for($tool, $type);
+        $directed = !empty($config['directed'])
+            || !empty($config['given_graph']['directed']);
+
+        // Given structure for given/authoring modes.
+        $given = null;
+        if ($mode === 'given' || $mode === 'authoring') {
+            $given = $config['given_graph'] ?? ($config['given_tree'] ?? null);
+        }
+
+        $maxnodes = $tool === 'arbol'
+            ? 31
+            : \local_graphitoubb\tools\grafo\grafo_tool::MAX_VERTICES;
+        $maxedges = $tool === 'arbol'
+            ? 60
+            : \local_graphitoubb\tools\grafo\grafo_tool::MAX_EDGES;
+        $maxlabel = $tool === 'arbol'
+            ? 6
+            : \local_graphitoubb\tools\grafo\grafo_tool::MAX_LABEL;
+
+        // Return raw JSON; the mustache {{given_json}} / {{snapshot_json}}
+        // placeholders HTML-escape once for the attribute (double-escaping here
+        // would leave &quot; literals that JSON.parse cannot read).
+        $attrjson = static function ($data): string {
+            if ($data === null) {
+                return '';
+            }
+            return (string) json_encode($data, JSON_UNESCAPED_UNICODE);
+        };
+
+        $context = [
+            'attemptid'     => $attemptid,
+            'instanceid'    => $instanceid,
+            'schemaversion' => 1,
+            'tool'          => $tool,
+            'mode'          => $mode,
+            'type'          => $type,
+            'directed'      => $directed ? '1' : '0',
+            'max_nodes'     => $maxnodes,
+            'max_edges'     => $maxedges,
+            'max_label'     => $maxlabel,
+            'given_json'    => $attrjson($given),
+            'snapshot_json' => $snapshotjson ?: '',
+            'finished'      => $finished,
+            'is_student'    => $isstudent,
+            'is_build'      => ($mode === 'build'),
+            'is_given'      => ($mode === 'given'),
+            'is_authoring'  => ($mode === 'authoring'),
+            'is_grafo'      => ($tool === 'grafo'),
+            'is_arbol'      => ($tool === 'arbol'),
+            'is_decision'         => ($type === 'decision'),
+            'is_traversal'        => ($type === 'traversal'),
+            'is_traversal_answer' => ($type === 'traversal_answer'),
+            'decision_true_label'  => get_string('graph_decision_yes', 'mod_graphitoubb'),
+            'decision_false_label' => get_string('graph_decision_no', 'mod_graphitoubb'),
+        ];
+        return $this->render_from_template('mod_graphitoubb/graph_editor', $context);
+    }
+
+    /**
+     * Render the grafo/arbol task prompt (consigna) shown above the editor.
+     *
+     * @param \stdClass $problem graphitoubb_problem row.
+     * @return string HTML.
+     */
+    public function render_graph_consigna(\stdClass $problem): string {
+        $payload = json_decode($problem->payload, true) ?: [];
+        $config  = $payload['config'] ?? [];
+        $type    = (string) ($payload['type'] ?? '');
+        $passpct = (int) round(\local_graphitoubb\grader_interface::PASS_THRESHOLD * 100);
+
+        return $this->render_from_template('mod_graphitoubb/graph_consigna', [
+            'prompt'       => (string) ($config['prompt'] ?? ''),
+            'type_label'   => get_string('graph_type_' . $type, 'mod_graphitoubb'),
+            'grading_info' => get_string('graph_consigna_grading_info', 'mod_graphitoubb', $passpct),
+        ]);
+    }
+
+    /**
+     * Render the grading-result panel for a finished grafo/arbol attempt.
+     *
+     * @param array $gr Decoded grading_result (shared grader output).
+     * @return string HTML.
+     */
+    public function render_graph_result(array $gr): string {
+        $invalid  = !empty($gr['invalid']);
+        $fraction = (float) ($gr['fraction'] ?? 0);
+        $ic       = (int) ($gr['items_correct'] ?? 0);
+        $it       = (int) ($gr['items_total'] ?? 0);
+        $pct      = round($fraction * 100, 1);
+        $scorelabel = get_string('graph_result_score', 'mod_graphitoubb',
+            (object) ['correct' => $ic, 'total' => $it, 'pct' => $pct]);
+        return $this->render_from_template('mod_graphitoubb/graph_result', [
+            'invalid'     => $invalid,
+            'score_label' => $scorelabel,
+            'passed'      => !empty($gr['passed']),
+        ]);
+    }
+
+    /**
      * Render a read-only teacher summary of an attempt.
      *
      * @param \stdClass $attempt Attempt row.

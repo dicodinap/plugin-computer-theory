@@ -82,6 +82,8 @@ function render_preset_catalog_browser(int $cmid, string $activepreset): string 
     $groups  = [
         'afd'         => get_string('preset_group_afd', 'mod_graphitoubb'),
         'truth_table' => get_string('preset_group_truth_table', 'mod_graphitoubb'),
+        'grafo'       => get_string('preset_group_grafo', 'mod_graphitoubb'),
+        'arbol'       => get_string('preset_group_arbol', 'mod_graphitoubb'),
     ];
     $difflabels = [
         'easy'   => get_string('preset_difficulty_easy', 'mod_graphitoubb'),
@@ -143,7 +145,7 @@ $warningmsg = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_sesskey();
 
-    $tool = optional_param('tool', 'truth_table', PARAM_ALPHA);
+    $tool = optional_param('tool', 'truth_table', PARAM_ALPHAEXT);
 }
 
 // C1: AFD authoring branch — prompt + alphabet + expected-verdict test words.
@@ -227,7 +229,137 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($tool ?? '') === 'afd') {
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($tool ?? 'truth_table') !== 'afd') {
+// grafo authoring branch — construct/decision/traversal.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($tool ?? '') === 'grafo') {
+    $gtype    = required_param('grafo_type', PARAM_ALPHA);
+    $gprompt  = optional_param('grafo_prompt', '', PARAM_TEXT);
+    $gdirected = (bool) optional_param('grafo_directed', 0, PARAM_INT);
+
+    $config = ['prompt' => $gprompt, 'directed' => $gdirected];
+
+    // Read the given-graph JSON (drawn on the authoring canvas / preset), falling
+    // back to the previously-saved graph when the hidden field is empty.
+    $givenraw   = optional_param('given_graph', '', PARAM_RAW);
+    $givengraph = json_decode($givenraw, true);
+    if (!is_array($givengraph) || empty($givengraph['nodes'])) {
+        $givengraph = $prevpayload['config']['given_graph'] ?? null;
+    }
+    if (is_array($givengraph)) {
+        $givengraph['directed'] = $gdirected;
+    }
+
+    if ($gtype === 'construct') {
+        $constraints = [];
+        $nv = optional_param('grafo_c_nvertices', '', PARAM_RAW_TRIMMED);
+        $ne = optional_param('grafo_c_nedges', '', PARAM_RAW_TRIMMED);
+        if ($nv !== '' && is_numeric($nv)) {
+            $constraints['n_vertices'] = (int) $nv;
+        }
+        if ($ne !== '' && is_numeric($ne)) {
+            $constraints['n_edges'] = (int) $ne;
+        }
+        $ds = optional_param('grafo_c_degseq', '', PARAM_RAW_TRIMMED);
+        if ($ds !== '') {
+            preg_match_all('/\d+/', $ds, $dm);
+            if (!empty($dm[0])) {
+                $constraints['degree_sequence'] = array_map('intval', $dm[0]);
+            }
+        }
+        foreach (['connected', 'bipartite', 'acyclic', 'is_tree', 'eulerian'] as $bkey) {
+            $val = optional_param('grafo_c_' . $bkey, 'ignore', PARAM_ALPHA);
+            if ($val === 'yes') {
+                $constraints[$bkey] = true;
+            } else if ($val === 'no') {
+                $constraints[$bkey] = false;
+            }
+        }
+        $config['constraints'] = $constraints;
+    } else if ($gtype === 'decision') {
+        $config['given_graph'] = $givengraph;
+        $config['question']    = optional_param('grafo_question', 'has_euler_circuit', PARAM_ALPHANUMEXT);
+    } else if ($gtype === 'traversal') {
+        $config['given_graph'] = $givengraph;
+        $config['walk_kind']   = optional_param('grafo_walkkind', 'euler_circuit', PARAM_ALPHANUMEXT);
+        $sv = optional_param('grafo_startvertex', '', PARAM_RAW_TRIMMED);
+        if ($sv !== '') {
+            $config['start_vertex'] = $sv;
+        }
+    }
+
+    if ($gprompt === '') {
+        $error = 'The prompt (consigna) is required.';
+    } else if (($gtype === 'decision' || $gtype === 'traversal') && empty($givengraph['nodes'])) {
+        $error = 'Draw or load a given graph (it has no vertices).';
+    } else if ($gtype === 'construct' && empty($config['constraints'])) {
+        $warningmsg = 'No constraints set: any non-empty graph will score 100%.';
+    }
+
+    if (!$error) {
+        $payload = [
+            'tool'           => 'grafo',
+            'schema_version' => 1,
+            'type'           => $gtype,
+            'config'         => $config,
+        ];
+        (new \mod_graphitoubb\problem_repository())->save((int) $instance->id, 'grafo', $gtype, $payload, 1);
+        $savedmsg    = 'Problem saved.';
+        $prevpayload = $payload;
+    }
+}
+
+// arbol authoring branch — bst_build/traversal_answer/reconstruct.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($tool ?? '') === 'arbol') {
+    $atype   = required_param('arbol_type', PARAM_ALPHA);
+    $aprompt = optional_param('arbol_prompt', '', PARAM_TEXT);
+    $config  = ['prompt' => $aprompt];
+
+    $parsenums = static function (string $raw): array {
+        preg_match_all('/-?\d+/', $raw, $m);
+        return array_map('intval', $m[0]);
+    };
+
+    if ($atype === 'bst_build') {
+        $config['insertions'] = $parsenums(optional_param('arbol_insertions', '', PARAM_RAW_TRIMMED));
+    } else if ($atype === 'traversal_answer') {
+        $config['order'] = optional_param('arbol_order', 'in', PARAM_ALPHA);
+        $giventreeraw    = optional_param('given_tree', '', PARAM_RAW);
+        $giventree       = json_decode($giventreeraw, true);
+        if (!is_array($giventree) || empty($giventree['nodes'])) {
+            $giventree = $prevpayload['config']['given_tree'] ?? null;
+        }
+        $config['given_tree'] = $giventree;
+    } else if ($atype === 'reconstruct') {
+        $config['pair'] = optional_param('arbol_pair', 'pre_in', PARAM_ALPHANUMEXT);
+        $config['a']    = $parsenums(optional_param('arbol_a', '', PARAM_RAW_TRIMMED));
+        $config['b']    = $parsenums(optional_param('arbol_b', '', PARAM_RAW_TRIMMED));
+    }
+
+    if ($aprompt === '') {
+        $error = 'The prompt (consigna) is required.';
+    } else if ($atype === 'bst_build' && empty($config['insertions'])) {
+        $error = 'Provide at least one insertion value.';
+    } else if ($atype === 'reconstruct'
+            && (empty($config['a']) || count($config['a']) !== count($config['b'])
+                || count(array_unique($config['a'])) !== count($config['a']))) {
+        $error = 'Reconstruct requires two equal-length sequences of DISTINCT values.';
+    } else if ($atype === 'traversal_answer' && empty($config['given_tree']['nodes'])) {
+        $error = 'Draw or load a given tree (it has no nodes).';
+    }
+
+    if (!$error) {
+        $payload = [
+            'tool'           => 'arbol',
+            'schema_version' => 1,
+            'type'           => $atype,
+            'config'         => $config,
+        ];
+        (new \mod_graphitoubb\problem_repository())->save((int) $instance->id, 'arbol', $atype, $payload, 1);
+        $savedmsg    = 'Problem saved.';
+        $prevpayload = $payload;
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !in_array(($tool ?? 'truth_table'), ['afd', 'grafo', 'arbol'], true)) {
     $type     = required_param('exercise_type', PARAM_ALPHA);
     $formula  = optional_param('formula',   '', PARAM_RAW_TRIMMED);
     $formula1 = optional_param('formula_1', '', PARAM_RAW_TRIMMED);
@@ -339,6 +471,28 @@ if (($prevpayload['tool'] ?? '') === 'afd' && !empty($prevpayload['config']['tes
     $cur_afd_words = implode("\n", $lines);
 }
 
+// grafo authoring prefill.
+$cur_grafo_type   = ($cur_tool === 'grafo') ? ($prevpayload['type'] ?? 'construct') : 'construct';
+$cur_grafo_cfg    = ($cur_tool === 'grafo') ? ($prevpayload['config'] ?? []) : [];
+$cur_grafo_prompt = (string) ($cur_grafo_cfg['prompt'] ?? '');
+$cur_grafo_dir    = !empty($cur_grafo_cfg['directed']);
+$cur_grafo_constr = $cur_grafo_cfg['constraints'] ?? [];
+$cur_grafo_q      = (string) ($cur_grafo_cfg['question'] ?? 'has_euler_circuit');
+$cur_grafo_wk     = (string) ($cur_grafo_cfg['walk_kind'] ?? 'euler_circuit');
+$cur_grafo_sv     = (string) ($cur_grafo_cfg['start_vertex'] ?? '');
+$cur_grafo_given  = $cur_grafo_cfg['given_graph'] ?? null;
+
+// arbol authoring prefill.
+$cur_arbol_type   = ($cur_tool === 'arbol') ? ($prevpayload['type'] ?? 'bst_build') : 'bst_build';
+$cur_arbol_cfg    = ($cur_tool === 'arbol') ? ($prevpayload['config'] ?? []) : [];
+$cur_arbol_prompt = (string) ($cur_arbol_cfg['prompt'] ?? '');
+$cur_arbol_ins    = isset($cur_arbol_cfg['insertions']) ? implode(', ', $cur_arbol_cfg['insertions']) : '';
+$cur_arbol_order  = (string) ($cur_arbol_cfg['order'] ?? 'in');
+$cur_arbol_pair   = (string) ($cur_arbol_cfg['pair'] ?? 'pre_in');
+$cur_arbol_a      = isset($cur_arbol_cfg['a']) ? implode(', ', $cur_arbol_cfg['a']) : '';
+$cur_arbol_b      = isset($cur_arbol_cfg['b']) ? implode(', ', $cur_arbol_cfg['b']) : '';
+$cur_arbol_given  = $cur_arbol_cfg['given_tree'] ?? null;
+
 echo $OUTPUT->header();
 echo $OUTPUT->heading('Edit problem — ' . format_string($instance->name));
 
@@ -427,6 +581,50 @@ $cur_afd_words_safe  = s($cur_afd_words);
 // button so the teacher can tweak before saving.
 echo render_preset_catalog_browser($cm->id, $presetkey);
 
+// grafo authoring canvas (rendered read/teacher-editable; prefilled from preset/existing).
+$renderer = $PAGE->get_renderer('mod_graphitoubb');
+$synth_grafo_problem = (object) [
+    'tool'    => 'grafo',
+    'payload' => json_encode(['tool' => 'grafo', 'type' => $cur_grafo_type, 'config' => $cur_grafo_cfg]),
+];
+$grafo_authoring_canvas = $renderer->render_graph_editor(
+    (int) $instance->id, (int) $instance->id, $synth_grafo_problem, false, null, false, true
+);
+$cur_grafo_given_attr = $cur_grafo_given
+    ? s(json_encode($cur_grafo_given, JSON_UNESCAPED_UNICODE)) : '';
+
+// Constraint 3-state select current values.
+$cstate = function (string $key) use ($cur_grafo_constr): string {
+    if (!array_key_exists($key, $cur_grafo_constr)) {
+        return 'ignore';
+    }
+    return $cur_grafo_constr[$key] ? 'yes' : 'no';
+};
+$cur_c_nv = isset($cur_grafo_constr['n_vertices']) ? (string) $cur_grafo_constr['n_vertices'] : '';
+$cur_c_ne = isset($cur_grafo_constr['n_edges']) ? (string) $cur_grafo_constr['n_edges'] : '';
+$cur_c_ds = isset($cur_grafo_constr['degree_sequence'])
+    ? implode(', ', $cur_grafo_constr['degree_sequence']) : '';
+$cur_grafo_prompt_safe = s($cur_grafo_prompt);
+$cur_grafo_sv_safe     = s($cur_grafo_sv);
+$grafo_dir_attr        = $checked($cur_grafo_dir);
+
+// arbol authoring canvas (for traversal_answer given tree).
+$synth_arbol_problem = (object) [
+    'tool'    => 'arbol',
+    'payload' => json_encode(['tool' => 'arbol', 'type' => $cur_arbol_type, 'config' => $cur_arbol_cfg]),
+];
+// Distinct host id (offset) so the two authoring canvases don't collide in the DOM.
+$arbol_canvas_hostid = (int) $instance->id + 1000000;
+$arbol_authoring_canvas = $renderer->render_graph_editor(
+    $arbol_canvas_hostid, $arbol_canvas_hostid, $synth_arbol_problem, false, null, false, true
+);
+$cur_arbol_given_attr  = $cur_arbol_given
+    ? s(json_encode($cur_arbol_given, JSON_UNESCAPED_UNICODE)) : '';
+$cur_arbol_prompt_safe = s($cur_arbol_prompt);
+$cur_arbol_ins_safe    = s($cur_arbol_ins);
+$cur_arbol_a_safe      = s($cur_arbol_a);
+$cur_arbol_b_safe      = s($cur_arbol_b);
+
 echo <<<HTML
 <form method="post" action="">
     <input type="hidden" name="sesskey" value="{$sesskey}">
@@ -437,6 +635,8 @@ echo <<<HTML
 HTML;
 echo $selopt('truth_table', $cur_tool, 'Truth table (logic)');
 echo $selopt('afd',         $cur_tool, 'AFD — finite automaton');
+echo $selopt('grafo',       $cur_tool, 'Grafo — graph theory');
+echo $selopt('arbol',       $cur_tool, 'Árbol — trees & BST');
 echo <<<HTML
         </select>
     </div>
@@ -550,6 +750,174 @@ echo <<<HTML
         </div>
     </div><!-- /afd tool section -->
 
+    <div class="mod-graphitoubb-tool-section" data-tool="grafo">
+        <div class="form-group">
+            <label for="grafo_type"><strong>Graph exercise type</strong></label>
+            <select name="grafo_type" id="grafo_type" class="form-control">
+HTML;
+echo $selopt('construct', $cur_grafo_type, 'Construct — build a graph meeting constraints');
+echo $selopt('decision',  $cur_grafo_type, 'Decision — yes/no about a given graph (e.g. Königsberg)');
+echo $selopt('traversal', $cur_grafo_type, 'Traversal — find a walk on a given graph');
+echo <<<HTML
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="grafo_prompt"><strong>Prompt (consigna)</strong></label>
+            <textarea name="grafo_prompt" id="grafo_prompt" class="form-control" rows="3"
+                      placeholder="Decide whether the Königsberg bridges graph has an Euler circuit.">{$cur_grafo_prompt_safe}</textarea>
+        </div>
+        <div class="form-check mb-3">
+            <input type="checkbox" name="grafo_directed" value="1" id="grafo_directed"
+                   class="form-check-input"{$grafo_dir_attr}>
+            <label class="form-check-label" for="grafo_directed">Directed graph</label>
+        </div>
+
+        <div class="mod-graphitoubb-grafo-fields" data-gtypes="construct">
+            <p class="text-muted small">Set the constraints the student's graph must satisfy. Each satisfied
+            constraint earns partial credit (pass ≥ 60%).</p>
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="grafo_c_nvertices">Number of vertices</label>
+                    <input type="text" name="grafo_c_nvertices" id="grafo_c_nvertices"
+                           class="form-control" value="{$cur_c_nv}" placeholder="(any)">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="grafo_c_nedges">Number of edges</label>
+                    <input type="text" name="grafo_c_nedges" id="grafo_c_nedges"
+                           class="form-control" value="{$cur_c_ne}" placeholder="(any)">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="grafo_c_degseq">Degree sequence</label>
+                    <input type="text" name="grafo_c_degseq" id="grafo_c_degseq"
+                           class="form-control" value="{$cur_c_ds}" placeholder="e.g. 2, 2, 2">
+                </div>
+            </div>
+            <div class="form-row">
+HTML;
+$constropts = function (string $key, string $label) use ($selopt, $cstate): string {
+    $cur = $cstate($key);
+    return '<div class="form-group col-md-4"><label>' . s($label) . '</label>'
+        . '<select name="grafo_c_' . $key . '" class="form-control">'
+        . $selopt('ignore', $cur, '—')
+        . $selopt('yes', $cur, 'Yes (required)')
+        . $selopt('no', $cur, 'No (must not)')
+        . '</select></div>';
+};
+echo $constropts('connected', 'Connected');
+echo $constropts('bipartite', 'Bipartite');
+echo $constropts('acyclic', 'Acyclic');
+echo $constropts('is_tree', 'Is a tree');
+echo $constropts('eulerian', 'Eulerian (Euler circuit)');
+echo <<<HTML
+            </div>
+        </div>
+
+        <div class="mod-graphitoubb-grafo-fields" data-gtypes="decision">
+            <div class="form-group">
+                <label for="grafo_question"><strong>Question</strong></label>
+                <select name="grafo_question" id="grafo_question" class="form-control">
+HTML;
+echo $selopt('has_euler_circuit',    $cur_grafo_q, 'Has an Euler circuit?');
+echo $selopt('has_euler_path',       $cur_grafo_q, 'Has an Euler path?');
+echo $selopt('has_hamiltonian_path', $cur_grafo_q, 'Has a Hamiltonian path?');
+echo $selopt('is_connected',         $cur_grafo_q, 'Is connected?');
+echo $selopt('is_bipartite',         $cur_grafo_q, 'Is bipartite?');
+echo <<<HTML
+                </select>
+            </div>
+        </div>
+
+        <div class="mod-graphitoubb-grafo-fields" data-gtypes="traversal">
+            <div class="form-group">
+                <label for="grafo_walkkind"><strong>Walk kind</strong></label>
+                <select name="grafo_walkkind" id="grafo_walkkind" class="form-control">
+HTML;
+echo $selopt('euler_circuit',       $cur_grafo_wk, 'Euler circuit');
+echo $selopt('euler_path',          $cur_grafo_wk, 'Euler path');
+echo $selopt('hamiltonian_path',    $cur_grafo_wk, 'Hamiltonian path');
+echo $selopt('hamiltonian_circuit', $cur_grafo_wk, 'Hamiltonian circuit');
+echo <<<HTML
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="grafo_startvertex">Start vertex id (optional)</label>
+                <input type="text" name="grafo_startvertex" id="grafo_startvertex"
+                       class="form-control" value="{$cur_grafo_sv_safe}" placeholder="(any)">
+            </div>
+        </div>
+
+        <div class="mod-graphitoubb-grafo-fields" data-gtypes="decision traversal">
+            <label><strong>Given graph</strong> (draw below, or load a preset)</label>
+            <input type="hidden" name="given_graph" value="{$cur_grafo_given_attr}">
+            {$grafo_authoring_canvas}
+        </div>
+    </div><!-- /grafo tool section -->
+
+    <div class="mod-graphitoubb-tool-section" data-tool="arbol">
+        <div class="form-group">
+            <label for="arbol_type"><strong>Tree exercise type</strong></label>
+            <select name="arbol_type" id="arbol_type" class="form-control">
+HTML;
+echo $selopt('bst_build',       $cur_arbol_type, 'BST construction — build a BST from an insertion order');
+echo $selopt('traversal_answer', $cur_arbol_type, 'Traversal — give the pre/in/post/level order of a tree');
+echo $selopt('reconstruct',     $cur_arbol_type, 'Reconstruct — rebuild a tree from two traversals');
+echo <<<HTML
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="arbol_prompt"><strong>Prompt (consigna)</strong></label>
+            <textarea name="arbol_prompt" id="arbol_prompt" class="form-control" rows="3"
+                      placeholder="Insert the values 8, 3, 10, 1, 6 into a binary search tree.">{$cur_arbol_prompt_safe}</textarea>
+        </div>
+
+        <div class="mod-graphitoubb-arbol-fields" data-atypes="bst_build">
+            <div class="form-group">
+                <label for="arbol_insertions"><strong>Insertion order</strong> (comma-separated integers)</label>
+                <input type="text" name="arbol_insertions" id="arbol_insertions"
+                       class="form-control" value="{$cur_arbol_ins_safe}" placeholder="8, 3, 10, 1, 6">
+            </div>
+        </div>
+
+        <div class="mod-graphitoubb-arbol-fields" data-atypes="traversal_answer">
+            <div class="form-group">
+                <label for="arbol_order"><strong>Traversal order</strong></label>
+                <select name="arbol_order" id="arbol_order" class="form-control">
+HTML;
+echo $selopt('pre',   $cur_arbol_order, 'Pre-order');
+echo $selopt('in',    $cur_arbol_order, 'In-order');
+echo $selopt('post',  $cur_arbol_order, 'Post-order');
+echo $selopt('level', $cur_arbol_order, 'Level-order');
+echo <<<HTML
+                </select>
+            </div>
+            <label><strong>Given tree</strong> (draw below, or load a preset)</label>
+            <input type="hidden" name="given_tree" value="{$cur_arbol_given_attr}">
+            {$arbol_authoring_canvas}
+        </div>
+
+        <div class="mod-graphitoubb-arbol-fields" data-atypes="reconstruct">
+            <div class="form-group">
+                <label for="arbol_pair"><strong>Traversal pair</strong></label>
+                <select name="arbol_pair" id="arbol_pair" class="form-control">
+HTML;
+echo $selopt('pre_in',  $cur_arbol_pair, 'Preorder + Inorder');
+echo $selopt('post_in', $cur_arbol_pair, 'Postorder + Inorder');
+echo <<<HTML
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="arbol_a"><strong>First traversal</strong> (preorder or postorder; distinct integers)</label>
+                <input type="text" name="arbol_a" id="arbol_a" class="form-control"
+                       value="{$cur_arbol_a_safe}" placeholder="8, 3, 1, 6, 10">
+            </div>
+            <div class="form-group">
+                <label for="arbol_b"><strong>Inorder traversal</strong> (distinct integers)</label>
+                <input type="text" name="arbol_b" id="arbol_b" class="form-control"
+                       value="{$cur_arbol_b_safe}" placeholder="1, 3, 6, 8, 10">
+            </div>
+        </div>
+    </div><!-- /arbol tool section -->
+
     <div class="mt-3">
         <button type="submit" class="btn btn-primary">Save problem</button>
         <a class="btn btn-secondary" href="{$viewurl}">Back to activity</a>
@@ -571,6 +939,8 @@ $PAGE->requires->js_amd_inline(<<<'JS'
 require([], function() {
     var toolSel = document.getElementById('tool');
     var typeSel = document.getElementById('exercise_type');
+    var grafoTypeSel = document.getElementById('grafo_type');
+    var arbolTypeSel = document.getElementById('arbol_type');
 
     var toggleTool = function() {
         var t = toolSel ? toolSel.value : 'truth_table';
@@ -592,14 +962,42 @@ require([], function() {
             g.style.display = (types.indexOf(t) !== -1) ? '' : 'none';
         });
     };
+    var toggleGrafoType = function() {
+        if (!grafoTypeSel) {
+            return;
+        }
+        var t = grafoTypeSel.value;
+        document.querySelectorAll('.mod-graphitoubb-grafo-fields').forEach(function(g) {
+            var types = (g.getAttribute('data-gtypes') || '').split(' ');
+            g.style.display = (types.indexOf(t) !== -1) ? '' : 'none';
+        });
+    };
     if (toolSel) {
         toolSel.addEventListener('change', toggleTool);
     }
     if (typeSel) {
         typeSel.addEventListener('change', toggleType);
     }
+    var toggleArbolType = function() {
+        if (!arbolTypeSel) {
+            return;
+        }
+        var t = arbolTypeSel.value;
+        document.querySelectorAll('.mod-graphitoubb-arbol-fields').forEach(function(g) {
+            var types = (g.getAttribute('data-atypes') || '').split(' ');
+            g.style.display = (types.indexOf(t) !== -1) ? '' : 'none';
+        });
+    };
+    if (grafoTypeSel) {
+        grafoTypeSel.addEventListener('change', toggleGrafoType);
+    }
+    if (arbolTypeSel) {
+        arbolTypeSel.addEventListener('change', toggleArbolType);
+    }
     toggleTool();
     toggleType();
+    toggleGrafoType();
+    toggleArbolType();
 });
 JS);
 

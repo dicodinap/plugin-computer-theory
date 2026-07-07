@@ -5,12 +5,26 @@ Lenguaje compartido del proyecto. Solo definiciones, sin detalles de implementac
 ## Términos
 
 ### Herramienta (tool)
-El tipo de ejercicio que el motor sabe corregir. Hoy hay dos: **AFD** y **tabla de
-verdad** (`truth_table`). Cada artefacto corregible declara su herramienta.
+El tipo de ejercicio que el motor sabe corregir. **AFD** y **tabla de verdad**
+(`truth_table`) están en producción; **grafo** y **árbol** (`arbol`) están en
+construcción. Cada artefacto corregible declara su herramienta.
 
 ### AFD
 Autómata finito determinista. El estudiante construye un autómata sobre un alfabeto
 para que acepte exactamente cierto lenguaje. (En inglés del código: DFA.)
+
+### Grafo (grafo)
+Herramienta de teoría de grafos. Según el tipo de ejercicio, el estudiante **construye**
+un grafo que cumpla ciertas propiedades, **decide** una propiedad de un grafo dado
+(p. ej. Königsberg: ¿existe circuito de Euler?), o **halla** un recorrido (Euler /
+Hamilton) sobre un grafo dado.
+
+### Árbol (arbol)
+Herramienta de árboles. El estudiante **construye** un árbol binario de búsqueda (BST)
+a partir de inserciones, **responde** un recorrido (pre/in/post-orden) de un árbol dado,
+o **reconstruye** el árbol único a partir de dos recorridos. Un árbol es un caso
+particular de grafo, pero es una herramienta distinta con su propia semántica (hijo
+izquierdo / derecho).
 
 ### Tabla de verdad (truth_table)
 Ejercicio de lógica proposicional: completar una tabla, decidir equivalencia de dos

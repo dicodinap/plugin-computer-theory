@@ -80,6 +80,49 @@ final class question_test extends \advanced_testcase {
     }
 
     /**
+     * AC7: a grafo question is routed to grafo_grader via grader_dispatch. A
+     * Königsberg decision recomputes has_euler_circuit=false, so "no" scores 1.0
+     * and "yes" scores 0.0. (truth_table routing is covered by the tests above — I3.)
+     */
+    public function test_grade_grafo_routes_to_grafo_grader(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/question/type/graphitoubb/question.php');
+
+        $question = new \qtype_graphitoubb_question();
+        $question->tool = 'grafo';
+        $question->exercise_type = 'decision';
+        $question->problem_payload = [
+            'tool' => 'grafo', 'type' => 'decision', 'config' => [
+                'question'    => 'has_euler_circuit',
+                'given_graph' => [
+                    'directed' => false,
+                    'nodes' => [['id' => 'A'], ['id' => 'B'], ['id' => 'C'], ['id' => 'D']],
+                    'edges' => [
+                        ['id' => 'e0', 'from' => 'A', 'to' => 'B'],
+                        ['id' => 'e1', 'from' => 'A', 'to' => 'B'],
+                        ['id' => 'e2', 'from' => 'A', 'to' => 'C'],
+                        ['id' => 'e3', 'from' => 'A', 'to' => 'C'],
+                        ['id' => 'e4', 'from' => 'A', 'to' => 'D'],
+                        ['id' => 'e5', 'from' => 'B', 'to' => 'D'],
+                        ['id' => 'e6', 'from' => 'C', 'to' => 'D'],
+                    ],
+                ],
+            ],
+        ];
+
+        [$fno, $sno] = $question->grade_response([
+            'answer_payload' => json_encode(['answer_kind' => 'boolean', 'value' => false]),
+        ]);
+        $this->assertEqualsWithDelta(1.0, $fno, 0.001);
+        $this->assertTrue($sno->is_graded());
+
+        [$fyes] = $question->grade_response([
+            'answer_payload' => json_encode(['answer_kind' => 'boolean', 'value' => true]),
+        ]);
+        $this->assertEqualsWithDelta(0.0, $fyes, 0.001);
+    }
+
+    /**
      * A partially correct submission (one wrong cell) returns 0 < fraction < 1
      * and a graded state.
      */

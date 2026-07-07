@@ -59,6 +59,27 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     };
 
     /**
+     * Save a snapshot WITHOUT swallowing errors — the returned promise rejects on
+     * failure (e.g. the 1/second rate limit). Used by the finish flush so the final
+     * answer is guaranteed to persist (with retry) before grading.
+     *
+     * @param {number} attemptid
+     * @param {object} payload
+     * @param {number} schemaversion
+     * @return {Promise<object>}
+     */
+    var saveSnapshotStrict = function(attemptid, payload, schemaversion) {
+        return Ajax.call([{
+            methodname: 'mod_graphitoubb_save_snapshot',
+            args: {
+                attemptid: attemptid,
+                payload: JSON.stringify(payload),
+                schemaversion: schemaversion || 1,
+            },
+        }])[0];
+    };
+
+    /**
      * Log a word tested against the automaton.
      *
      * @param {number} attemptid
@@ -210,6 +231,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     return {
         loadLatestSnapshot:  loadLatestSnapshot,
         saveSnapshot:        saveSnapshot,
+        saveSnapshotStrict:  saveSnapshotStrict,
         logWord:             logWord,
         saveDraft:           saveDraft,
         submit:              submit,

@@ -66,12 +66,13 @@ final class tool_factory_test extends advanced_testcase {
         \local_graphitoubb\bootstrap::register_default_tools();
 
         $registry = tool_registry::instance();
-        $this->assertCount(2, $registry->all());
+        // afd, grafo, arbol, truth_table.
+        $this->assertCount(4, $registry->all());
 
         $factory = new tool_factory();
         $factory->get_afd_tool();
 
-        // Still exactly two tools after factory call (afd + truth_table).
-        $this->assertCount(2, $registry->all());
+        // Still exactly the same tools after factory call (no double-registration).
+        $this->assertCount(4, $registry->all());
     }
 }

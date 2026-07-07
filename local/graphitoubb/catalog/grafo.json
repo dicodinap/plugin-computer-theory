@@ -1,0 +1,143 @@
+[
+  {
+    "key": "grafo_konigsberg_euler",
+    "tool": "grafo",
+    "type": "decision",
+    "difficulty": "hard",
+    "tags": ["euler", "konigsberg", "decision"],
+    "title": {"en": "Königsberg bridges — Euler circuit?", "es": "Puentes de Königsberg — ¿circuito de Euler?"},
+    "summary": {"en": "Classic 4-land, 7-bridge multigraph: does an Euler circuit exist?", "es": "Multigrafo clásico de 4 zonas y 7 puentes: ¿existe un circuito de Euler?"},
+    "payload": {
+      "tool": "grafo",
+      "schema_version": 1,
+      "type": "decision",
+      "config": {
+        "prompt": {"en": "The map of Königsberg has four land masses joined by seven bridges. Decide whether it is possible to walk crossing every bridge exactly once and return to the start (an Euler circuit).", "es": "El mapa de Königsberg tiene cuatro zonas de tierra unidas por siete puentes. Decide si es posible recorrer cruzando cada puente exactamente una vez y volver al inicio (un circuito de Euler)."},
+        "directed": false,
+        "question": "has_euler_circuit",
+        "given_graph": {
+          "directed": false,
+          "nodes": [
+            {"id": "v0", "label": "A"},
+            {"id": "v1", "label": "B"},
+            {"id": "v2", "label": "C"},
+            {"id": "v3", "label": "D"}
+          ],
+          "edges": [
+            {"id": "e0", "from": "v0", "to": "v1"},
+            {"id": "e1", "from": "v0", "to": "v1"},
+            {"id": "e2", "from": "v0", "to": "v2"},
+            {"id": "e3", "from": "v0", "to": "v2"},
+            {"id": "e4", "from": "v0", "to": "v3"},
+            {"id": "e5", "from": "v1", "to": "v3"},
+            {"id": "e6", "from": "v2", "to": "v3"}
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "grafo_square_euler_circuit",
+    "tool": "grafo",
+    "type": "traversal",
+    "difficulty": "easy",
+    "tags": ["euler", "traversal"],
+    "title": {"en": "Euler circuit on a square", "es": "Circuito de Euler en un cuadrado"},
+    "summary": {"en": "Every vertex has even degree — find an Euler circuit by clicking the edges in order.", "es": "Todos los vértices tienen grado par — encuentra un circuito de Euler haciendo clic en las aristas en orden."},
+    "payload": {
+      "tool": "grafo",
+      "schema_version": 1,
+      "type": "traversal",
+      "config": {
+        "prompt": {"en": "Find an Euler circuit: click the edges in the order you would cross them so that every edge is used exactly once and you return to the start.", "es": "Encuentra un circuito de Euler: haz clic en las aristas en el orden en que las cruzarías de modo que cada arista se use exactamente una vez y vuelvas al inicio."},
+        "directed": false,
+        "walk_kind": "euler_circuit",
+        "given_graph": {
+          "directed": false,
+          "nodes": [
+            {"id": "v0", "label": "A"},
+            {"id": "v1", "label": "B"},
+            {"id": "v2", "label": "C"},
+            {"id": "v3", "label": "D"}
+          ],
+          "edges": [
+            {"id": "e0", "from": "v0", "to": "v1"},
+            {"id": "e1", "from": "v1", "to": "v2"},
+            {"id": "e2", "from": "v2", "to": "v3"},
+            {"id": "e3", "from": "v3", "to": "v0"}
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "grafo_construct_bipartite",
+    "tool": "grafo",
+    "type": "construct",
+    "difficulty": "medium",
+    "tags": ["construct", "bipartite", "connected"],
+    "title": {"en": "Build a connected bipartite graph (6 vertices)", "es": "Construye un grafo bipartito conexo (6 vértices)"},
+    "summary": {"en": "Construct a graph with 6 vertices that is connected and bipartite.", "es": "Construye un grafo con 6 vértices que sea conexo y bipartito."},
+    "payload": {
+      "tool": "grafo",
+      "schema_version": 1,
+      "type": "construct",
+      "config": {
+        "prompt": {"en": "Draw a graph with exactly 6 vertices that is both connected and bipartite.", "es": "Dibuja un grafo con exactamente 6 vértices que sea conexo y bipartito."},
+        "directed": false,
+        "constraints": {"n_vertices": 6, "connected": true, "bipartite": true}
+      }
+    }
+  },
+  {
+    "key": "grafo_construct_tree",
+    "tool": "grafo",
+    "type": "construct",
+    "difficulty": "easy",
+    "tags": ["construct", "tree"],
+    "title": {"en": "Build a tree on 5 vertices", "es": "Construye un árbol de 5 vértices"},
+    "summary": {"en": "Construct a tree (connected, acyclic) with 5 vertices.", "es": "Construye un árbol (conexo, acíclico) con 5 vértices."},
+    "payload": {
+      "tool": "grafo",
+      "schema_version": 1,
+      "type": "construct",
+      "config": {
+        "prompt": {"en": "Draw a tree with exactly 5 vertices (connected and with no cycles).", "es": "Dibuja un árbol con exactamente 5 vértices (conexo y sin ciclos)."},
+        "directed": false,
+        "constraints": {"n_vertices": 5, "is_tree": true}
+      }
+    }
+  },
+  {
+    "key": "grafo_decision_bipartite_odd",
+    "tool": "grafo",
+    "type": "decision",
+    "difficulty": "medium",
+    "tags": ["bipartite", "decision"],
+    "title": {"en": "Is this triangle bipartite?", "es": "¿Es bipartito este triángulo?"},
+    "summary": {"en": "A 3-cycle (odd cycle): decide whether it is bipartite.", "es": "Un ciclo de 3 (ciclo impar): decide si es bipartito."},
+    "payload": {
+      "tool": "grafo",
+      "schema_version": 1,
+      "type": "decision",
+      "config": {
+        "prompt": {"en": "Decide whether the graph shown (a triangle) is bipartite (2-colourable).", "es": "Decide si el grafo mostrado (un triángulo) es bipartito (2-coloreable)."},
+        "directed": false,
+        "question": "is_bipartite",
+        "given_graph": {
+          "directed": false,
+          "nodes": [
+            {"id": "v0", "label": "A"},
+            {"id": "v1", "label": "B"},
+            {"id": "v2", "label": "C"}
+          ],
+          "edges": [
+            {"id": "e0", "from": "v0", "to": "v1"},
+            {"id": "e1", "from": "v1", "to": "v2"},
+            {"id": "e2", "from": "v2", "to": "v0"}
+          ]
+        }
+      }
+    }
+  }
+]
