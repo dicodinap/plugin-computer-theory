@@ -86,9 +86,10 @@ final class gradebook_test extends advanced_testcase {
         $this->make_graded_attempt($instance->id, $user->id, 1.00, 1100);
         $this->make_graded_attempt($instance->id, $user->id, 0.75, 1200);
 
+        // Best fraction 1.00 → 7.0 on the Chilean scale.
         $grades = graphitoubb_get_user_grades($instance, $user->id);
         $this->assertArrayHasKey($user->id, $grades);
-        $this->assertEqualsWithDelta(100.0, $grades[$user->id]->rawgrade, 0.0001);
+        $this->assertEqualsWithDelta(7.0, $grades[$user->id]->rawgrade, 0.0001);
     }
 
     public function test_get_user_grades_last_policy(): void {
@@ -99,8 +100,9 @@ final class gradebook_test extends advanced_testcase {
         $this->make_graded_attempt($instance->id, $user->id, 0.50, 1100);
         $this->make_graded_attempt($instance->id, $user->id, 0.30, 1200); // Most recent.
 
+        // Last fraction 0.30 (< 60% exigencia) → 1 + (0.30/0.60)·3 = 2.5.
         $grades = graphitoubb_get_user_grades($instance, $user->id);
-        $this->assertEqualsWithDelta(30.0, $grades[$user->id]->rawgrade, 0.0001);
+        $this->assertEqualsWithDelta(2.5, $grades[$user->id]->rawgrade, 0.0001);
     }
 
     public function test_get_user_grades_average_policy(): void {
@@ -111,9 +113,9 @@ final class gradebook_test extends advanced_testcase {
         $this->make_graded_attempt($instance->id, $user->id, 0.50, 1100);
         $this->make_graded_attempt($instance->id, $user->id, 0.00, 1200);
 
-        // (1.0 + 0.5 + 0.0) / 3 = 0.5 ⇒ 50.
+        // (1.0 + 0.5 + 0.0) / 3 = 0.5 ⇒ 1 + (0.5/0.6)·3 = 3.5.
         $grades = graphitoubb_get_user_grades($instance, $user->id);
-        $this->assertEqualsWithDelta(50.0, $grades[$user->id]->rawgrade, 0.0001);
+        $this->assertEqualsWithDelta(3.5, $grades[$user->id]->rawgrade, 0.0001);
     }
 
     public function test_get_user_grades_multiuser(): void {
@@ -125,10 +127,11 @@ final class gradebook_test extends advanced_testcase {
         $this->make_graded_attempt($instance->id, $u2->id, 0.40, 1000);
         $this->make_graded_attempt($instance->id, $u2->id, 0.90, 1100);
 
+        // u1 best 0.80 → 5.5 ; u2 best 0.90 → 6.3 (Chilean scale).
         $grades = graphitoubb_get_user_grades($instance, 0);
         $this->assertCount(2, $grades);
-        $this->assertEqualsWithDelta(80.0, $grades[$u1->id]->rawgrade, 0.0001);
-        $this->assertEqualsWithDelta(90.0, $grades[$u2->id]->rawgrade, 0.0001);
+        $this->assertEqualsWithDelta(5.5, $grades[$u1->id]->rawgrade, 0.0001);
+        $this->assertEqualsWithDelta(6.3, $grades[$u2->id]->rawgrade, 0.0001);
     }
 
     public function test_get_user_grades_no_submissions_returns_empty(): void {
@@ -160,10 +163,11 @@ final class gradebook_test extends advanced_testcase {
 
         graphitoubb_update_grades($instance, $user->id);
 
+        // Fraction 0.85 → 4 + (0.25/0.4)·3 = 5.875 → 5.9 ; grademax on the 1–7 scale.
         $grades = grade_get_grades($course->id, 'mod', 'graphitoubb', $instance->id, $user->id);
         $item   = reset($grades->items);
-        $this->assertEqualsWithDelta(85.0, (float) $item->grades[$user->id]->grade, 0.0001);
-        $this->assertEqualsWithDelta(100.0, (float) $item->grademax, 0.0001);
+        $this->assertEqualsWithDelta(5.9, (float) $item->grades[$user->id]->grade, 0.0001);
+        $this->assertEqualsWithDelta(7.0, (float) $item->grademax, 0.0001);
     }
 
     public function test_update_grades_nullifnone_pushes_null(): void {
@@ -220,8 +224,31 @@ final class gradebook_test extends advanced_testcase {
         graphitoubb_grade_item_update($instance);
         graphitoubb_update_grades($instance, 0, false);
 
+        // Backfilled fraction 1.00 → 7.0 on the Chilean scale.
         $grades = grade_get_grades($course->id, 'mod', 'graphitoubb', $instance->id, $user->id);
         $item   = reset($grades->items);
-        $this->assertEqualsWithDelta(100.0, (float) $item->grades[$user->id]->grade, 0.0001);
+        $this->assertEqualsWithDelta(7.0, (float) $item->grades[$user->id]->grade, 0.0001);
+    }
+
+    /**
+     * @dataProvider chilean_scale_provider
+     */
+    public function test_fraction_to_grade(float $fraction, float $expected): void {
+        $this->assertEqualsWithDelta($expected, graphitoubb_fraction_to_grade($fraction), 0.0001);
+    }
+
+    /**
+     * @return array<string, array{0: float, 1: float}>
+     */
+    public static function chilean_scale_provider(): array {
+        return [
+            'zero'            => [0.00, 1.0],
+            'below exigencia' => [0.30, 2.5],
+            'exigencia = 4.0' => [0.60, 4.0],
+            'above exigencia' => [0.80, 5.5],
+            'perfect'         => [1.00, 7.0],
+            'clamp negative'  => [-0.5, 1.0],
+            'clamp over one'  => [1.50, 7.0],
+        ];
     }
 }

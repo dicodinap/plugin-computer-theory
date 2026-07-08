@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component    = 'mod_graphitoubb';
-$plugin->version      = 2026070800;
+$plugin->version      = 2026070801;
 $plugin->requires     = 2024100700;
 $plugin->maturity     = MATURITY_ALPHA;
 $plugin->release      = '0.9.0-alpha';

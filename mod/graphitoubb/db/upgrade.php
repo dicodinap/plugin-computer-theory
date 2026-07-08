@@ -195,5 +195,20 @@ function xmldb_graphitoubb_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026070800, 'graphitoubb');
     }
 
+    if ($oldversion < 2026070801) {
+        // Switch the gradebook to the Chilean 1.0–7.0 scale. Existing grade items
+        // were created with grademax 100 and grades on that scale; re-queue the
+        // deferred update_grades task so each item's grademax and every user's grade
+        // are re-pushed on the new scale (same is_locked()-during-upgrade constraint).
+        $instances = $DB->get_fieldset_select('graphitoubb', 'id', '1=1', []);
+        foreach ($instances as $instanceid) {
+            $task = new \mod_graphitoubb\task\update_grades();
+            $task->set_custom_data(['instanceid' => (int) $instanceid]);
+            \core\task\manager::queue_adhoc_task($task, true);
+        }
+
+        upgrade_mod_savepoint(true, 2026070801, 'graphitoubb');
+    }
+
     return true;
 }

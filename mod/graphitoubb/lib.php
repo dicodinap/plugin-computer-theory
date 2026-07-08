@@ -24,6 +24,38 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
+
+/** @var float Chilean grade scale bounds and passing threshold (exigencia). */
+define('MOD_GRAPHITOUBB_GRADEMAX', 7.0);
+define('MOD_GRAPHITOUBB_GRADEMIN', 1.0);
+// Passing threshold: 60% of the content maps to the passing grade 4.0.
+define('MOD_GRAPHITOUBB_EXIGENCIA', 0.60);
+
+/**
+ * Converts a [0,1] fraction to the Chilean 1.0–7.0 grade scale.
+ *
+ * Two-segment linear map with a configurable exigencia p (default 60%):
+ *   f ≥ p:  4.0 + (f − p)/(1 − p) · 3.0   (60% → 4.0 … 100% → 7.0)
+ *   f < p:  1.0 + (f / p)     · 3.0        (0% → 1.0 … 60% → 4.0)
+ * Rounded to one decimal, matching Chilean grade-reporting convention.
+ *
+ * @param float $fraction Fraction in [0,1] (clamped).
+ * @return float Grade in [1.0, 7.0], one decimal.
+ */
+function graphitoubb_fraction_to_grade($fraction) {
+    $p = MOD_GRAPHITOUBB_EXIGENCIA;
+    $f = max(0.0, min(1.0, (float) $fraction));
+
+    if ($f >= $p) {
+        $nota = 4.0 + (($f - $p) / (1.0 - $p)) * 3.0;
+    } else {
+        $nota = 1.0 + ($f / $p) * 3.0;
+    }
+
+    return round($nota, 1);
+}
+
 /**
  * Returns the list of features this module supports.
  *
@@ -164,8 +196,8 @@ function graphitoubb_get_coursemodule_info($coursemodule) {
 /**
  * Creates or updates the gradebook grade item for a mod_graphitoubb instance.
  *
- * Single grade item (itemnumber 0), value type, fixed grademax of 100, no scales
- * or outcomes — matching the design decision (fraction × 100).
+ * Single grade item (itemnumber 0), value type on the Chilean 1.0–7.0 scale, no
+ * scales or outcomes. The [0,1] fraction is mapped by graphitoubb_fraction_to_grade().
  *
  * @param stdClass $instance Instance record; must include id, course and name.
  * @param mixed    $grades   Grade object/array keyed by userid, 'reset', or null.
@@ -178,8 +210,8 @@ function graphitoubb_grade_item_update($instance, $grades = null) {
     $params = [
         'itemname'  => $instance->name,
         'gradetype' => GRADE_TYPE_VALUE,
-        'grademax'  => 100,
-        'grademin'  => 0,
+        'grademax'  => MOD_GRAPHITOUBB_GRADEMAX,
+        'grademin'  => MOD_GRAPHITOUBB_GRADEMIN,
     ];
 
     if ($grades === 'reset') {
@@ -226,7 +258,8 @@ function graphitoubb_grade_item_delete($instance) {
  *
  * The gradebook grade is per-user per-instance: the instance's attempts_policy is
  * applied BETWEEN the user's attempts (join graphitoubb_attempt → graphitoubb_grade_cache
- * by attemptid, considering only attempts that have a cached grade). rawgrade = fraction × 100.
+ * by attemptid, considering only attempts that have a cached grade). rawgrade is the
+ * fraction mapped to the Chilean 1.0–7.0 scale by graphitoubb_fraction_to_grade().
  *
  * @param stdClass $instance Instance record (loaded from the graphitoubb table).
  * @param int      $userid   Optional single user id; 0 for all users.
@@ -283,7 +316,7 @@ function graphitoubb_get_user_grades($instance, $userid = 0) {
 
         $grade           = new stdClass();
         $grade->userid   = $uid;
-        $grade->rawgrade = $fraction * 100;
+        $grade->rawgrade = graphitoubb_fraction_to_grade($fraction);
         $grades[$uid]    = $grade;
     }
 
