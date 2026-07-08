@@ -168,7 +168,16 @@ final class gradebook_test extends advanced_testcase {
         $item   = reset($grades->items);
         $this->assertEqualsWithDelta(5.9, (float) $item->grades[$user->id]->grade, 0.0001);
         $this->assertEqualsWithDelta(7.0, (float) $item->grademax, 0.0001);
-        $this->assertEqualsWithDelta(4.0, (float) $item->gradepass, 0.0001);
+
+        // 4.0 grade-to-pass drives the gradebook red/green colouring.
+        global $DB;
+        $gradepass = $DB->get_field('grade_items', 'gradepass', [
+            'itemtype'     => 'mod',
+            'itemmodule'   => 'graphitoubb',
+            'iteminstance' => $instance->id,
+            'itemnumber'   => 0,
+        ]);
+        $this->assertEqualsWithDelta(4.0, (float) $gradepass, 0.0001);
     }
 
     public function test_update_grades_nullifnone_pushes_null(): void {

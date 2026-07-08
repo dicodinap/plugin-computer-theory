@@ -215,7 +215,6 @@ function graphitoubb_grade_item_update($instance, $grades = null) {
         'gradetype' => GRADE_TYPE_VALUE,
         'grademax'  => MOD_GRAPHITOUBB_GRADEMAX,
         'grademin'  => MOD_GRAPHITOUBB_GRADEMIN,
-        'gradepass' => MOD_GRAPHITOUBB_GRADEPASS,
     ];
 
     if ($grades === 'reset') {
@@ -223,7 +222,7 @@ function graphitoubb_grade_item_update($instance, $grades = null) {
         $grades = null;
     }
 
-    return grade_update(
+    $result = grade_update(
         'mod/graphitoubb',
         $instance->course,
         'mod',
@@ -233,6 +232,23 @@ function graphitoubb_grade_item_update($instance, $grades = null) {
         $grades,
         $params
     );
+
+    // grade_update() drops gradepass (not in its allowed list), so set the 4.0
+    // grade-to-pass directly on the item — this is what colours the gradebook
+    // red (< 4.0) / green (>= 4.0).
+    $gradeitem = grade_item::fetch([
+        'courseid'     => $instance->course,
+        'itemtype'     => 'mod',
+        'itemmodule'   => 'graphitoubb',
+        'iteminstance' => $instance->id,
+        'itemnumber'   => 0,
+    ]);
+    if ($gradeitem && (float) $gradeitem->gradepass !== (float) MOD_GRAPHITOUBB_GRADEPASS) {
+        $gradeitem->gradepass = MOD_GRAPHITOUBB_GRADEPASS;
+        $gradeitem->update();
+    }
+
+    return $result;
 }
 
 /**
