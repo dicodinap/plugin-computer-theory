@@ -1244,9 +1244,14 @@ echo <<<HTML
 </form>
 HTML;
 
-// C4: live preview of the truth table the current formula produces.
+// C4: live preview of the truth table the current formula produces. Tagged as a
+// tool-section for truth_table so the client-side toggle hides it when the teacher
+// switches the Tool selector to a non-truth_table tool (the preview is server-built
+// from the saved truth_table formula and would otherwise linger on screen).
 if ($previewhtml !== '') {
-    echo \html_writer::start_div('mod-graphitoubb-tt-preview mt-4');
+    echo \html_writer::start_div('mod-graphitoubb-tt-preview mod-graphitoubb-tool-section mt-4', [
+        'data-tool' => 'truth_table',
+    ]);
     echo $OUTPUT->heading('Truth table preview', 4, 'h5');
     echo $previewhtml;
     echo \html_writer::end_div();
