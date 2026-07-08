@@ -1,0 +1,61 @@
+# GraphitoUBB — despliegue autocontenido para servidor (red interna / IP).
+#
+#   cd deploy
+#   cp .env.example .env      # edita MOODLE_WWWROOT y las contraseñas
+#   docker compose up -d --build
+#
+# Accede en la MOODLE_WWWROOT que definiste (ej. http://IP_DEL_SERVIDOR:8080).
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "${MOODLE_DB_NAME:-moodle}"
+      POSTGRES_USER: "${MOODLE_DB_USER:-moodle}"
+      POSTGRES_PASSWORD: "${MOODLE_DB_PASS:-moodle}"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${MOODLE_DB_USER:-moodle} -d ${MOODLE_DB_NAME:-moodle}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: ..                     # raíz del repo: ve local/ mod/ qtype/
+      dockerfile: deploy/Dockerfile
+      args:
+        MOODLE_PHP_TAG: "${MOODLE_PHP_TAG:-8.3}"
+        MOODLE_BRANCH: "${MOODLE_BRANCH:-MOODLE_405_STABLE}"
+    image: graphitoubb-moodle:local
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      MOODLE_DB_TYPE: pgsql
+      MOODLE_DB_HOST: db
+      MOODLE_DB_PORT: "5432"
+      MOODLE_DB_NAME: "${MOODLE_DB_NAME:-moodle}"
+      MOODLE_DB_USER: "${MOODLE_DB_USER:-moodle}"
+      MOODLE_DB_PASS: "${MOODLE_DB_PASS:-moodle}"
+      MOODLE_WWWROOT: "${MOODLE_WWWROOT:-http://localhost:8080}"
+      MOODLE_DATAROOT: /var/moodledata
+      MOODLE_ADMIN_USER: "${MOODLE_ADMIN_USER:-admin}"
+      MOODLE_ADMIN_PASS: "${MOODLE_ADMIN_PASS:-Admin123#}"
+      MOODLE_ADMIN_EMAIL: "${MOODLE_ADMIN_EMAIL:-admin@example.com}"
+      MOODLE_SITE_FULLNAME: "${MOODLE_SITE_FULLNAME:-GraphitoUBB}"
+      MOODLE_SITE_SHORTNAME: "${MOODLE_SITE_SHORTNAME:-graphitoubb}"
+      MOODLE_LANG: "${MOODLE_LANG:-es}"
+      MOODLE_SEED_DEMO: "${MOODLE_SEED_DEMO:-false}"
+      MOODLE_DEMO_PASS: "${MOODLE_DEMO_PASS:-DemoDay2026#}"
+    ports:
+      - "${MOODLE_HTTP_PORT:-8080}:80"
+    volumes:
+      - moodledata:/var/moodledata
+
+volumes:
+  db_data:
+  moodledata:

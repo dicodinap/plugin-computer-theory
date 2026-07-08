@@ -1,0 +1,9 @@
+# Mantiene el build context liviano (context = raíz del repo).
+.git
+.gitignore
+.playwright-mcp/
+informes-tesis/
+*.png
+CHANGELOG.md
+openspec/
+node_modules/
