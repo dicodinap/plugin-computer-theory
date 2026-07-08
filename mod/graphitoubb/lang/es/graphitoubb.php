@@ -422,3 +422,69 @@ $string['graph_finish_reload'] = 'Respuesta entregada y calificada.';
 $string['err_graph_max_nodes'] = 'Has alcanzado el máximo de {$a} vértices.';
 $string['err_graph_max_edges'] = 'Has alcanzado el máximo de {$a} aristas.';
 $string['err_tree_two_children'] = 'Un nodo puede tener como máximo dos hijos (izquierdo y derecho).';
+
+// Karnaugh (RF_04).
+$string['kmap_mode_label'] = 'Modo del editor';
+$string['kmap_mode_fill'] = 'Llenar';
+$string['kmap_mode_group'] = 'Agrupar';
+$string['kmap_grid_label'] = 'Mapa de Karnaugh';
+$string['kmap_fill_help'] = 'Haz clic en una celda para ciclar: vacía → 1 → 0. Transfiere la tabla de verdad dada al mapa.';
+$string['kmap_group_help'] = 'Haz clic en las celdas en 1 para seleccionarlas y luego crea un grupo. Cada grupo válido es un término producto; la forma mínima es el OR de los términos.';
+$string['kmap_verify_button'] = 'Verificar mapa';
+$string['kmap_verify_ok'] = 'Mapa correcto: cada celda coincide con la tabla de verdad.';
+$string['kmap_verify_errors'] = 'El mapa tiene errores: {$a->wrong} mal ubicadas, {$a->blank} vacías.';
+$string['kmap_add_group'] = 'Crear grupo con la selección';
+$string['kmap_clear_selection'] = 'Limpiar selección';
+$string['kmap_consigna_title'] = 'Simplificación booleana (mapa de Karnaugh)';
+$string['kmap_consigna_grading_info'] = 'Se califica el llenado del mapa y la agrupación. Aprobación >= {$a}%.';
+$string['kmap_result_score'] = 'Puntaje: {$a->pct}%';
+$string['kmap_result_invalid'] = 'Respuesta no calificable (mapa vacío o sin grupos).';
+$string['kmap_result_minimality'] = 'Una cobertura mínima usa {$a->optimal} grupo(s); usaste {$a->used}.';
+$string['kmap_result_not_equivalent'] = 'El OR de tus grupos no es equivalente a f (una celda en 1 sin cubrir o una celda en 0 sobrecubierta).';
+$string['kmap_result_group_zero'] = 'El grupo {$a} cubre una celda en 0.';
+$string['kmap_result_group_illegal'] = 'El grupo {$a} no es un bloque válido de potencia de 2.';
+
+// Relations (RF_05).
+$string['relations_consigna_title'] = 'Relaciones binarias';
+$string['relations_consigna_grading_info'] = 'Se califica la relación que construyes y las cuatro propiedades. Aprobación >= {$a}%.';
+$string['relations_rep_tab_pairs'] = 'Pares ordenados';
+$string['relations_rep_tab_matrix'] = 'Matriz';
+$string['relations_rep_tab_digraph'] = 'Grafo dirigido';
+$string['relations_pairs_help'] = 'Haz clic en una celda para alternar si (fila, columna) pertenece a R.';
+$string['relations_matrix_help'] = 'Alterna cada celda: 1 = (fila, columna) pertenece a R.';
+$string['relations_digraph_help'] = 'Dibuja un arco a -> b por cada par (a, b) en R.';
+$string['relations_props_legend'] = '¿Qué propiedades cumple R?';
+$string['relations_prop_reflexive'] = 'Reflexiva';
+$string['relations_prop_symmetric'] = 'Simétrica';
+$string['relations_prop_antisymmetric'] = 'Antisimétrica';
+$string['relations_prop_transitive'] = 'Transitiva';
+$string['relations_result_score'] = 'Puntaje: {$a->pct}%';
+$string['relations_result_invalid'] = 'Respuesta no calificable (no se construyó ninguna relación).';
+$string['relations_result_rep'] = 'Relación: faltan {$a->missing}, sobran {$a->extra} par(es).';
+$string['relations_result_prop_ce'] = '{$a->prop}: incorrecta — contraejemplo {$a->ce}.';
+$string['relations_result_prop_holds'] = '{$a->prop}: incorrecta — la propiedad sí se cumple; no hay contraejemplo.';
+$string['relations_base_label'] = 'Conjunto base S';
+$string['relations_consigna_relation'] = 'Relación R';
+
+// RF_04 submission gate (D9/D13).
+$string['gate_header'] = 'Disponibilidad e intentos';
+$string['gate_timeopen'] = 'Abrir la actividad';
+$string['gate_timeopen_help'] = 'Antes de esta fecha los estudiantes no pueden entregar. Deja desactivado para no restringir.';
+$string['gate_timeclose'] = 'Cerrar la actividad';
+$string['gate_attempts_max'] = 'Intentos permitidos';
+$string['gate_attempts_max_help'] = 'Cuántas veces puede entregar un estudiante. «Ilimitados» reproduce el comportamiento previo al gate.';
+$string['gate_attempts_unlimited'] = 'Ilimitados';
+$string['gate_attempts_policy'] = 'Método de calificación';
+$string['gate_policy_best'] = 'Mejor intento';
+$string['gate_policy_last'] = 'Último intento';
+$string['gate_policy_average'] = 'Promedio de los intentos';
+$string['gate_not_open'] = 'Esta actividad aún no está abierta.';
+$string['gate_closed'] = 'Esta actividad está cerrada.';
+$string['gate_no_attempts'] = 'No te quedan intentos.';
+$string['gate_reason_not_open'] = 'Aún no está abierta.';
+$string['gate_reason_closed'] = 'Cerrada: ya no se aceptan entregas.';
+$string['gate_reason_no_attempts'] = 'No te quedan intentos.';
+
+// Grupos del catálogo de plantillas.
+$string['preset_group_karnaugh'] = 'Karnaugh (simplificación booleana)';
+$string['preset_group_relations'] = 'Relaciones (relaciones binarias)';

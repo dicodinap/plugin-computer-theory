@@ -581,4 +581,84 @@
     <ui_config><![CDATA[{"intermediate_subformulas":"auto","row_order":"canonical"}]]></ui_config>
     <payload_hash>c6a9e15d8cca8e88a8fea9be2881a3bed7685211ef66379c93e83af548401196</payload_hash>
   </question>
+  <question type="graphitoubb">
+    <name><text>Simplificación de 3 variables</text></name>
+    <questiontext format="html"><text><![CDATA[<p>f(A,B,C) con minterms {0,2,3,4,7}; cobertura mínima de 3 grupos.</p>]]></text></questiontext>
+    <generalfeedback format="html"><text></text></generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.0000000</penalty>
+    <hidden>0</hidden>
+    <idnumber>karnaugh_3var_basic</idnumber>
+    <tool>karnaugh</tool>
+    <exercise_type>simplify</exercise_type>
+    <schema_version>1</schema_version>
+    <problem_payload><![CDATA[{"tool":"karnaugh","schema_version":1,"type":"simplify","config":{"prompt":"Transfiere la tabla de verdad al mapa de Karnaugh y agrupa las celdas en 1 para obtener la forma mínima de f(A,B,C).","n_vars":3,"var_names":["A","B","C"],"minterms":[0,2,3,4,7],"require_minimal":true,"scoring":{"fill_weight":40,"grouping_weight":60}}}]]></problem_payload>
+    <scoring_config><![CDATA[{}]]></scoring_config>
+    <ui_config><![CDATA[{"intermediate_subformulas":"auto","row_order":"canonical"}]]></ui_config>
+    <payload_hash>ba3b886c2d9832a6066ad0648bd13c7ad28a3a3a817d9bb6831c51508b170076</payload_hash>
+  </question>
+  <question type="graphitoubb">
+    <name><text>Simplificación de 4 variables</text></name>
+    <questiontext format="html"><text><![CDATA[<p>f(A,B,C,D) con minterms {0,1,2,5,8,9,10}.</p>]]></text></questiontext>
+    <generalfeedback format="html"><text></text></generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.0000000</penalty>
+    <hidden>0</hidden>
+    <idnumber>karnaugh_4var_medium</idnumber>
+    <tool>karnaugh</tool>
+    <exercise_type>simplify</exercise_type>
+    <schema_version>1</schema_version>
+    <problem_payload><![CDATA[{"tool":"karnaugh","schema_version":1,"type":"simplify","config":{"prompt":"Simplifica f(A,B,C,D) usando el mapa de Karnaugh de 4 variables.","n_vars":4,"var_names":["A","B","C","D"],"minterms":[0,1,2,5,8,9,10],"require_minimal":true,"scoring":{"fill_weight":40,"grouping_weight":60}}}]]></problem_payload>
+    <scoring_config><![CDATA[{}]]></scoring_config>
+    <ui_config><![CDATA[{"intermediate_subformulas":"auto","row_order":"canonical"}]]></ui_config>
+    <payload_hash>3a13e7e636d78f6a968010ed146f4da1dfe26c3c3bd6b8965a53bdbc178a69ad</payload_hash>
+  </question>
+  <question type="graphitoubb">
+    <name><text>Introducción (2 variables)</text></name>
+    <questiontext format="html"><text><![CDATA[<p>f(A,B) = A ∨ B; práctica de agrupación sin minimalidad estricta.</p>]]></text></questiontext>
+    <generalfeedback format="html"><text></text></generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.0000000</penalty>
+    <hidden>0</hidden>
+    <idnumber>karnaugh_2var_intro</idnumber>
+    <tool>karnaugh</tool>
+    <exercise_type>simplify</exercise_type>
+    <schema_version>1</schema_version>
+    <problem_payload><![CDATA[{"tool":"karnaugh","schema_version":1,"type":"simplify","config":{"prompt":"Agrupa las celdas en 1 del mapa de f(A,B).","n_vars":2,"var_names":["A","B"],"minterms":[1,2,3],"require_minimal":false,"scoring":{"fill_weight":40,"grouping_weight":60}}}]]></problem_payload>
+    <scoring_config><![CDATA[{}]]></scoring_config>
+    <ui_config><![CDATA[{"intermediate_subformulas":"auto","row_order":"canonical"}]]></ui_config>
+    <payload_hash>e7f671aa6b3db0a25c2f138f656e77cffcfd713d8896ad2b9ef3fa1441885d67</payload_hash>
+  </question>
+  <question type="graphitoubb">
+    <name><text>Relación reflexiva con un par extra</text></name>
+    <questiontext format="html"><text><![CDATA[<p>S={1,2,3}, R={(1,1),(2,2),(3,3),(1,2)}; reflexiva y transitiva, no simétrica.</p>]]></text></questiontext>
+    <generalfeedback format="html"><text></text></generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.0000000</penalty>
+    <hidden>0</hidden>
+    <idnumber>relations_partial_order</idnumber>
+    <tool>relations</tool>
+    <exercise_type>analyze</exercise_type>
+    <schema_version>1</schema_version>
+    <problem_payload><![CDATA[{"tool":"relations","schema_version":1,"type":"analyze","config":{"prompt":"Construye la relación R sobre S en una representación y declara qué propiedades cumple.","base_set":["1","2","3"],"relation":[["1","1"],["2","2"],["3","3"],["1","2"]],"required_representation":"any","ask_properties":["reflexive","symmetric","antisymmetric","transitive"],"scoring":{"representation_weight":40,"properties_weight":60}}}]]></problem_payload>
+    <scoring_config><![CDATA[{}]]></scoring_config>
+    <ui_config><![CDATA[{"intermediate_subformulas":"auto","row_order":"canonical"}]]></ui_config>
+    <payload_hash>4903e1cc77262e3a9bba57e084607e0aa6b25a1623c7580b6ac1094ed53bb5e7</payload_hash>
+  </question>
+  <question type="graphitoubb">
+    <name><text>Relación simétrica no transitiva</text></name>
+    <questiontext format="html"><text><![CDATA[<p>S={1,2,3,4}, R con pares simétricos; simétrica, no transitiva ni reflexiva.</p>]]></text></questiontext>
+    <generalfeedback format="html"><text></text></generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.0000000</penalty>
+    <hidden>0</hidden>
+    <idnumber>relations_symmetric</idnumber>
+    <tool>relations</tool>
+    <exercise_type>analyze</exercise_type>
+    <schema_version>1</schema_version>
+    <problem_payload><![CDATA[{"tool":"relations","schema_version":1,"type":"analyze","config":{"prompt":"Construye R y decide sus propiedades; observa que la simetría no implica transitividad.","base_set":["1","2","3","4"],"relation":[["1","2"],["2","1"],["2","3"],["3","2"]],"required_representation":"any","ask_properties":["reflexive","symmetric","antisymmetric","transitive"],"scoring":{"representation_weight":40,"properties_weight":60}}}]]></problem_payload>
+    <scoring_config><![CDATA[{}]]></scoring_config>
+    <ui_config><![CDATA[{"intermediate_subformulas":"auto","row_order":"canonical"}]]></ui_config>
+    <payload_hash>20d25e783609721ee77111450860aeec5c101109042aad6b35783daa27f5fade</payload_hash>
+  </question>
 </quiz>

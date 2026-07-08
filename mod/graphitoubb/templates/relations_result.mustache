@@ -1,0 +1,23 @@
+{{!
+    Relations grading result panel (shown after a finished/graded attempt).
+
+    Context: {invalid, score_label, passed, has_details, details:[{text}]}
+
+    @template mod_graphitoubb/relations_result
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-relations-result alert {{#invalid}}alert-warning{{/invalid}}{{^invalid}}{{#passed}}alert-success{{/passed}}{{^passed}}alert-info{{/passed}}{{/invalid}}"
+     data-region="relations-result" role="status">
+    {{#invalid}}
+        <strong>{{#str}}relations_result_invalid, mod_graphitoubb{{/str}}</strong>
+    {{/invalid}}
+    {{^invalid}}
+        <strong>{{score_label}}</strong>{{#passed}} — {{#str}}graph_result_passed, mod_graphitoubb{{/str}}{{/passed}}
+        {{#has_details}}
+        <ul class="mb-0 mt-2">
+            {{#details}}<li>{{text}}</li>{{/details}}
+        </ul>
+        {{/has_details}}
+    {{/invalid}}
+</div>

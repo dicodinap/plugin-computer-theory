@@ -30,7 +30,8 @@ defined('MOODLE_INTERNAL') || die();
  * @return bool
  */
 function xmldb_qtype_graphitoubb_install(): bool {
-    // Seed the shipped truth_table presets. Defensive: never breaks install.
-    \qtype_graphitoubb\catalog_seeder::seed(2026062904);
+    // Seed the shipped presets (truth_table + grafo/arbol/karnaugh/relations).
+    // Defensive: never breaks install.
+    \qtype_graphitoubb\catalog_seeder::seed(2026070601);
     return true;
 }

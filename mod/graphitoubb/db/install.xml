@@ -18,6 +18,8 @@
         <FIELD NAME="attempts_policy"  TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="best"        COMMENT="Grading policy: best, last, or average."/>
         <FIELD NAME="attempts_max"     TYPE="int"  LENGTH="10" NOTNULL="false"                      COMMENT="Maximum attempts per student; null = unlimited."/>
         <FIELD NAME="close_behavior"   TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="auto_submit" COMMENT="What happens when close date is reached."/>
+        <FIELD NAME="timeopen"         TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"           COMMENT="Open date (unix); 0 = no restriction (RF_04 gate)."/>
+        <FIELD NAME="timeclose"        TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"           COMMENT="Close date (unix); 0 = no restriction (RF_04 gate)."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

@@ -95,7 +95,7 @@ final class preset_catalog {
         $presets  = [];
         $seenkeys = [];
 
-        foreach (['afd', 'truth_table', 'grafo', 'arbol'] as $tool) {
+        foreach (['afd', 'truth_table', 'grafo', 'arbol', 'karnaugh', 'relations'] as $tool) {
             $file = $this->dir . '/' . $tool . '.json';
             if (!is_readable($file)) {
                 continue;

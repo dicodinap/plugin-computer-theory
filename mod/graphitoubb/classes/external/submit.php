@@ -79,6 +79,18 @@ final class submit extends external_api {
             throw new \moodle_exception('not_attempt_owner', 'mod_graphitoubb');
         }
 
+        // RF_04 submission gate (D9/D13): same enforcement as finish_attempt.
+        if (!has_capability('mod/graphitoubb:viewreport', $context)) {
+            $instance_gate = $DB->get_record('graphitoubb', ['id' => $attempt->instanceid], '*', MUST_EXIST);
+            $gate = \mod_graphitoubb\submission_gate::check($instance_gate, (int) $USER->id);
+            if (!$gate['allowed']) {
+                return array_merge(self::empty_result(), [
+                    'error'         => true,
+                    'error_message' => \mod_graphitoubb\submission_gate::reason_text((string) $gate['reason']),
+                ]);
+            }
+        }
+
         // Decode submission JSON.
         $ser        = new serializer();
         $submission = $ser->decode($params['payload']);

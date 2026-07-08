@@ -32,6 +32,8 @@ namespace local_graphitoubb;
 use local_graphitoubb\tools\afd\grader\afd_grader_adapter;
 use local_graphitoubb\tools\arbol\grader\arbol_grader;
 use local_graphitoubb\tools\grafo\grader\grafo_grader;
+use local_graphitoubb\tools\karnaugh\grader\karnaugh_grader;
+use local_graphitoubb\tools\relations\grader\relations_grader;
 
 /**
  * Maps a tool slug to its grader_interface implementation.
@@ -52,6 +54,10 @@ final class grader_dispatch {
                 return new grafo_grader();
             case 'arbol':
                 return new arbol_grader();
+            case 'karnaugh':
+                return new karnaugh_grader();
+            case 'relations':
+                return new relations_grader();
             default:
                 return null;
         }

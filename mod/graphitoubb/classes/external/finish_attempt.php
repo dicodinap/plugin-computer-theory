@@ -71,6 +71,16 @@ final class finish_attempt extends external_api {
             throw new \moodle_exception('not_attempt_owner', 'mod_graphitoubb');
         }
 
+        // RF_04 submission gate (D9/D13): reject when the activity is closed / not
+        // yet open, or the student is out of attempts. Teachers (viewreport) bypass.
+        if (!$canbypass) {
+            $instance = $DB->get_record('graphitoubb', ['id' => $attempt->instanceid], '*', MUST_EXIST);
+            $gate = \mod_graphitoubb\submission_gate::check($instance, (int) $USER->id);
+            if (!$gate['allowed']) {
+                throw new \moodle_exception('gate_' . $gate['reason'], 'mod_graphitoubb');
+            }
+        }
+
         $attemptservice->finish($params['attemptid']);
 
         $response = ['status' => 'ok'];

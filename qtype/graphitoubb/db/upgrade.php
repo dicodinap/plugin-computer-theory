@@ -47,5 +47,12 @@ function xmldb_qtype_graphitoubb_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026062904, 'qtype', 'graphitoubb');
     }
 
+    // Re-seed with the karnaugh/relations presets added (also back-fills grafo/arbol
+    // on installs whose preset category is still empty). Guarded/defensive.
+    if ($oldversion < 2026070601) {
+        \qtype_graphitoubb\catalog_seeder::seed(2026070601);
+        upgrade_plugin_savepoint(true, 2026070601, 'qtype', 'graphitoubb');
+    }
+
     return true;
 }

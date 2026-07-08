@@ -73,7 +73,9 @@ $catalog = new preset_catalog($catalogdir);
 $presets = array_merge(
     $catalog->all('truth_table'),
     $catalog->all('grafo'),
-    $catalog->all('arbol')
+    $catalog->all('arbol'),
+    $catalog->all('karnaugh'),
+    $catalog->all('relations')
 );
 
 /**

@@ -408,3 +408,88 @@
         height: 1.25rem;
     }
 }
+
+/* ------------------------------------------------------------------ */
+/* Karnaugh map editor (RF_04)                                        */
+/* ------------------------------------------------------------------ */
+.mod-graphitoubb-kmap-table {
+    border-collapse: collapse;
+    margin: 0.5rem 0;
+    font-family: monospace;
+}
+.mod-graphitoubb-kmap-table th,
+.mod-graphitoubb-kmap-table td {
+    border: 1px solid #adb5bd;
+    text-align: center;
+    vertical-align: middle;
+    padding: 0;
+}
+.mod-graphitoubb-kmap-table th {
+    background: #f1f3f5;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+    color: #495057;
+}
+.mod-graphitoubb-kmap-corner {
+    background: #e9ecef !important;
+    font-size: 0.75rem;
+}
+.mod-graphitoubb-kmap-cell {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    cursor: pointer;
+    font-size: 1.15rem;
+    font-weight: bold;
+    background: #fff;
+    user-select: none;
+}
+.mod-graphitoubb-kmap-cell.kmap-one { color: #0b7285; }
+.mod-graphitoubb-kmap-cell.kmap-zero { color: #adb5bd; }
+.mod-graphitoubb-kmap-cell.kmap-selected { outline: 3px solid #f59f00; outline-offset: -3px; }
+.mod-graphitoubb-kmap-cell.kmap-grouped { background: #f8f9fa; }
+.mod-graphitoubb-kmap-cell.kmap-verify-ok { background: #d3f9d8; }
+.mod-graphitoubb-kmap-cell.kmap-verify-bad { background: #ffe3e3; }
+.mod-graphitoubb-kmap-cell .kmap-badges {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    display: flex;
+    gap: 2px;
+}
+.kmap-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.2);
+    vertical-align: middle;
+    margin-right: 4px;
+}
+.mod-graphitoubb-kmap-group-item { margin-bottom: 0.25rem; }
+.mod-graphitoubb-kmap-minimal { font-size: 1.05rem; }
+.mod-graphitoubb-kmap-modebar .btn.active { background: #495057; color: #fff; }
+
+/* ------------------------------------------------------------------ */
+/* Relations editor (RF_05)                                           */
+/* ------------------------------------------------------------------ */
+.mod-graphitoubb-rel-matrix { border-collapse: collapse; margin: 0.5rem 0; font-family: monospace; }
+.mod-graphitoubb-rel-matrix th,
+.mod-graphitoubb-rel-matrix td {
+    border: 1px solid #adb5bd;
+    width: 42px;
+    height: 42px;
+    text-align: center;
+    vertical-align: middle;
+}
+.mod-graphitoubb-rel-matrix th { background: #f1f3f5; }
+.mod-graphitoubb-rel-matrix td { cursor: pointer; background: #fff; user-select: none; }
+.mod-graphitoubb-rel-matrix td.rel-on { background: #d0ebff; font-weight: bold; color: #1971c2; }
+.mod-graphitoubb-rel-tabs .btn.active { background: #495057; color: #fff; }
+.mod-graphitoubb-rel-pairs-list { font-family: monospace; }
+
+@media (max-width: 600px) {
+    .mod-graphitoubb-kmap-cell { width: 40px; height: 40px; }
+    .mod-graphitoubb-rel-matrix th,
+    .mod-graphitoubb-rel-matrix td { width: 38px; height: 38px; }
+}

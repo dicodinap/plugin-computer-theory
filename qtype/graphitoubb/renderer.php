@@ -58,6 +58,13 @@ class qtype_graphitoubb_renderer extends qtype_renderer {
         if ($question->tool === 'grafo' || $question->tool === 'arbol') {
             return $this->render_canvas_question($qa, $options, $question);
         }
+        // karnaugh/relations: render each tool's own editor host bound to the qt field.
+        if ($question->tool === 'karnaugh') {
+            return $this->render_karnaugh_question($qa, $options, $question);
+        }
+        if ($question->tool === 'relations') {
+            return $this->render_relations_question($qa, $options, $question);
+        }
 
         $wrapper_id  = 'qtype_graphitoubb_' . $qa->get_database_id();
         $input_name  = $qa->get_qt_field_name('answer_payload');
@@ -273,6 +280,200 @@ JS);
         $this->page->requires->js_call_amd('mod_graphitoubb/graph_canvas', 'init',
             [(int) $qaid, (int) $qaid, 1, $tool]);
 
+        return $out;
+    }
+
+    /**
+     * Render a karnaugh question: the two-stage K-map editor host bound to the
+     * quiz's hidden answer field (seed/import-only, D14). No autosave/WS.
+     *
+     * @param  question_attempt         $qa
+     * @param  question_display_options $options
+     * @param  qtype_graphitoubb_question $question
+     * @return string
+     */
+    private function render_karnaugh_question(
+        question_attempt $qa,
+        question_display_options $options,
+        qtype_graphitoubb_question $question
+    ): string {
+        $qaid       = $qa->get_database_id();
+        $input_name = $qa->get_qt_field_name('answer_payload');
+        $current    = (string) $qa->get_last_qt_var('answer_payload', '');
+
+        $config   = $question->problem_payload['config'] ?? [];
+        $nvars    = (int) ($config['n_vars'] ?? 2);
+        $varnames = array_values(array_map('strval', $config['var_names'] ?? []));
+        $minterms = array_values(array_map('intval', $config['minterms'] ?? []));
+
+        $out = html_writer::start_div('qtype_graphitoubb_wrapper qtype_graphitoubb_karnaugh');
+        if (!empty($config['prompt'])) {
+            $out .= html_writer::tag('p', s((string) $config['prompt']), ['class' => 'qtype_graphitoubb_prompt']);
+        }
+        // Given truth table so the student knows f (same as the mod consigna).
+        $out .= $this->karnaugh_truthtable($nvars, $minterms, $varnames);
+
+        $out .= '<div class="mod-graphitoubb-karnaugh mod-graphitoubb-editor" id="graphitoubb-karnaugh-' . (int) $qaid . '"'
+            . ' data-attemptid="' . (int) $qaid . '" data-instanceid="' . (int) $qaid . '" data-schemaversion="1"'
+            . ' data-nvars="' . $nvars . '"'
+            . ' data-varnames="' . s(json_encode($varnames, JSON_UNESCAPED_UNICODE)) . '"'
+            . ' data-minterms="' . s(json_encode($minterms)) . '"'
+            . ' data-finished="' . ($options->readonly ? '1' : '0') . '"'
+            . ' data-snapshot="' . s($current) . '"'
+            . ' data-answer-input="' . s($input_name) . '">';
+        $out .= '<div class="mod-graphitoubb-kmap-modebar mod-graphitoubb-toolbar mb-2" role="toolbar">'
+            . '<button type="button" class="btn btn-sm btn-outline-secondary" data-kmode="fill" aria-pressed="true">'
+            . get_string('kmap_mode_fill', 'mod_graphitoubb') . '</button>'
+            . '<button type="button" class="btn btn-sm btn-outline-secondary" data-kmode="group" aria-pressed="false">'
+            . get_string('kmap_mode_group', 'mod_graphitoubb') . '</button></div>';
+        $out .= '<div class="mod-graphitoubb-kmap-grid"></div>';
+        $out .= '<div class="mod-graphitoubb-kmap-filltools mt-2">'
+            . '<p class="text-muted small mb-1">' . get_string('kmap_fill_help', 'mod_graphitoubb') . '</p>'
+            . '<button type="button" class="btn btn-sm btn-info mod-graphitoubb-kmap-verify"' . ($options->readonly ? ' disabled' : '') . '>'
+            . get_string('kmap_verify_button', 'mod_graphitoubb') . '</button>'
+            . '<span class="mod-graphitoubb-kmap-verify-result ml-2" aria-live="polite"></span></div>';
+        $out .= '<div class="mod-graphitoubb-kmap-grouptools mt-2" style="display:none">'
+            . '<p class="text-muted small mb-1">' . get_string('kmap_group_help', 'mod_graphitoubb') . '</p>'
+            . '<button type="button" class="btn btn-sm btn-primary mod-graphitoubb-kmap-addgroup"' . ($options->readonly ? ' disabled' : '') . '>'
+            . get_string('kmap_add_group', 'mod_graphitoubb') . '</button> '
+            . '<button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-kmap-clearsel"' . ($options->readonly ? ' disabled' : '') . '>'
+            . get_string('kmap_clear_selection', 'mod_graphitoubb') . '</button>'
+            . '<ul class="mod-graphitoubb-kmap-groups list-unstyled mt-2"></ul>'
+            . '<div class="mod-graphitoubb-kmap-minimal font-monospace mt-2 p-2 bg-light rounded">f = —</div></div>';
+        $out .= '</div>';
+
+        $inattrs = ['type' => 'hidden', 'name' => $input_name, 'id' => $input_name,
+            'value' => htmlspecialchars($current, ENT_QUOTES)];
+        if ($options->readonly) {
+            $inattrs['disabled'] = 'disabled';
+        }
+        $out .= html_writer::empty_tag('input', $inattrs);
+        $out .= html_writer::end_div();
+
+        $this->page->requires->js_call_amd('mod_graphitoubb/karnaugh_editor', 'init', [(int) $qaid]);
+        return $out;
+    }
+
+    /**
+     * Render the read-only given truth table for a karnaugh qtype question.
+     *
+     * @param  int   $nvars
+     * @param  int[] $minterms
+     * @param  string[] $varnames
+     * @return string
+     */
+    private function karnaugh_truthtable(int $nvars, array $minterms, array $varnames): string {
+        $mint = array_fill_keys($minterms, true);
+        $out = '<div class="table-responsive"><table class="table table-sm table-bordered" style="width:auto">';
+        $out .= '<thead><tr>';
+        foreach ($varnames as $v) {
+            $out .= '<th class="text-center">' . s($v) . '</th>';
+        }
+        $out .= '<th class="text-center">f</th></tr></thead><tbody>';
+        for ($i = 0; $i < (1 << $nvars); $i++) {
+            $out .= '<tr>';
+            for ($pos = 0; $pos < $nvars; $pos++) {
+                $bit = $nvars - 1 - $pos;
+                $out .= '<td class="text-center">' . (($i >> $bit) & 1) . '</td>';
+            }
+            $out .= '<td class="text-center font-weight-bold">' . (isset($mint[$i]) ? 1 : 0) . '</td></tr>';
+        }
+        $out .= '</tbody></table></div>';
+        return $out;
+    }
+
+    /**
+     * Render a relations question: matrix/pairs/digraph editor host bound to the
+     * quiz's hidden answer field (seed/import-only, D14).
+     *
+     * @param  question_attempt         $qa
+     * @param  question_display_options $options
+     * @param  qtype_graphitoubb_question $question
+     * @return string
+     */
+    private function render_relations_question(
+        question_attempt $qa,
+        question_display_options $options,
+        qtype_graphitoubb_question $question
+    ): string {
+        $qaid       = $qa->get_database_id();
+        $input_name = $qa->get_qt_field_name('answer_payload');
+        $current    = (string) $qa->get_last_qt_var('answer_payload', '');
+
+        $config   = $question->problem_payload['config'] ?? [];
+        $baseset  = array_values(array_map('strval', $config['base_set'] ?? []));
+        $requiredrep = (string) ($config['required_representation'] ?? 'any');
+        $askprops = $config['ask_properties'] ?? ['reflexive', 'symmetric', 'antisymmetric', 'transitive'];
+
+        $proplabels = [
+            'reflexive'     => get_string('relations_prop_reflexive', 'mod_graphitoubb'),
+            'symmetric'     => get_string('relations_prop_symmetric', 'mod_graphitoubb'),
+            'antisymmetric' => get_string('relations_prop_antisymmetric', 'mod_graphitoubb'),
+            'transitive'    => get_string('relations_prop_transitive', 'mod_graphitoubb'),
+        ];
+
+        $showmatrix  = ($requiredrep === 'any' || $requiredrep === 'matrix');
+        $showpairs   = ($requiredrep === 'any' || $requiredrep === 'pairs');
+        $showdigraph = ($requiredrep === 'any' || $requiredrep === 'digraph');
+
+        $out = html_writer::start_div('qtype_graphitoubb_wrapper qtype_graphitoubb_relations');
+        if (!empty($config['prompt'])) {
+            $out .= html_writer::tag('p', s((string) $config['prompt']), ['class' => 'qtype_graphitoubb_prompt']);
+        }
+        $rel = [];
+        foreach (($config['relation'] ?? []) as $p) {
+            $rel[] = '(' . (string) ($p[0] ?? '') . ', ' . (string) ($p[1] ?? '') . ')';
+        }
+        $out .= html_writer::tag('p', 'S = { ' . s(implode(', ', $baseset)) . ' } &nbsp; R = { '
+            . s(implode(' ', $rel)) . ' }', ['class' => 'font-monospace']);
+
+        $out .= '<div class="mod-graphitoubb-relations mod-graphitoubb-editor" id="graphitoubb-relations-' . (int) $qaid . '"'
+            . ' data-attemptid="' . (int) $qaid . '" data-instanceid="' . (int) $qaid . '" data-schemaversion="1"'
+            . ' data-baseset="' . s(json_encode($baseset, JSON_UNESCAPED_UNICODE)) . '"'
+            . ' data-required-rep="' . s($requiredrep) . '"'
+            . ' data-finished="' . ($options->readonly ? '1' : '0') . '"'
+            . ' data-snapshot="' . s($current) . '"'
+            . ' data-answer-input="' . s($input_name) . '">';
+        $out .= '<div class="mod-graphitoubb-rel-tabs mod-graphitoubb-toolbar mb-2" role="tablist">';
+        if ($showmatrix) {
+            $out .= '<button type="button" class="btn btn-sm btn-outline-secondary" data-rep-tab="matrix">'
+                . get_string('relations_rep_tab_matrix', 'mod_graphitoubb') . '</button>';
+        }
+        if ($showpairs) {
+            $out .= '<button type="button" class="btn btn-sm btn-outline-secondary" data-rep-tab="pairs">'
+                . get_string('relations_rep_tab_pairs', 'mod_graphitoubb') . '</button>';
+        }
+        if ($showdigraph) {
+            $out .= '<button type="button" class="btn btn-sm btn-outline-secondary" data-rep-tab="digraph">'
+                . get_string('relations_rep_tab_digraph', 'mod_graphitoubb') . '</button>';
+        }
+        $out .= '</div>';
+        $out .= '<div class="mod-graphitoubb-rel-matrix-wrap" style="display:none"></div>';
+        $out .= '<div class="mod-graphitoubb-rel-pairs-wrap" style="display:none"></div>';
+        $out .= '<div class="mod-graphitoubb-rel-digraph-wrap" style="display:none"></div>';
+        $out .= '<fieldset class="mod-graphitoubb-rel-props card card-body mt-3"' . ($options->readonly ? ' disabled' : '') . '>';
+        $out .= '<legend class="h6">' . get_string('relations_props_legend', 'mod_graphitoubb') . '</legend>';
+        foreach ($askprops as $p) {
+            if (!isset($proplabels[$p])) {
+                continue;
+            }
+            $id = 'rel-prop-' . $p . '-' . (int) $qaid;
+            $out .= '<div class="form-check"><input class="form-check-input mod-graphitoubb-rel-prop" type="checkbox" id="'
+                . $id . '" value="' . $p . '"><label class="form-check-label" for="' . $id . '">'
+                . $proplabels[$p] . '</label></div>';
+        }
+        $out .= '</fieldset>';
+        $out .= '</div>';
+
+        $inattrs = ['type' => 'hidden', 'name' => $input_name, 'id' => $input_name,
+            'value' => htmlspecialchars($current, ENT_QUOTES)];
+        if ($options->readonly) {
+            $inattrs['disabled'] = 'disabled';
+        }
+        $out .= html_writer::empty_tag('input', $inattrs);
+        $out .= html_writer::end_div();
+
+        $this->page->requires->js_call_amd('mod_graphitoubb/relations_editor', 'init', [(int) $qaid]);
         return $out;
     }
 
