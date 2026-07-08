@@ -31,6 +31,8 @@ define('MOD_GRAPHITOUBB_GRADEMAX', 7.0);
 define('MOD_GRAPHITOUBB_GRADEMIN', 1.0);
 // Passing threshold: 60% of the content maps to the passing grade 4.0.
 define('MOD_GRAPHITOUBB_EXIGENCIA', 0.60);
+// Grade to pass: 4.0. Moodle colours grades below this red and at/above green.
+define('MOD_GRAPHITOUBB_GRADEPASS', 4.0);
 
 /**
  * Converts a [0,1] fraction to the Chilean 1.0–7.0 grade scale.
@@ -196,8 +198,9 @@ function graphitoubb_get_coursemodule_info($coursemodule) {
 /**
  * Creates or updates the gradebook grade item for a mod_graphitoubb instance.
  *
- * Single grade item (itemnumber 0), value type on the Chilean 1.0–7.0 scale, no
- * scales or outcomes. The [0,1] fraction is mapped by graphitoubb_fraction_to_grade().
+ * Single grade item (itemnumber 0), value type on the Chilean 1.0–7.0 scale with a
+ * 4.0 grade-to-pass (Moodle colours failing grades red / passing green), no scales or
+ * outcomes. The [0,1] fraction is mapped by graphitoubb_fraction_to_grade().
  *
  * @param stdClass $instance Instance record; must include id, course and name.
  * @param mixed    $grades   Grade object/array keyed by userid, 'reset', or null.
@@ -212,6 +215,7 @@ function graphitoubb_grade_item_update($instance, $grades = null) {
         'gradetype' => GRADE_TYPE_VALUE,
         'grademax'  => MOD_GRAPHITOUBB_GRADEMAX,
         'grademin'  => MOD_GRAPHITOUBB_GRADEMIN,
+        'gradepass' => MOD_GRAPHITOUBB_GRADEPASS,
     ];
 
     if ($grades === 'reset') {

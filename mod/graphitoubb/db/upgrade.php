@@ -210,5 +210,20 @@ function xmldb_graphitoubb_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026070801, 'graphitoubb');
     }
 
+    if ($oldversion < 2026070802) {
+        // Set a 4.0 grade-to-pass on every grade item so the gradebook colours
+        // failing grades (< 4.0) red and passing (>= 4.0) green. Re-queue the
+        // deferred update_grades task — grade_item_update() now writes gradepass,
+        // and setting it on an existing item hits is_locked() during upgrade.
+        $instances = $DB->get_fieldset_select('graphitoubb', 'id', '1=1', []);
+        foreach ($instances as $instanceid) {
+            $task = new \mod_graphitoubb\task\update_grades();
+            $task->set_custom_data(['instanceid' => (int) $instanceid]);
+            \core\task\manager::queue_adhoc_task($task, true);
+        }
+
+        upgrade_mod_savepoint(true, 2026070802, 'graphitoubb');
+    }
+
     return true;
 }
