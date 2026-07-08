@@ -425,3 +425,69 @@ $string['graph_finish_reload'] = 'Answer submitted and graded.';
 $string['err_graph_max_nodes'] = 'You have reached the maximum of {$a} vertices.';
 $string['err_graph_max_edges'] = 'You have reached the maximum of {$a} edges.';
 $string['err_tree_two_children'] = 'A node can have at most two children (left and right).';
+
+// Karnaugh (RF_04).
+$string['kmap_mode_label'] = 'Editor mode';
+$string['kmap_mode_fill'] = 'Fill';
+$string['kmap_mode_group'] = 'Group';
+$string['kmap_grid_label'] = 'Karnaugh map';
+$string['kmap_fill_help'] = 'Click a cell to cycle it: blank → 1 → 0. Transfer the given truth table into the map.';
+$string['kmap_group_help'] = 'Click 1-cells to select them, then create a group. Each valid group is a product term; the minimal form is the OR of the terms.';
+$string['kmap_verify_button'] = 'Verificar mapa';
+$string['kmap_verify_ok'] = 'Map correct — every cell matches the truth table.';
+$string['kmap_verify_errors'] = 'Map has errors: {$a->wrong} misplaced, {$a->blank} blank.';
+$string['kmap_add_group'] = 'Create group from selection';
+$string['kmap_clear_selection'] = 'Clear selection';
+$string['kmap_consigna_title'] = 'Boolean simplification (Karnaugh map)';
+$string['kmap_consigna_grading_info'] = 'You are graded on the map fill and the grouping. Pass >= {$a}%.';
+$string['kmap_result_score'] = 'Score: {$a->pct}%';
+$string['kmap_result_invalid'] = 'Ungradeable answer (empty map or no groups).';
+$string['kmap_result_minimality'] = 'A minimal cover uses {$a->optimal} group(s); you used {$a->used}.';
+$string['kmap_result_not_equivalent'] = 'The OR of your groups is not equivalent to f (a 1-cell is uncovered or a 0-cell over-covered).';
+$string['kmap_result_group_zero'] = 'Group {$a} covers a 0-cell.';
+$string['kmap_result_group_illegal'] = 'Group {$a} is not a valid power-of-two block.';
+
+// Relations (RF_05).
+$string['relations_consigna_title'] = 'Binary relations';
+$string['relations_consigna_grading_info'] = 'You are graded on the relation you build and the four properties. Pass >= {$a}%.';
+$string['relations_rep_tab_pairs'] = 'Ordered pairs';
+$string['relations_rep_tab_matrix'] = 'Matrix';
+$string['relations_rep_tab_digraph'] = 'Directed graph';
+$string['relations_pairs_help'] = 'Click a cell to toggle whether (row, column) is in R.';
+$string['relations_matrix_help'] = 'Toggle each cell: 1 = (row, column) is in R.';
+$string['relations_digraph_help'] = 'Draw an arc a -> b for each pair (a, b) in R.';
+$string['relations_props_legend'] = 'Which properties does R satisfy?';
+$string['relations_prop_reflexive'] = 'Reflexive';
+$string['relations_prop_symmetric'] = 'Symmetric';
+$string['relations_prop_antisymmetric'] = 'Antisymmetric';
+$string['relations_prop_transitive'] = 'Transitive';
+$string['relations_result_score'] = 'Score: {$a->pct}%';
+$string['relations_result_invalid'] = 'Ungradeable answer (no relation built).';
+$string['relations_result_rep'] = 'Relation: {$a->missing} missing, {$a->extra} extra pair(s).';
+$string['relations_result_prop_ce'] = '{$a->prop}: incorrect — counterexample {$a->ce}.';
+$string['relations_result_prop_holds'] = '{$a->prop}: incorrect — the property does hold; there is no counterexample.';
+$string['relations_base_label'] = 'Base set S';
+$string['relations_consigna_relation'] = 'Relation R';
+
+// RF_04 submission gate (D9/D13).
+$string['gate_header'] = 'Availability & attempts';
+$string['gate_timeopen'] = 'Open the activity';
+$string['gate_timeopen_help'] = 'Before this date students cannot submit. Leave disabled for no restriction.';
+$string['gate_timeclose'] = 'Close the activity';
+$string['gate_attempts_max'] = 'Attempts allowed';
+$string['gate_attempts_max_help'] = 'How many times a student may submit. "Unlimited" reproduces the pre-gate behaviour.';
+$string['gate_attempts_unlimited'] = 'Unlimited';
+$string['gate_attempts_policy'] = 'Grading method';
+$string['gate_policy_best'] = 'Best attempt';
+$string['gate_policy_last'] = 'Last attempt';
+$string['gate_policy_average'] = 'Average of attempts';
+$string['gate_not_open'] = 'This activity is not open yet.';
+$string['gate_closed'] = 'This activity is closed.';
+$string['gate_no_attempts'] = 'You have no attempts left.';
+$string['gate_reason_not_open'] = 'Not open yet.';
+$string['gate_reason_closed'] = 'Closed — submissions are no longer accepted.';
+$string['gate_reason_no_attempts'] = 'No attempts left.';
+
+// Preset catalogue groups.
+$string['preset_group_karnaugh'] = 'Karnaugh (boolean simplification)';
+$string['preset_group_relations'] = 'Relations (binary relations)';

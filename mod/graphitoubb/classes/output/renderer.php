@@ -266,6 +266,285 @@ class renderer extends \plugin_renderer_base {
     }
 
     /**
+     * Render the karnaugh task prompt (consigna) — prompt + the given truth table
+     * (the canonical f the student transfers into the map).
+     *
+     * @param \stdClass $problem graphitoubb_problem row (tool='karnaugh').
+     * @return string HTML.
+     */
+    public function render_karnaugh_consigna(\stdClass $problem): string {
+        $payload = json_decode($problem->payload, true) ?: [];
+        $config  = $payload['config'] ?? [];
+        $nvars   = (int) ($config['n_vars'] ?? 2);
+        $size    = 1 << $nvars;
+        $minterms = array_fill_keys(array_map('intval', $config['minterms'] ?? []), true);
+        $varnames = array_values(array_map('strval', $config['var_names'] ?? []));
+        $passpct  = (int) round(\local_graphitoubb\grader_interface::PASS_THRESHOLD * 100);
+
+        // Build the truth-table rows (assignment index → f).
+        $rows = [];
+        for ($i = 0; $i < $size; $i++) {
+            $bits = [];
+            for ($pos = 0; $pos < $nvars; $pos++) {
+                $bit = $nvars - 1 - $pos;
+                $bits[] = ['v' => (($i >> $bit) & 1)];
+            }
+            $rows[] = ['idx' => $i, 'bits' => $bits, 'f' => isset($minterms[$i]) ? 1 : 0];
+        }
+        $headers = [];
+        foreach ($varnames as $v) {
+            $headers[] = ['label' => $v];
+        }
+
+        return $this->render_from_template('mod_graphitoubb/karnaugh_consigna', [
+            'prompt'       => (string) ($config['prompt'] ?? ''),
+            'headers'      => $headers,
+            'rows'         => $rows,
+            'grading_info' => get_string('kmap_consigna_grading_info', 'mod_graphitoubb', $passpct),
+        ]);
+    }
+
+    /**
+     * Render the karnaugh two-stage editor for a student attempt.
+     *
+     * @param int       $attemptid
+     * @param int       $instanceid
+     * @param \stdClass $problem
+     * @param ?string   $snapshotjson Latest snapshot envelope JSON, or null.
+     * @param bool      $finished
+     * @param array     $gate {allowed:bool, reason:?string} — RF_04 submission gate.
+     * @return string HTML.
+     */
+    public function render_karnaugh_editor(
+        int $attemptid,
+        int $instanceid,
+        \stdClass $problem,
+        ?string $snapshotjson = null,
+        bool $finished = false,
+        array $gate = ['allowed' => true, 'reason' => null]
+    ): string {
+        $payload  = json_decode($problem->payload, true) ?: [];
+        $config   = $payload['config'] ?? [];
+        $nvars    = (int) ($config['n_vars'] ?? 2);
+        $varnames = array_values(array_map('strval', $config['var_names'] ?? []));
+        $minterms = array_values(array_map('intval', $config['minterms'] ?? []));
+
+        $blocked = empty($gate['allowed']);
+        $context = [
+            'attemptid'     => $attemptid,
+            'instanceid'    => $instanceid,
+            'schemaversion' => 1,
+            'nvars'         => $nvars,
+            'varnames_json' => (string) json_encode($varnames, JSON_UNESCAPED_UNICODE),
+            'minterms_json' => (string) json_encode($minterms),
+            'snapshot_json' => $snapshotjson ?: '',
+            'finished'      => $finished,
+            'is_student'    => true,
+            'gate_blocked'  => $blocked,
+            'gate_reason'   => $blocked ? \mod_graphitoubb\submission_gate::reason_text((string) $gate['reason']) : '',
+        ];
+        return $this->render_from_template('mod_graphitoubb/karnaugh_editor', $context);
+    }
+
+    /**
+     * Render the grading-result panel for a finished karnaugh attempt.
+     *
+     * @param array $gr Decoded grading_result (shared grader output).
+     * @return string HTML.
+     */
+    public function render_karnaugh_result(array $gr): string {
+        $invalid  = !empty($gr['invalid']);
+        $fraction = (float) ($gr['fraction'] ?? 0);
+        $pct      = round($fraction * 100, 1);
+        $scorelabel = get_string('kmap_result_score', 'mod_graphitoubb', (object) ['pct' => $pct]);
+
+        // Surface the minimality hint + specific errors from results[].
+        $details = [];
+        foreach (($gr['results'] ?? []) as $r) {
+            $check = (string) ($r['check'] ?? '');
+            if ($check === 'minimality') {
+                $details[] = get_string('kmap_result_minimality', 'mod_graphitoubb',
+                    (object) ['optimal' => (int) $r['expected'], 'used' => (int) $r['got']]);
+            } else if ($check === 'equivalence' && empty($r['correct'])) {
+                $details[] = get_string('kmap_result_not_equivalent', 'mod_graphitoubb');
+            } else if (strpos($check, 'group:') === 0 && empty($r['correct'])) {
+                $reason = is_string($r['got'] ?? null) ? $r['got'] : '';
+                $key = ($reason === 'covers_zero') ? 'kmap_result_group_zero' : 'kmap_result_group_illegal';
+                $details[] = get_string($key, 'mod_graphitoubb', substr($check, 6));
+            }
+        }
+
+        return $this->render_from_template('mod_graphitoubb/karnaugh_result', [
+            'invalid'     => $invalid,
+            'score_label' => $scorelabel,
+            'passed'      => !empty($gr['passed']),
+            'has_details' => !empty($details),
+            'details'     => array_map(static fn($d) => ['text' => $d], $details),
+        ]);
+    }
+
+    /**
+     * Render the relations task prompt (consigna) — prompt + base set + R (pairs).
+     *
+     * @param \stdClass $problem graphitoubb_problem row (tool='relations').
+     * @return string HTML.
+     */
+    public function render_relations_consigna(\stdClass $problem): string {
+        $payload = json_decode($problem->payload, true) ?: [];
+        $config  = $payload['config'] ?? [];
+        $baseset = array_map('strval', $config['base_set'] ?? []);
+        $pairs   = [];
+        foreach (($config['relation'] ?? []) as $p) {
+            $pairs[] = ['a' => (string) ($p[0] ?? ''), 'b' => (string) ($p[1] ?? '')];
+        }
+        $passpct = (int) round(\local_graphitoubb\grader_interface::PASS_THRESHOLD * 100);
+
+        return $this->render_from_template('mod_graphitoubb/relations_consigna', [
+            'prompt'       => (string) ($config['prompt'] ?? ''),
+            'baseset'      => implode(', ', $baseset),
+            'pairs'        => $pairs,
+            'grading_info' => get_string('relations_consigna_grading_info', 'mod_graphitoubb', $passpct),
+        ]);
+    }
+
+    /**
+     * Render the relations editor (matrix/pairs/digraph + property checklist).
+     *
+     * @param int       $attemptid
+     * @param int       $instanceid
+     * @param \stdClass $problem
+     * @param ?string   $snapshotjson
+     * @param bool      $finished
+     * @param array     $gate {allowed:bool, reason:?string}
+     * @return string HTML.
+     */
+    public function render_relations_editor(
+        int $attemptid,
+        int $instanceid,
+        \stdClass $problem,
+        ?string $snapshotjson = null,
+        bool $finished = false,
+        array $gate = ['allowed' => true, 'reason' => null]
+    ): string {
+        $payload  = json_decode($problem->payload, true) ?: [];
+        $config   = $payload['config'] ?? [];
+        $baseset  = array_values(array_map('strval', $config['base_set'] ?? []));
+        $requiredrep = (string) ($config['required_representation'] ?? 'any');
+        $askprops = $config['ask_properties'] ?? ['reflexive', 'symmetric', 'antisymmetric', 'transitive'];
+
+        $proplabels = [
+            'reflexive'     => get_string('relations_prop_reflexive', 'mod_graphitoubb'),
+            'symmetric'     => get_string('relations_prop_symmetric', 'mod_graphitoubb'),
+            'antisymmetric' => get_string('relations_prop_antisymmetric', 'mod_graphitoubb'),
+            'transitive'    => get_string('relations_prop_transitive', 'mod_graphitoubb'),
+        ];
+        $properties = [];
+        foreach ($askprops as $p) {
+            if (isset($proplabels[$p])) {
+                $properties[] = ['key' => $p, 'label' => $proplabels[$p]];
+            }
+        }
+
+        $blocked = empty($gate['allowed']);
+        $context = [
+            'attemptid'     => $attemptid,
+            'instanceid'    => $instanceid,
+            'schemaversion' => 1,
+            'baseset_json'  => (string) json_encode($baseset, JSON_UNESCAPED_UNICODE),
+            'required_rep'  => $requiredrep,
+            'snapshot_json' => $snapshotjson ?: '',
+            'finished'      => $finished,
+            'is_student'    => true,
+            'show_matrix'   => ($requiredrep === 'any' || $requiredrep === 'matrix'),
+            'show_pairs'    => ($requiredrep === 'any' || $requiredrep === 'pairs'),
+            'show_digraph'  => ($requiredrep === 'any' || $requiredrep === 'digraph'),
+            'properties'    => $properties,
+            'gate_blocked'  => $blocked,
+            'gate_reason'   => $blocked ? \mod_graphitoubb\submission_gate::reason_text((string) $gate['reason']) : '',
+        ];
+        return $this->render_from_template('mod_graphitoubb/relations_editor', $context);
+    }
+
+    /**
+     * Render the grading-result panel for a finished relations attempt.
+     *
+     * @param array $gr Decoded grading_result (shared grader output).
+     * @return string HTML.
+     */
+    public function render_relations_result(array $gr): string {
+        $invalid  = !empty($gr['invalid']);
+        $fraction = (float) ($gr['fraction'] ?? 0);
+        $pct      = round($fraction * 100, 1);
+        $scorelabel = get_string('relations_result_score', 'mod_graphitoubb', (object) ['pct' => $pct]);
+
+        $proplabels = [
+            'reflexive'     => get_string('relations_prop_reflexive', 'mod_graphitoubb'),
+            'symmetric'     => get_string('relations_prop_symmetric', 'mod_graphitoubb'),
+            'antisymmetric' => get_string('relations_prop_antisymmetric', 'mod_graphitoubb'),
+            'transitive'    => get_string('relations_prop_transitive', 'mod_graphitoubb'),
+        ];
+        $details = [];
+        foreach (($gr['results'] ?? []) as $r) {
+            $check = (string) ($r['check'] ?? '');
+            if ($check === 'representation' && empty($r['correct'])) {
+                $got = is_array($r['got'] ?? null) ? $r['got'] : [];
+                $details[] = get_string('relations_result_rep', 'mod_graphitoubb', (object) [
+                    'missing' => count($got['missing'] ?? []),
+                    'extra'   => count($got['extra'] ?? []),
+                ]);
+            } else if (strpos($check, 'property:') === 0 && empty($r['correct'])) {
+                $prop = substr($check, 9);
+                $label = $proplabels[$prop] ?? $prop;
+                $got = is_array($r['got'] ?? null) ? $r['got'] : [];
+                $ce  = $got['counterexample'] ?? null;
+                if ($ce) {
+                    $details[] = get_string('relations_result_prop_ce', 'mod_graphitoubb', (object) [
+                        'prop' => $label,
+                        'ce'   => $this->format_counterexample($ce),
+                    ]);
+                } else {
+                    $details[] = get_string('relations_result_prop_holds', 'mod_graphitoubb',
+                        (object) ['prop' => $label]);
+                }
+            }
+        }
+
+        return $this->render_from_template('mod_graphitoubb/relations_result', [
+            'invalid'     => $invalid,
+            'score_label' => $scorelabel,
+            'passed'      => !empty($gr['passed']),
+            'has_details' => !empty($details),
+            'details'     => array_map(static fn($d) => ['text' => $d], $details),
+        ]);
+    }
+
+    /**
+     * Format a relations counterexample into a short human string.
+     *
+     * @param  array $ce {kind, a, [b], [c]}
+     * @return string
+     */
+    private function format_counterexample(array $ce): string {
+        $kind = (string) ($ce['kind'] ?? '');
+        switch ($kind) {
+            case 'reflexive':
+                return '(' . ($ce['a'] ?? '') . ',' . ($ce['a'] ?? '') . ') ∉ R';
+            case 'symmetric':
+                return '(' . ($ce['a'] ?? '') . ',' . ($ce['b'] ?? '') . ') ∈ R, (' .
+                    ($ce['b'] ?? '') . ',' . ($ce['a'] ?? '') . ') ∉ R';
+            case 'antisymmetric':
+                return '(' . ($ce['a'] ?? '') . ',' . ($ce['b'] ?? '') . '),(' .
+                    ($ce['b'] ?? '') . ',' . ($ce['a'] ?? '') . ') ∈ R, ' . ($ce['a'] ?? '') . '≠' . ($ce['b'] ?? '');
+            case 'transitive':
+                return '(' . ($ce['a'] ?? '') . ',' . ($ce['b'] ?? '') . '),(' .
+                    ($ce['b'] ?? '') . ',' . ($ce['c'] ?? '') . ') ∈ R, (' .
+                    ($ce['a'] ?? '') . ',' . ($ce['c'] ?? '') . ') ∉ R';
+            default:
+                return '';
+        }
+    }
+
+    /**
      * Render a read-only teacher summary of an attempt.
      *
      * @param \stdClass $attempt Attempt row.

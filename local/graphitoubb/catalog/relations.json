@@ -1,0 +1,46 @@
+[
+  {
+    "key": "relations_partial_order",
+    "tool": "relations",
+    "type": "analyze",
+    "difficulty": "easy",
+    "tags": ["relations", "order", "3elem"],
+    "title": {"es": "Relación reflexiva con un par extra", "en": "Reflexive relation with one extra pair"},
+    "summary": {"es": "S={1,2,3}, R={(1,1),(2,2),(3,3),(1,2)}; reflexiva y transitiva, no simétrica.", "en": "S={1,2,3}, R={(1,1),(2,2),(3,3),(1,2)}; reflexive & transitive, not symmetric."},
+    "payload": {
+      "tool": "relations",
+      "schema_version": 1,
+      "type": "analyze",
+      "config": {
+        "prompt": {"es": "Construye la relación R sobre S en una representación y declara qué propiedades cumple.", "en": "Build the relation R on S in one representation and declare which properties it satisfies."},
+        "base_set": ["1", "2", "3"],
+        "relation": [["1", "1"], ["2", "2"], ["3", "3"], ["1", "2"]],
+        "required_representation": "any",
+        "ask_properties": ["reflexive", "symmetric", "antisymmetric", "transitive"],
+        "scoring": {"representation_weight": 40, "properties_weight": 60}
+      }
+    }
+  },
+  {
+    "key": "relations_symmetric",
+    "tool": "relations",
+    "type": "analyze",
+    "difficulty": "medium",
+    "tags": ["relations", "symmetric", "4elem"],
+    "title": {"es": "Relación simétrica no transitiva", "en": "Symmetric non-transitive relation"},
+    "summary": {"es": "S={1,2,3,4}, R con pares simétricos; simétrica, no transitiva ni reflexiva.", "en": "S={1,2,3,4}, symmetric pairs; symmetric, not transitive nor reflexive."},
+    "payload": {
+      "tool": "relations",
+      "schema_version": 1,
+      "type": "analyze",
+      "config": {
+        "prompt": {"es": "Construye R y decide sus propiedades; observa que la simetría no implica transitividad.", "en": "Build R and decide its properties; note symmetry does not imply transitivity."},
+        "base_set": ["1", "2", "3", "4"],
+        "relation": [["1", "2"], ["2", "1"], ["2", "3"], ["3", "2"]],
+        "required_representation": "any",
+        "ask_properties": ["reflexive", "symmetric", "antisymmetric", "transitive"],
+        "scoring": {"representation_weight": 40, "properties_weight": 60}
+      }
+    }
+  }
+]

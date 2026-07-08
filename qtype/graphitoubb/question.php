@@ -89,8 +89,8 @@ class qtype_graphitoubb_question extends question_graded_automatically {
             return get_string('err_internal', 'qtype_graphitoubb');
         }
 
-        // grafo/arbol: summarise the answer envelope.
-        if ($this->tool === 'grafo' || $this->tool === 'arbol') {
+        // Canvas/snapshot tools: summarise the answer envelope.
+        if ($this->is_canvas_tool()) {
             $kind = $data['answer_kind'] ?? '';
             if ($kind === 'boolean') {
                 return ($data['value'] ?? false) ? get_string('yes') : get_string('no');
@@ -105,6 +105,12 @@ class qtype_graphitoubb_question extends question_graded_automatically {
             }
             if ($kind === 'tree') {
                 return count($data['tree']['nodes'] ?? []) . ' nodes';
+            }
+            if ($kind === 'kmap') {
+                return count($data['groups'] ?? []) . ' groups';
+            }
+            if ($kind === 'relation') {
+                return count($data['pairs'] ?? []) . ' pairs';
             }
             return $kind;
         }
@@ -151,11 +157,21 @@ class qtype_graphitoubb_question extends question_graded_automatically {
         if (!is_array($data)) {
             return false;
         }
-        // grafo/arbol: a complete response is a non-empty answer envelope.
-        if ($this->tool === 'grafo' || $this->tool === 'arbol') {
+        // Canvas/snapshot tools: a complete response is a non-empty answer envelope.
+        if ($this->is_canvas_tool()) {
             return !empty($data['answer_kind']);
         }
         return true;
+    }
+
+    /**
+     * Whether this question's tool grades a canvas/snapshot envelope via the shared
+     * grader_dispatch rather than the truth_table grader.
+     *
+     * @return bool
+     */
+    private function is_canvas_tool(): bool {
+        return in_array($this->tool, ['grafo', 'arbol', 'karnaugh', 'relations'], true);
     }
 
     /**
@@ -228,9 +244,9 @@ class qtype_graphitoubb_question extends question_graded_automatically {
                 return [0.0, question_state::$gaveup];
             }
 
-            // Tool-aware routing (D8/C2): grafo/arbol grade through the shared
-            // grader_dispatch; truth_table keeps its existing path (I3 — unchanged).
-            if ($this->tool === 'grafo' || $this->tool === 'arbol') {
+            // Tool-aware routing (D8/C2): canvas/snapshot tools grade through the
+            // shared grader_dispatch; truth_table keeps its existing path (I3).
+            if ($this->is_canvas_tool()) {
                 $dispatch = \local_graphitoubb\grader_dispatch::for($this->tool);
                 if ($dispatch === null) {
                     return [0.0, question_state::$gaveup];

@@ -1,0 +1,19 @@
+{{!
+    Relations task prompt (consigna) — prompt + base set + the canonical relation R
+    (shown as ordered pairs, per D7).
+
+    Context: {prompt, baseset, pairs:[{a,b}], grading_info}
+
+    @template mod_graphitoubb/relations_consigna
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-consigna card card-body mb-3">
+    <h3 class="h5">{{#str}}relations_consigna_title, mod_graphitoubb{{/str}}</h3>
+    <p class="mod-graphitoubb-consigna-prompt mb-2">{{prompt}}</p>
+    <p class="mb-1"><strong>{{#str}}relations_base_label, mod_graphitoubb{{/str}}:</strong>
+        S = &#123; {{baseset}} &#125;</p>
+    <p class="mb-2 font-monospace"><strong>{{#str}}relations_consigna_relation, mod_graphitoubb{{/str}}:</strong>
+        R = &#123; {{#pairs}}({{a}}, {{b}}) {{/pairs}}&#125;</p>
+    <p class="text-muted small mb-0">{{grading_info}}</p>
+</div>

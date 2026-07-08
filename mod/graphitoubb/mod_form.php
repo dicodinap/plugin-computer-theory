@@ -44,7 +44,47 @@ class mod_graphitoubb_mod_form extends moodleform_mod {
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
 
         $this->standard_intro_elements();
+
+        // RF_04 submission gate (D13): availability window + attempts policy.
+        $mform->addElement('header', 'gatehdr', get_string('gate_header', 'mod_graphitoubb'));
+
+        $mform->addElement('date_time_selector', 'timeopen', get_string('gate_timeopen', 'mod_graphitoubb'),
+            ['optional' => true]);
+        $mform->addHelpButton('timeopen', 'gate_timeopen', 'mod_graphitoubb');
+
+        $mform->addElement('date_time_selector', 'timeclose', get_string('gate_timeclose', 'mod_graphitoubb'),
+            ['optional' => true]);
+
+        // Attempts allowed: 0 = unlimited (stored as NULL), 1..10 concrete.
+        $attemptoptions = [0 => get_string('gate_attempts_unlimited', 'mod_graphitoubb')];
+        for ($i = 1; $i <= 10; $i++) {
+            $attemptoptions[$i] = (string) $i;
+        }
+        $mform->addElement('select', 'attempts_max', get_string('gate_attempts_max', 'mod_graphitoubb'), $attemptoptions);
+        $mform->setDefault('attempts_max', 1);
+        $mform->addHelpButton('attempts_max', 'gate_attempts_max', 'mod_graphitoubb');
+
+        $mform->addElement('select', 'attempts_policy', get_string('gate_attempts_policy', 'mod_graphitoubb'), [
+            'best'    => get_string('gate_policy_best', 'mod_graphitoubb'),
+            'last'    => get_string('gate_policy_last', 'mod_graphitoubb'),
+            'average' => get_string('gate_policy_average', 'mod_graphitoubb'),
+        ]);
+        $mform->setDefault('attempts_policy', 'best');
+
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
+    }
+
+    /**
+     * Normalise form data before it is persisted: 0 attempts_max ⇒ NULL (unlimited).
+     *
+     * @param  \stdClass $data Submitted form data.
+     * @return void
+     */
+    public function data_postprocessing($data) {
+        parent::data_postprocessing($data);
+        if (isset($data->attempts_max) && (int) $data->attempts_max === 0) {
+            $data->attempts_max = null;
+        }
     }
 }

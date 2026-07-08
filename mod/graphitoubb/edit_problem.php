@@ -84,6 +84,8 @@ function render_preset_catalog_browser(int $cmid, string $activepreset): string 
         'truth_table' => get_string('preset_group_truth_table', 'mod_graphitoubb'),
         'grafo'       => get_string('preset_group_grafo', 'mod_graphitoubb'),
         'arbol'       => get_string('preset_group_arbol', 'mod_graphitoubb'),
+        'karnaugh'    => get_string('preset_group_karnaugh', 'mod_graphitoubb'),
+        'relations'   => get_string('preset_group_relations', 'mod_graphitoubb'),
     ];
     $difflabels = [
         'easy'   => get_string('preset_difficulty_easy', 'mod_graphitoubb'),
@@ -359,7 +361,159 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($tool ?? '') === 'arbol') {
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !in_array(($tool ?? 'truth_table'), ['afd', 'grafo', 'arbol'], true)) {
+// karnaugh authoring branch — define f by truth table (minterms) or formula shortcut.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($tool ?? '') === 'karnaugh') {
+    $knvars   = (int) optional_param('karnaugh_nvars', 3, PARAM_INT);
+    $knvars   = max(2, min(4, $knvars));
+    $kprompt  = optional_param('karnaugh_prompt', '', PARAM_TEXT);
+    $kvarsraw = optional_param('karnaugh_varnames', '', PARAM_RAW_TRIMMED);
+    $kminraw  = optional_param('karnaugh_minterms', '', PARAM_RAW_TRIMMED);
+    $kformula = optional_param('karnaugh_formula', '', PARAM_RAW_TRIMMED);
+    $kmin     = optional_param('karnaugh_require_minimal', 0, PARAM_INT);
+    $kfw      = (int) optional_param('karnaugh_fill_weight', 40, PARAM_INT);
+    $kgw      = (int) optional_param('karnaugh_grouping_weight', 60, PARAM_INT);
+
+    // Variable names: single uppercase letters, MSB→LSB. Default A,B,C,D.
+    preg_match_all('/[A-Za-z]/', strtoupper($kvarsraw), $vm);
+    $varnames = array_slice(array_values(array_unique($vm[0])), 0, $knvars);
+    while (count($varnames) < $knvars) {
+        $varnames[] = chr(65 + count($varnames));
+    }
+
+    // Minterms: either from a formula shortcut (auto-fill) or the index list.
+    $minterms = [];
+    $formulaerror = null;
+    if ($kformula !== '') {
+        try {
+            $ast = (new \local_graphitoubb\tools\truth_table\domain\parser())->parse($kformula);
+            $evaluator = new \local_graphitoubb\tools\truth_table\domain\evaluator();
+            for ($i = 0; $i < (1 << $knvars); $i++) {
+                $assignment = [];
+                for ($pos = 0; $pos < $knvars; $pos++) {
+                    $bit = $knvars - 1 - $pos;
+                    $assignment[$varnames[$pos]] = (bool) (($i >> $bit) & 1);
+                }
+                if ($evaluator->evaluate($ast, $assignment)) {
+                    $minterms[] = $i;
+                }
+            }
+        } catch (\Throwable $e) {
+            $formulaerror = $e->getMessage();
+        }
+    } else {
+        preg_match_all('/\d+/', $kminraw, $mm);
+        foreach ($mm[0] as $m) {
+            $mi = (int) $m;
+            if ($mi >= 0 && $mi < (1 << $knvars)) {
+                $minterms[$mi] = true;
+            }
+        }
+        $minterms = array_keys($minterms);
+        sort($minterms);
+    }
+
+    if ($kprompt === '') {
+        $error = 'The prompt (consigna) is required.';
+    } else if ($formulaerror !== null) {
+        $error = 'Formula shortcut failed to parse: ' . $formulaerror;
+    } else if (empty($minterms)) {
+        $error = 'Define at least one 1-cell (a contradiction has nothing to simplify).';
+    } else if (count($minterms) === (1 << $knvars)) {
+        // Tautology allowed but warn.
+        $warningmsg = 'The function is a tautology (all 1s): the correct answer is one full-map group.';
+    }
+    if (!$error && ($kfw + $kgw) !== 100) {
+        $error = 'fill_weight + grouping_weight must equal 100 (got ' . ($kfw + $kgw) . ').';
+    }
+
+    if (!$error) {
+        $payload = [
+            'tool'           => 'karnaugh',
+            'schema_version' => 1,
+            'type'           => 'simplify',
+            'config'         => [
+                'prompt'          => $kprompt,
+                'n_vars'          => $knvars,
+                'var_names'       => $varnames,
+                'minterms'        => array_values($minterms),
+                'require_minimal' => (bool) $kmin,
+                'scoring'         => ['fill_weight' => $kfw, 'grouping_weight' => $kgw],
+            ],
+        ];
+        (new \mod_graphitoubb\problem_repository())->save((int) $instance->id, 'karnaugh', 'simplify', $payload, 1);
+        $savedmsg    = 'Problem saved.';
+        $prevpayload = $payload;
+    }
+}
+
+// relations authoring branch — base set + relation pairs + properties + weights.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($tool ?? '') === 'relations') {
+    $rprompt  = optional_param('relations_prompt', '', PARAM_TEXT);
+    $rsetraw  = optional_param('relations_baseset', '', PARAM_RAW_TRIMMED);
+    $rpairraw = optional_param('relations_pairs', '', PARAM_RAW);
+    $rreq     = optional_param('relations_required_rep', 'any', PARAM_ALPHA);
+    $raskraw  = optional_param('relations_ask', '', PARAM_RAW);
+    $rrw      = (int) optional_param('relations_rep_weight', 40, PARAM_INT);
+    $rpw      = (int) optional_param('relations_prop_weight', 60, PARAM_INT);
+
+    // Base set: distinct tokens separated by comma/space.
+    $baseset = array_values(array_unique(array_filter(preg_split('/[\s,]+/', $rsetraw), static fn($x) => $x !== '')));
+
+    // Relation pairs: "a,b" or "a b" per line, or "(a,b)".
+    $pairs = [];
+    foreach (preg_split('/\r\n|\r|\n/', $rpairraw) as $line) {
+        $line = trim($line);
+        if ($line === '') {
+            continue;
+        }
+        if (preg_match('/([^\s,()]+)\s*[,\s]\s*([^\s,()]+)/', $line, $pm)) {
+            $pairs[] = [$pm[1], $pm[2]];
+        }
+    }
+
+    $askprops = [];
+    foreach (['reflexive', 'symmetric', 'antisymmetric', 'transitive'] as $p) {
+        if (optional_param('relations_ask_' . $p, 0, PARAM_INT)) {
+            $askprops[] = $p;
+        }
+    }
+    if (empty($askprops)) {
+        $askprops = ['reflexive', 'symmetric', 'antisymmetric', 'transitive'];
+    }
+
+    $tool_obj = new \local_graphitoubb\tools\relations\relations_tool();
+    $cfg = [
+        'prompt'                  => $rprompt,
+        'base_set'                => $baseset,
+        'relation'                => $pairs,
+        'required_representation' => in_array($rreq, ['matrix', 'pairs', 'digraph', 'any'], true) ? $rreq : 'any',
+        'ask_properties'          => $askprops,
+        'scoring'                 => ['representation_weight' => $rrw, 'properties_weight' => $rpw],
+    ];
+    $vres = $tool_obj->validate(['config' => $cfg]);
+
+    if ($rprompt === '') {
+        $error = 'The prompt (consigna) is required.';
+    } else if (empty($baseset)) {
+        $error = 'Define the base set S (at least one element).';
+    } else if (!$vres->ok) {
+        $error = 'Validation failed: ' . implode('; ', $vres->errors);
+    }
+
+    if (!$error) {
+        $payload = [
+            'tool'           => 'relations',
+            'schema_version' => 1,
+            'type'           => 'analyze',
+            'config'         => $tool_obj->serialize($cfg) + ['prompt' => $rprompt],
+        ];
+        (new \mod_graphitoubb\problem_repository())->save((int) $instance->id, 'relations', 'analyze', $payload, 1);
+        $savedmsg    = 'Problem saved.';
+        $prevpayload = $payload;
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !in_array(($tool ?? 'truth_table'), ['afd', 'grafo', 'arbol', 'karnaugh', 'relations'], true)) {
     $type     = required_param('exercise_type', PARAM_ALPHA);
     $formula  = optional_param('formula',   '', PARAM_RAW_TRIMMED);
     $formula1 = optional_param('formula_1', '', PARAM_RAW_TRIMMED);
@@ -492,6 +646,33 @@ $cur_arbol_pair   = (string) ($cur_arbol_cfg['pair'] ?? 'pre_in');
 $cur_arbol_a      = isset($cur_arbol_cfg['a']) ? implode(', ', $cur_arbol_cfg['a']) : '';
 $cur_arbol_b      = isset($cur_arbol_cfg['b']) ? implode(', ', $cur_arbol_cfg['b']) : '';
 $cur_arbol_given  = $cur_arbol_cfg['given_tree'] ?? null;
+
+// karnaugh authoring prefill.
+$cur_k_cfg    = ($cur_tool === 'karnaugh') ? ($prevpayload['config'] ?? []) : [];
+$cur_k_prompt = (string) ($cur_k_cfg['prompt'] ?? '');
+$cur_k_nvars  = (int) ($cur_k_cfg['n_vars'] ?? 3);
+$cur_k_vars   = isset($cur_k_cfg['var_names']) ? implode(' ', $cur_k_cfg['var_names']) : 'A B C';
+$cur_k_min    = isset($cur_k_cfg['minterms']) ? implode(', ', $cur_k_cfg['minterms']) : '';
+$cur_k_reqmin = !array_key_exists('require_minimal', $cur_k_cfg) || !empty($cur_k_cfg['require_minimal']);
+$cur_k_fw     = (int) ($cur_k_cfg['scoring']['fill_weight'] ?? 40);
+$cur_k_gw     = (int) ($cur_k_cfg['scoring']['grouping_weight'] ?? 60);
+
+// relations authoring prefill.
+$cur_r_cfg    = ($cur_tool === 'relations') ? ($prevpayload['config'] ?? []) : [];
+$cur_r_prompt = (string) ($cur_r_cfg['prompt'] ?? '');
+$cur_r_set    = isset($cur_r_cfg['base_set']) ? implode(', ', $cur_r_cfg['base_set']) : '1, 2, 3';
+$cur_r_pairs  = '';
+if (!empty($cur_r_cfg['relation'])) {
+    $lines = [];
+    foreach ($cur_r_cfg['relation'] as $p) {
+        $lines[] = ($p[0] ?? '') . ', ' . ($p[1] ?? '');
+    }
+    $cur_r_pairs = implode("\n", $lines);
+}
+$cur_r_req    = (string) ($cur_r_cfg['required_representation'] ?? 'any');
+$cur_r_ask    = $cur_r_cfg['ask_properties'] ?? ['reflexive', 'symmetric', 'antisymmetric', 'transitive'];
+$cur_r_rw     = (int) ($cur_r_cfg['scoring']['representation_weight'] ?? 40);
+$cur_r_pw     = (int) ($cur_r_cfg['scoring']['properties_weight'] ?? 60);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading('Edit problem — ' . format_string($instance->name));
@@ -637,6 +818,8 @@ echo $selopt('truth_table', $cur_tool, 'Truth table (logic)');
 echo $selopt('afd',         $cur_tool, 'AFD — finite automaton');
 echo $selopt('grafo',       $cur_tool, 'Grafo — graph theory');
 echo $selopt('arbol',       $cur_tool, 'Árbol — trees & BST');
+echo $selopt('karnaugh',    $cur_tool, 'Karnaugh — boolean simplification');
+echo $selopt('relations',   $cur_tool, 'Relations — binary relations');
 echo <<<HTML
         </select>
     </div>
@@ -917,7 +1100,143 @@ echo <<<HTML
             </div>
         </div>
     </div><!-- /arbol tool section -->
+HTML;
 
+// ---- karnaugh tool section ----
+$k_prompt_safe = s($cur_k_prompt);
+$k_vars_safe   = s($cur_k_vars);
+$k_min_safe    = s($cur_k_min);
+$k_reqmin_attr = $checked($cur_k_reqmin);
+$k_fw_safe     = (int) $cur_k_fw;
+$k_gw_safe     = (int) $cur_k_gw;
+echo '<div class="mod-graphitoubb-tool-section" data-tool="karnaugh">';
+echo <<<HTML
+    <div class="form-group">
+        <label for="karnaugh_prompt"><strong>Prompt (consigna)</strong></label>
+        <textarea name="karnaugh_prompt" id="karnaugh_prompt" class="form-control" rows="3"
+                  placeholder="Simplify f(A,B,C) using a Karnaugh map.">{$k_prompt_safe}</textarea>
+    </div>
+    <div class="form-row">
+        <div class="form-group col-md-4">
+            <label for="karnaugh_nvars"><strong>Variables</strong></label>
+            <select name="karnaugh_nvars" id="karnaugh_nvars" class="form-control">
+HTML;
+echo $selopt('2', (string) $cur_k_nvars, '2 variables');
+echo $selopt('3', (string) $cur_k_nvars, '3 variables');
+echo $selopt('4', (string) $cur_k_nvars, '4 variables');
+echo <<<HTML
+            </select>
+        </div>
+        <div class="form-group col-md-8">
+            <label for="karnaugh_varnames">Variable names (MSB→LSB, single letters)</label>
+            <input type="text" name="karnaugh_varnames" id="karnaugh_varnames" class="form-control"
+                   value="{$k_vars_safe}" placeholder="A B C">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="karnaugh_minterms"><strong>Minterms</strong> (indices where f = 1, comma-separated)</label>
+        <input type="text" name="karnaugh_minterms" id="karnaugh_minterms" class="form-control"
+               value="{$k_min_safe}" placeholder="0, 2, 3, 4, 7">
+        <small class="form-text text-muted">The canonical truth of f. Index i's bits are the variables MSB→LSB.</small>
+    </div>
+    <div class="form-group">
+        <label for="karnaugh_formula">…or a <strong>formula shortcut</strong> (auto-fills the minterms; overrides the list)</label>
+        <input type="text" name="karnaugh_formula" id="karnaugh_formula" class="form-control"
+               placeholder="A&amp;B | ~C   (leave blank to use the minterm list)">
+        <small class="form-text text-muted">Uses the same syntax as truth-table formulas. Variables must match the names above.</small>
+    </div>
+    <div class="form-check mb-2">
+        <input type="checkbox" name="karnaugh_require_minimal" value="1" id="karnaugh_require_minimal"
+               class="form-check-input"{$k_reqmin_attr}>
+        <label class="form-check-label" for="karnaugh_require_minimal">
+            Require a minimal cover (reward fewer/larger groups)
+        </label>
+    </div>
+    <div class="form-row">
+        <div class="form-group col-md-4">
+            <label for="karnaugh_fill_weight">Fill weight (%)</label>
+            <input type="number" name="karnaugh_fill_weight" id="karnaugh_fill_weight" class="form-control"
+                   value="{$k_fw_safe}" min="0" max="100">
+        </div>
+        <div class="form-group col-md-4">
+            <label for="karnaugh_grouping_weight">Grouping weight (%)</label>
+            <input type="number" name="karnaugh_grouping_weight" id="karnaugh_grouping_weight" class="form-control"
+                   value="{$k_gw_safe}" min="0" max="100">
+        </div>
+    </div>
+    <small class="form-text text-muted mb-2">Fill + grouping weights must sum to 100.</small>
+</div><!-- /karnaugh tool section -->
+HTML;
+
+// ---- relations tool section ----
+$r_prompt_safe = s($cur_r_prompt);
+$r_set_safe    = s($cur_r_set);
+$r_pairs_safe  = s($cur_r_pairs);
+$r_rw_safe     = (int) $cur_r_rw;
+$r_pw_safe     = (int) $cur_r_pw;
+$r_ask = static function (string $p) use ($cur_r_ask, $checked): string {
+    return $checked(in_array($p, $cur_r_ask, true));
+};
+echo '<div class="mod-graphitoubb-tool-section" data-tool="relations">';
+echo <<<HTML
+    <div class="form-group">
+        <label for="relations_prompt"><strong>Prompt (consigna)</strong></label>
+        <textarea name="relations_prompt" id="relations_prompt" class="form-control" rows="3"
+                  placeholder="Build R on S and declare its properties.">{$r_prompt_safe}</textarea>
+    </div>
+    <div class="form-group">
+        <label for="relations_baseset"><strong>Base set S</strong> (elements, comma/space-separated; ≤ 6)</label>
+        <input type="text" name="relations_baseset" id="relations_baseset" class="form-control"
+               value="{$r_set_safe}" placeholder="1, 2, 3">
+    </div>
+    <div class="form-group">
+        <label for="relations_pairs"><strong>Relation R</strong> (one ordered pair per line: <code>a, b</code>)</label>
+        <textarea name="relations_pairs" id="relations_pairs" class="form-control" rows="5"
+                  placeholder="1, 1&#10;2, 2&#10;3, 3&#10;1, 2">{$r_pairs_safe}</textarea>
+    </div>
+    <div class="form-group">
+        <label for="relations_required_rep"><strong>Required representation</strong></label>
+        <select name="relations_required_rep" id="relations_required_rep" class="form-control">
+HTML;
+echo $selopt('any',     $cur_r_req, 'Any (student chooses)');
+echo $selopt('matrix',  $cur_r_req, 'Matrix only');
+echo $selopt('pairs',   $cur_r_req, 'Ordered pairs only');
+echo $selopt('digraph', $cur_r_req, 'Directed graph only');
+echo <<<HTML
+        </select>
+    </div>
+    <div class="form-group">
+        <label><strong>Properties to declare</strong></label>
+        <div class="form-check"><input type="checkbox" name="relations_ask_reflexive" value="1"
+             id="relations_ask_reflexive" class="form-check-input"{$r_ask('reflexive')}>
+             <label class="form-check-label" for="relations_ask_reflexive">Reflexive</label></div>
+        <div class="form-check"><input type="checkbox" name="relations_ask_symmetric" value="1"
+             id="relations_ask_symmetric" class="form-check-input"{$r_ask('symmetric')}>
+             <label class="form-check-label" for="relations_ask_symmetric">Symmetric</label></div>
+        <div class="form-check"><input type="checkbox" name="relations_ask_antisymmetric" value="1"
+             id="relations_ask_antisymmetric" class="form-check-input"{$r_ask('antisymmetric')}>
+             <label class="form-check-label" for="relations_ask_antisymmetric">Antisymmetric</label></div>
+        <div class="form-check"><input type="checkbox" name="relations_ask_transitive" value="1"
+             id="relations_ask_transitive" class="form-check-input"{$r_ask('transitive')}>
+             <label class="form-check-label" for="relations_ask_transitive">Transitive</label></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group col-md-4">
+            <label for="relations_rep_weight">Representation weight (%)</label>
+            <input type="number" name="relations_rep_weight" id="relations_rep_weight" class="form-control"
+                   value="{$r_rw_safe}" min="0" max="100">
+        </div>
+        <div class="form-group col-md-4">
+            <label for="relations_prop_weight">Properties weight (%)</label>
+            <input type="number" name="relations_prop_weight" id="relations_prop_weight" class="form-control"
+                   value="{$r_pw_safe}" min="0" max="100">
+        </div>
+    </div>
+    <small class="form-text text-muted mb-2">Representation + properties weights must sum to 100.</small>
+</div><!-- /relations tool section -->
+HTML;
+
+echo <<<HTML
     <div class="mt-3">
         <button type="submit" class="btn btn-primary">Save problem</button>
         <a class="btn btn-secondary" href="{$viewurl}">Back to activity</a>

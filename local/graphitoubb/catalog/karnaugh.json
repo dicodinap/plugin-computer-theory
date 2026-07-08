@@ -1,0 +1,68 @@
+[
+  {
+    "key": "karnaugh_3var_basic",
+    "tool": "karnaugh",
+    "type": "simplify",
+    "difficulty": "easy",
+    "tags": ["karnaugh", "sop", "3var"],
+    "title": {"es": "Simplificación de 3 variables", "en": "3-variable simplification"},
+    "summary": {"es": "f(A,B,C) con minterms {0,2,3,4,7}; cobertura mínima de 3 grupos.", "en": "f(A,B,C) with minterms {0,2,3,4,7}; minimal cover of 3 groups."},
+    "payload": {
+      "tool": "karnaugh",
+      "schema_version": 1,
+      "type": "simplify",
+      "config": {
+        "prompt": {"es": "Transfiere la tabla de verdad al mapa de Karnaugh y agrupa las celdas en 1 para obtener la forma mínima de f(A,B,C).", "en": "Transfer the truth table into the Karnaugh map and group the 1-cells to obtain the minimal form of f(A,B,C)."},
+        "n_vars": 3,
+        "var_names": ["A", "B", "C"],
+        "minterms": [0, 2, 3, 4, 7],
+        "require_minimal": true,
+        "scoring": {"fill_weight": 40, "grouping_weight": 60}
+      }
+    }
+  },
+  {
+    "key": "karnaugh_4var_medium",
+    "tool": "karnaugh",
+    "type": "simplify",
+    "difficulty": "medium",
+    "tags": ["karnaugh", "sop", "4var"],
+    "title": {"es": "Simplificación de 4 variables", "en": "4-variable simplification"},
+    "summary": {"es": "f(A,B,C,D) con minterms {0,1,2,5,8,9,10}.", "en": "f(A,B,C,D) with minterms {0,1,2,5,8,9,10}."},
+    "payload": {
+      "tool": "karnaugh",
+      "schema_version": 1,
+      "type": "simplify",
+      "config": {
+        "prompt": {"es": "Simplifica f(A,B,C,D) usando el mapa de Karnaugh de 4 variables.", "en": "Simplify f(A,B,C,D) using the 4-variable Karnaugh map."},
+        "n_vars": 4,
+        "var_names": ["A", "B", "C", "D"],
+        "minterms": [0, 1, 2, 5, 8, 9, 10],
+        "require_minimal": true,
+        "scoring": {"fill_weight": 40, "grouping_weight": 60}
+      }
+    }
+  },
+  {
+    "key": "karnaugh_2var_intro",
+    "tool": "karnaugh",
+    "type": "simplify",
+    "difficulty": "easy",
+    "tags": ["karnaugh", "intro", "2var"],
+    "title": {"es": "Introducción (2 variables)", "en": "Intro (2 variables)"},
+    "summary": {"es": "f(A,B) = A ∨ B; práctica de agrupación sin minimalidad estricta.", "en": "f(A,B) = A ∨ B; grouping practice with minimality off."},
+    "payload": {
+      "tool": "karnaugh",
+      "schema_version": 1,
+      "type": "simplify",
+      "config": {
+        "prompt": {"es": "Agrupa las celdas en 1 del mapa de f(A,B).", "en": "Group the 1-cells of the map of f(A,B)."},
+        "n_vars": 2,
+        "var_names": ["A", "B"],
+        "minterms": [1, 2, 3],
+        "require_minimal": false,
+        "scoring": {"fill_weight": 40, "grouping_weight": 60}
+      }
+    }
+  }
+]

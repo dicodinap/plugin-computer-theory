@@ -92,9 +92,10 @@ class qtype_graphitoubb extends question_type {
 
         $tool = $question->tool ?? 'truth_table';
 
-        // grafo/arbol: the canonical payload arrives ready-made (XML import / seeding),
-        // not from truth_table form fields. Store it as-is (no truth_table schema).
-        if ($tool === 'grafo' || $tool === 'arbol') {
+        // Canvas/snapshot tools (grafo/arbol/karnaugh/relations): the canonical
+        // payload arrives ready-made (XML import / seeding), not from truth_table
+        // form fields. Store it as-is (no truth_table schema).
+        if (self::is_canvas_tool($tool)) {
             $this->save_canvas_question_options($question, $tool);
             return;
         }
@@ -147,12 +148,23 @@ class qtype_graphitoubb extends question_type {
     }
 
     /**
-     * Persist a grafo/arbol (canvas) question's options. The canonical payload is
-     * taken verbatim from $question->problem_payload (import/seeding) — grafo/arbol
-     * have no truth_table-style form, and no truth_table JSON schema applies.
+     * Whether a tool stores its payload verbatim (canvas/snapshot tools) rather
+     * than through the truth_table form + schema.
+     *
+     * @param  string $tool
+     * @return bool
+     */
+    private static function is_canvas_tool(string $tool): bool {
+        return in_array($tool, ['grafo', 'arbol', 'karnaugh', 'relations'], true);
+    }
+
+    /**
+     * Persist a canvas/snapshot question's options. The canonical payload is taken
+     * verbatim from $question->problem_payload (import/seeding) — these tools have
+     * no truth_table-style form, and no truth_table JSON schema applies.
      *
      * @param  object $question
-     * @param  string $tool 'grafo' | 'arbol'
+     * @param  string $tool 'grafo' | 'arbol' | 'karnaugh' | 'relations'
      * @return void
      * @throws \moodle_exception When the payload is not valid JSON.
      */
@@ -332,9 +344,9 @@ class qtype_graphitoubb extends question_type {
         $qo->scoring_config  = $format->getpath($data, ['#', 'scoring_config', 0, '#'], '{}');
         $qo->ui_config       = $format->getpath($data, ['#', 'ui_config', 0, '#'], '{}');
 
-        // grafo/arbol: no truth_table schema; keep the payload verbatim, hash the
+        // Canvas tools: no truth_table schema; keep the payload verbatim, hash the
         // decoded canonical form, and let save_canvas_question_options() store it.
-        if ($qo->tool === 'grafo' || $qo->tool === 'arbol') {
+        if (self::is_canvas_tool($qo->tool)) {
             $decoded = $this->json_decode_safe($qo->problem_payload);
             if (empty($decoded)) {
                 return false;

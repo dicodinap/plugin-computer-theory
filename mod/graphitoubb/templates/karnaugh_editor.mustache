@@ -1,0 +1,65 @@
+{{!
+    Two-stage Karnaugh editor shell (fill + group).
+
+    Context: {attemptid, instanceid, schemaversion, nvars, varnames_json,
+              minterms_json, snapshot_json, finished, is_student}
+
+    @template mod_graphitoubb/karnaugh_editor
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-karnaugh mod-graphitoubb-editor"
+    id="graphitoubb-karnaugh-{{instanceid}}"
+    data-attemptid="{{attemptid}}"
+    data-instanceid="{{instanceid}}"
+    data-schemaversion="{{schemaversion}}"
+    data-nvars="{{nvars}}"
+    data-varnames="{{varnames_json}}"
+    data-minterms="{{minterms_json}}"
+    data-finished="{{#finished}}1{{/finished}}{{^finished}}0{{/finished}}"
+    data-snapshot="{{snapshot_json}}">
+
+    <div class="mod-graphitoubb-kmap-modebar mod-graphitoubb-toolbar mb-2" role="toolbar"
+         aria-label="{{#str}}kmap_mode_label, mod_graphitoubb{{/str}}">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-kmode="fill"
+                aria-pressed="true">{{#str}}kmap_mode_fill, mod_graphitoubb{{/str}}</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-kmode="group"
+                aria-pressed="false">{{#str}}kmap_mode_group, mod_graphitoubb{{/str}}</button>
+    </div>
+
+    <div class="mod-graphitoubb-kmap-grid" aria-label="{{#str}}kmap_grid_label, mod_graphitoubb{{/str}}"></div>
+
+    <div class="mod-graphitoubb-kmap-filltools mt-2">
+        <p class="text-muted small mb-1">{{#str}}kmap_fill_help, mod_graphitoubb{{/str}}</p>
+        <button type="button" class="btn btn-sm btn-info mod-graphitoubb-kmap-verify"
+                {{#finished}}disabled{{/finished}}>{{#str}}kmap_verify_button, mod_graphitoubb{{/str}}</button>
+        <span class="mod-graphitoubb-kmap-verify-result ml-2" aria-live="polite"></span>
+    </div>
+
+    <div class="mod-graphitoubb-kmap-grouptools mt-2" style="display:none">
+        <p class="text-muted small mb-1">{{#str}}kmap_group_help, mod_graphitoubb{{/str}}</p>
+        <button type="button" class="btn btn-sm btn-primary mod-graphitoubb-kmap-addgroup"
+                {{#finished}}disabled{{/finished}}>{{#str}}kmap_add_group, mod_graphitoubb{{/str}}</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary mod-graphitoubb-kmap-clearsel"
+                {{#finished}}disabled{{/finished}}>{{#str}}kmap_clear_selection, mod_graphitoubb{{/str}}</button>
+        <ul class="mod-graphitoubb-kmap-groups list-unstyled mt-2"></ul>
+        <div class="mod-graphitoubb-kmap-minimal font-monospace mt-2 p-2 bg-light rounded">f = —</div>
+    </div>
+</div>
+{{#is_student}}
+<div class="mod-graphitoubb-submission-bar mt-3">
+    <span class="mod-graphitoubb-status-label">{{#str}}afd_status_label, mod_graphitoubb{{/str}}</span>
+    <span class="mod-graphitoubb-status-badge badge {{#finished}}badge-success bg-success{{/finished}}{{^finished}}badge-warning bg-warning text-dark{{/finished}}"
+          data-region="attempt-status" aria-live="polite">
+        {{#finished}}{{#str}}status_finished, mod_graphitoubb{{/str}}{{/finished}}{{^finished}}{{#str}}status_inprogress, mod_graphitoubb{{/str}}{{/finished}}
+    </span>
+    <button type="button" class="btn btn-primary mod-graphitoubb-finish-btn" data-region="karnaugh-finish-btn"
+            {{#finished}}disabled{{/finished}}{{#gate_blocked}} disabled title="{{gate_reason}}"{{/gate_blocked}}>{{#str}}afd_finish_button, mod_graphitoubb{{/str}}</button>
+    {{#gate_blocked}}<span class="text-danger small ml-2">{{gate_reason}}</span>{{/gate_blocked}}
+</div>
+{{/is_student}}
+{{#js}}
+require(['mod_graphitoubb/karnaugh_editor'], function(Editor) {
+    Editor.init({{instanceid}});
+});
+{{/js}}

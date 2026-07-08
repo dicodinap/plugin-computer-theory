@@ -1,0 +1,62 @@
+{{!
+    Relations editor shell — matrix / pairs / digraph surfaces + property checklist.
+
+    Context: {attemptid, instanceid, schemaversion, baseset_json, required_rep,
+              snapshot_json, finished, is_student, gate_blocked, gate_reason,
+              show_matrix, show_pairs, show_digraph, properties:[{key,label}]}
+
+    @template mod_graphitoubb/relations_editor
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-relations mod-graphitoubb-editor"
+    id="graphitoubb-relations-{{instanceid}}"
+    data-attemptid="{{attemptid}}"
+    data-instanceid="{{instanceid}}"
+    data-schemaversion="{{schemaversion}}"
+    data-baseset="{{baseset_json}}"
+    data-required-rep="{{required_rep}}"
+    data-finished="{{#finished}}1{{/finished}}{{^finished}}0{{/finished}}"
+    data-snapshot="{{snapshot_json}}">
+
+    <div class="mod-graphitoubb-rel-tabs mod-graphitoubb-toolbar mb-2" role="tablist">
+        {{#show_matrix}}<button type="button" class="btn btn-sm btn-outline-secondary" data-rep-tab="matrix"
+                aria-pressed="false">{{#str}}relations_rep_tab_matrix, mod_graphitoubb{{/str}}</button>{{/show_matrix}}
+        {{#show_pairs}}<button type="button" class="btn btn-sm btn-outline-secondary" data-rep-tab="pairs"
+                aria-pressed="false">{{#str}}relations_rep_tab_pairs, mod_graphitoubb{{/str}}</button>{{/show_pairs}}
+        {{#show_digraph}}<button type="button" class="btn btn-sm btn-outline-secondary" data-rep-tab="digraph"
+                aria-pressed="false">{{#str}}relations_rep_tab_digraph, mod_graphitoubb{{/str}}</button>{{/show_digraph}}
+    </div>
+
+    <div class="mod-graphitoubb-rel-matrix-wrap" style="display:none"></div>
+    <div class="mod-graphitoubb-rel-pairs-wrap" style="display:none"></div>
+    <div class="mod-graphitoubb-rel-digraph-wrap" style="display:none"></div>
+
+    <fieldset class="mod-graphitoubb-rel-props card card-body mt-3" {{#finished}}disabled{{/finished}}>
+        <legend class="h6">{{#str}}relations_props_legend, mod_graphitoubb{{/str}}</legend>
+        {{#properties}}
+        <div class="form-check">
+            <input class="form-check-input mod-graphitoubb-rel-prop" type="checkbox"
+                   id="rel-prop-{{key}}-{{instanceid}}" value="{{key}}">
+            <label class="form-check-label" for="rel-prop-{{key}}-{{instanceid}}">{{label}}</label>
+        </div>
+        {{/properties}}
+    </fieldset>
+</div>
+{{#is_student}}
+<div class="mod-graphitoubb-submission-bar mt-3">
+    <span class="mod-graphitoubb-status-label">{{#str}}afd_status_label, mod_graphitoubb{{/str}}</span>
+    <span class="mod-graphitoubb-status-badge badge {{#finished}}badge-success bg-success{{/finished}}{{^finished}}badge-warning bg-warning text-dark{{/finished}}"
+          data-region="attempt-status" aria-live="polite">
+        {{#finished}}{{#str}}status_finished, mod_graphitoubb{{/str}}{{/finished}}{{^finished}}{{#str}}status_inprogress, mod_graphitoubb{{/str}}{{/finished}}
+    </span>
+    <button type="button" class="btn btn-primary mod-graphitoubb-finish-btn" data-region="relations-finish-btn"
+            {{#finished}}disabled{{/finished}}{{#gate_blocked}} disabled title="{{gate_reason}}"{{/gate_blocked}}>{{#str}}afd_finish_button, mod_graphitoubb{{/str}}</button>
+    {{#gate_blocked}}<span class="text-danger small ml-2">{{gate_reason}}</span>{{/gate_blocked}}
+</div>
+{{/is_student}}
+{{#js}}
+require(['mod_graphitoubb/relations_editor'], function(Editor) {
+    Editor.init({{instanceid}});
+});
+{{/js}}

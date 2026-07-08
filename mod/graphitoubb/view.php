@@ -155,6 +155,78 @@ if ($problem && $problem->tool === 'truth_table') {
             'mt-3'
         );
     }
+} else if ($problem && $problem->tool === 'karnaugh') {
+    // Karnaugh two-stage simplify exercise — consigna (truth table) + grid editor.
+    if ($canattempt) {
+        $service = new \mod_graphitoubb\attempt_service();
+        $attempt = $service->start_or_resume((int) $instance->id, (int) $USER->id);
+
+        echo $renderer->render_karnaugh_consigna($problem);
+
+        $finished = ((string) $attempt->status === 'finished');
+        $sub = (new \mod_graphitoubb\submission_repository())->find_by_attempt((int) $attempt->id);
+        if ($sub) {
+            $gr = json_decode($sub->grading_result, true) ?: [];
+            echo $renderer->render_karnaugh_result($gr);
+        }
+
+        $latest       = (new \mod_graphitoubb\snapshot_service())->get_latest((int) $attempt->id);
+        $snapshotjson = $latest ? $latest->payload : null;
+
+        $gate = \mod_graphitoubb\submission_gate::check($instance, (int) $USER->id);
+
+        echo $renderer->render_karnaugh_editor(
+            (int) $attempt->id,
+            (int) $instance->id,
+            $problem,
+            $snapshotjson,
+            $finished,
+            $gate
+        );
+    }
+    if ($canmanage) {
+        $editurl = new \moodle_url('/mod/graphitoubb/edit_problem.php', ['id' => $cm->id]);
+        echo \html_writer::div(
+            \html_writer::link($editurl, '✏ Edit problem (teacher)'),
+            'mt-3'
+        );
+    }
+} else if ($problem && $problem->tool === 'relations') {
+    // Relations exercise — consigna + matrix/pairs/digraph editor + property checklist.
+    if ($canattempt) {
+        $service = new \mod_graphitoubb\attempt_service();
+        $attempt = $service->start_or_resume((int) $instance->id, (int) $USER->id);
+
+        echo $renderer->render_relations_consigna($problem);
+
+        $finished = ((string) $attempt->status === 'finished');
+        $sub = (new \mod_graphitoubb\submission_repository())->find_by_attempt((int) $attempt->id);
+        if ($sub) {
+            $gr = json_decode($sub->grading_result, true) ?: [];
+            echo $renderer->render_relations_result($gr);
+        }
+
+        $latest       = (new \mod_graphitoubb\snapshot_service())->get_latest((int) $attempt->id);
+        $snapshotjson = $latest ? $latest->payload : null;
+
+        $gate = \mod_graphitoubb\submission_gate::check($instance, (int) $USER->id);
+
+        echo $renderer->render_relations_editor(
+            (int) $attempt->id,
+            (int) $instance->id,
+            $problem,
+            $snapshotjson,
+            $finished,
+            $gate
+        );
+    }
+    if ($canmanage) {
+        $editurl = new \moodle_url('/mod/graphitoubb/edit_problem.php', ['id' => $cm->id]);
+        echo \html_writer::div(
+            \html_writer::link($editurl, '✏ Edit problem (teacher)'),
+            'mt-3'
+        );
+    }
 } else if ($canmanage) {
     // No problem configured yet: prompt the teacher.
     $editurl = new \moodle_url('/mod/graphitoubb/edit_problem.php', ['id' => $cm->id]);

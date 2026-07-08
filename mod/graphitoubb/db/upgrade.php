@@ -160,5 +160,23 @@ function xmldb_graphitoubb_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026051800, 'graphitoubb');
     }
 
+    if ($oldversion < 2026070600) {
+        // RF_04 submission gate (D13): add timeopen/timeclose to graphitoubb.
+        // Existing rows default to 0 (no window) ⇒ no retroactive lock (I6).
+        $table = new xmldb_table('graphitoubb');
+
+        $field = new xmldb_field('timeopen', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'close_behavior');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('timeclose', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'timeopen');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 2026070600, 'graphitoubb');
+    }
+
     return true;
 }

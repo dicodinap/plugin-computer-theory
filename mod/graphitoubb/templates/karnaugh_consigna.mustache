@@ -1,0 +1,30 @@
+{{!
+    Karnaugh task prompt (consigna) — prompt + the given truth table of f.
+
+    Context: {prompt, headers:[{label}], rows:[{idx, bits:[{v}], f}], grading_info}
+
+    @template mod_graphitoubb/karnaugh_consigna
+    @copyright 2026 GraphitoUBB
+    @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="mod-graphitoubb-consigna card card-body mb-3">
+    <h3 class="h5">{{#str}}kmap_consigna_title, mod_graphitoubb{{/str}}</h3>
+    <p class="mod-graphitoubb-consigna-prompt mb-2">{{prompt}}</p>
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered mod-graphitoubb-kmap-truthtable" style="width:auto">
+            <thead><tr>
+                {{#headers}}<th class="text-center">{{label}}</th>{{/headers}}
+                <th class="text-center">f</th>
+            </tr></thead>
+            <tbody>
+                {{#rows}}
+                <tr>
+                    {{#bits}}<td class="text-center">{{v}}</td>{{/bits}}
+                    <td class="text-center font-weight-bold {{#f}}text-success{{/f}}">{{f}}</td>
+                </tr>
+                {{/rows}}
+            </tbody>
+        </table>
+    </div>
+    <p class="text-muted small mb-0">{{grading_info}}</p>
+</div>
