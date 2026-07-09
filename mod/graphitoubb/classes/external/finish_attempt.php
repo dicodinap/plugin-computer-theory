@@ -52,7 +52,7 @@ final class finish_attempt extends external_api {
      * @return array{status: string}
      */
     public static function execute(int $attemptid): array {
-        global $USER, $DB;
+        global $USER, $DB, $CFG;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'attemptid' => $attemptid,
@@ -112,6 +112,10 @@ final class finish_attempt extends external_api {
                 $instance = $DB->get_record('graphitoubb', ['id' => $attempt->instanceid], 'attempts_policy');
                 $policy   = $instance ? ($instance->attempts_policy ?: 'best') : 'best';
                 (new \mod_graphitoubb\grade_cache_service())->recompute_for_attempt($params['attemptid'], $policy);
+
+                // Push the aggregated grade to the gradebook for this student (itemnumber 0).
+                require_once($CFG->dirroot . '/mod/graphitoubb/lib.php');
+                graphitoubb_update_grades((object) ['id' => (int) $attempt->instanceid], (int) $attempt->userid);
 
                 $response['graded']   = (bool) ($grading['graded'] ?? true);
                 $response['invalid']  = (bool) ($grading['invalid'] ?? false);

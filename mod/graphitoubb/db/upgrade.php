@@ -29,7 +29,7 @@
  * @return bool True on success.
  */
 function xmldb_graphitoubb_upgrade($oldversion) {
-    global $DB;
+    global $DB, $CFG;
 
     $dbman = $DB->get_manager();
 
@@ -176,6 +176,53 @@ function xmldb_graphitoubb_upgrade($oldversion) {
         }
 
         upgrade_mod_savepoint(true, 2026070600, 'graphitoubb');
+    }
+
+    if ($oldversion < 2026070800) {
+        // Gradebook integration: create the grade item and backfill grades already
+        // emitted (graphitoubb_grade_cache) for every existing instance. Both are
+        // deferred to an adhoc task — any grade_update on an existing item calls
+        // grade_item::is_locked() → get_fast_modinfo(), which is forbidden while an
+        // upgrade is running. Mirrors core mod_scorm's deferred update_grades pattern.
+        // The task's graphitoubb_update_grades() creates the item AND pushes grades.
+        $instances = $DB->get_fieldset_select('graphitoubb', 'id', '1=1', []);
+        foreach ($instances as $instanceid) {
+            $task = new \mod_graphitoubb\task\update_grades();
+            $task->set_custom_data(['instanceid' => (int) $instanceid]);
+            \core\task\manager::queue_adhoc_task($task, true);
+        }
+
+        upgrade_mod_savepoint(true, 2026070800, 'graphitoubb');
+    }
+
+    if ($oldversion < 2026070801) {
+        // Switch the gradebook to the Chilean 1.0–7.0 scale. Existing grade items
+        // were created with grademax 100 and grades on that scale; re-queue the
+        // deferred update_grades task so each item's grademax and every user's grade
+        // are re-pushed on the new scale (same is_locked()-during-upgrade constraint).
+        $instances = $DB->get_fieldset_select('graphitoubb', 'id', '1=1', []);
+        foreach ($instances as $instanceid) {
+            $task = new \mod_graphitoubb\task\update_grades();
+            $task->set_custom_data(['instanceid' => (int) $instanceid]);
+            \core\task\manager::queue_adhoc_task($task, true);
+        }
+
+        upgrade_mod_savepoint(true, 2026070801, 'graphitoubb');
+    }
+
+    if ($oldversion < 2026070802) {
+        // Set a 4.0 grade-to-pass on every grade item so the gradebook colours
+        // failing grades (< 4.0) red and passing (>= 4.0) green. Re-queue the
+        // deferred update_grades task — grade_item_update() now writes gradepass,
+        // and setting it on an existing item hits is_locked() during upgrade.
+        $instances = $DB->get_fieldset_select('graphitoubb', 'id', '1=1', []);
+        foreach ($instances as $instanceid) {
+            $task = new \mod_graphitoubb\task\update_grades();
+            $task->set_custom_data(['instanceid' => (int) $instanceid]);
+            \core\task\manager::queue_adhoc_task($task, true);
+        }
+
+        upgrade_mod_savepoint(true, 2026070802, 'graphitoubb');
     }
 
     return true;

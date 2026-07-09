@@ -83,14 +83,12 @@ final class lib_test extends advanced_testcase {
         global $DB;
 
         $course = $this->getDataGenerator()->create_course();
-
-        $data              = new stdClass();
-        $data->course      = $course->id;
-        $data->name        = 'To delete';
-        $data->intro       = '';
-        $data->introformat = FORMAT_HTML;
-
-        $id = graphitoubb_add_instance($data);
+        // Use the generator so a real course module exists (gradebook item cleanup).
+        $activity = $this->getDataGenerator()->create_module('graphitoubb', [
+            'course' => $course->id,
+            'name'   => 'To delete',
+        ]);
+        $id = (int) $activity->id;
 
         $result = graphitoubb_delete_instance($id);
 
@@ -104,13 +102,12 @@ final class lib_test extends advanced_testcase {
         $course = $this->getDataGenerator()->create_course();
         $user   = $this->getDataGenerator()->create_user();
 
-        $data              = new stdClass();
-        $data->course      = $course->id;
-        $data->name        = 'Cascade';
-        $data->intro       = '';
-        $data->introformat = FORMAT_HTML;
-
-        $instanceid = graphitoubb_add_instance($data);
+        // Use the generator so a real course module exists (gradebook item cleanup).
+        $activity   = $this->getDataGenerator()->create_module('graphitoubb', [
+            'course' => $course->id,
+            'name'   => 'Cascade',
+        ]);
+        $instanceid = (int) $activity->id;
 
         $attemptid = $DB->insert_record('graphitoubb_attempt', [
             'instanceid'  => $instanceid,

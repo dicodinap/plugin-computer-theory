@@ -61,7 +61,7 @@ final class submit extends external_api {
      * @return array  Flattened grading_result plus feedback_items.
      */
     public static function execute(int $attemptid, string $payload): array {
-        global $USER, $DB;
+        global $USER, $DB, $CFG;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'attemptid' => $attemptid,
@@ -144,6 +144,10 @@ final class submit extends external_api {
         $policy   = $instance ? ($instance->attempts_policy ?: 'best') : 'best';
         $gc_svc   = new grade_cache_service();
         $gc_svc->recompute_for_attempt($params['attemptid'], $policy);
+
+        // Push the aggregated grade to the gradebook for this student (itemnumber 0).
+        require_once($CFG->dirroot . '/mod/graphitoubb/lib.php');
+        graphitoubb_update_grades((object) ['id' => (int) $attempt->instanceid], (int) $attempt->userid);
 
         // Fire submission event.
         $event_svc = new event_service();
