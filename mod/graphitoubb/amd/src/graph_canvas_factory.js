@@ -188,7 +188,10 @@ define(['mod_graphitoubb/cytoscape'], function(cytoscape) {
             layout: hasElements
                 ? (tool === 'arbol'
                     ? {name: 'breadthfirst', directed: true, padding: 30, spacingFactor: 1.1, fit: true,
-                       roots: payload.root ? ['#' + payload.root] : undefined}
+                       // roots must be a selector string (or bare node ids); an array of
+                       // '#id' selectors is read as node ids, matches nothing, and the tree
+                       // collapses to a single horizontal row (every node treated as a root).
+                       roots: payload.root ? ('#' + payload.root) : undefined}
                     : {name: 'cose', fit: true, padding: 50, animate: false,
                        idealEdgeLength: 90, nodeRepulsion: 9000, nodeOverlap: 24})
                 : {name: 'preset'},
